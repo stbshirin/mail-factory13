@@ -1,0 +1,92 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with balances, role and statistics",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user id" },
+        "name": { "type": "string", "description": "Full name" },
+        "email": { "type": "string", "format": "email", "description": "User email address" },
+        "phone": { "type": "string", "description": "Contact phone number" },
+        "role": { "type": "string", "enum": ["admin", "moderator", "user"], "description": "Access role" },
+        "balanceBdt": { "type": "number", "description": "Balance in BDT" },
+        "balanceUsd": { "type": "number", "description": "Balance in USD" },
+        "referralCode": { "type": "string", "description": "Unique referral code" },
+        "referralEarnings": { "type": "number", "description": "Earnings from referral" },
+        "memberTier": { "type": "string", "enum": ["Bronze", "Silver", "Gold", "Diamond"] },
+        "joinedAt": { "type": "string", "description": "ISO timestamp of joining" }
+      },
+      "required": ["id", "name", "email", "role", "balanceBdt"]
+    },
+    "MailBatch": {
+      "title": "MailBatch",
+      "description": "Batch of submitted Gmail accounts for admin review",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "batchName": { "type": "string" },
+        "mailType": { "type": "string" },
+        "totalMails": { "type": "number" },
+        "validMailsCount": { "type": "number" },
+        "pricePerMail": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "checking", "approved", "rejected", "paid"] },
+        "submittedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "totalMails", "totalAmount", "status"]
+    },
+    "MarketplaceItem": {
+      "title": "MarketplaceItem",
+      "description": "Email accounts inventory stock package for buyers",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string" },
+        "pricePerUnit": { "type": "number" },
+        "stockAvailable": { "type": "number" },
+        "minOrder": { "type": "number" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["id", "title", "type", "pricePerUnit", "stockAvailable"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial deposit, withdrawal, sale or purchase record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["deposit", "withdraw", "mail_sale", "marketplace_buy", "referral_bonus", "exchange"] },
+        "amount": { "type": "number" },
+        "currency": { "type": "string", "enum": ["BDT", "USD"] },
+        "method": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "completed", "rejected"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "type", "amount", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile records"
+    },
+    "/mail_batches/{batchId}": {
+      "schema": "MailBatch",
+      "description": "Submitted Gmail batches by sellers"
+    },
+    "/marketplace_items/{itemId}": {
+      "schema": "MarketplaceItem",
+      "description": "Inventory items available in the buyer marketplace"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "All financial wallet transactions"
+    }
+  }
+}

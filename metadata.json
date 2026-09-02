@@ -1,0 +1,6 @@
+{
+  "name": "Mail Factory",
+  "description": "Mail Factory - Trusted Gmail Buying, Selling, Marketplace & Exchange Platform with Full Admin Control",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
