@@ -50,8 +50,10 @@ const AppContent: React.FC = () => {
       case 'transactions':
         return <BuyerTransactionsView />;
       case 'referral':
+      case 'leaderboard':
         return <ReferralLeaderboard />;
       case 'idcard':
+      case 'id_card':
         return <MemberIdCardView />;
       case 'reviews':
         return <ReviewsView />;
@@ -67,7 +69,7 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
       {/* Toast Notification Container */}
-      {toasts && toasts.length > 0 && (
+      {toasts && Array.isArray(toasts) && toasts.length > 0 && (
         <div className="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none">
           {toasts.map((t) => (
             <div

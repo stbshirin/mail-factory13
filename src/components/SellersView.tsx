@@ -442,10 +442,10 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
 
             <div>
               <label className="text-xs font-bold text-slate-300 mb-1.5 block">
-                সাবমিটকৃত মেইল তালিকা ({selectedBatchDetails.mails.length}টি):
+                সাবমিটকৃত মেইল তালিকা ({selectedBatchDetails.mails?.length || 0}টি):
               </label>
               <div className="max-h-56 overflow-y-auto bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-xs text-slate-300 space-y-1">
-                {selectedBatchDetails.mails.map((m, i) => (
+                {(selectedBatchDetails.mails || []).map((m, i) => (
                   <div key={i} className="flex items-center justify-between border-b border-slate-900/60 pb-1">
                     <span>
                       {m.email}:{m.password}:{m.recoveryEmail}

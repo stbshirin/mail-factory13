@@ -146,10 +146,10 @@ export const BuyerOrdersView: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-slate-300">
-                  ডেলিভারিকৃত মেইল তালিকা ({activeOrderDetails.deliveredMails.length}টি):
+                  ডেলিভারিকৃত মেইল তালিকা ({activeOrderDetails.deliveredMails?.length || 0}টি):
                 </span>
                 <button
-                  onClick={() => handleCopy(activeOrderDetails.deliveredMails)}
+                  onClick={() => handleCopy(activeOrderDetails.deliveredMails || [])}
                   className="text-xs text-amber-400 hover:underline flex items-center gap-1 font-semibold"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -158,7 +158,7 @@ export const BuyerOrdersView: React.FC = () => {
               </div>
 
               <div className="max-h-60 overflow-y-auto bg-slate-950 border border-slate-800 rounded-2xl p-4 font-mono text-xs text-amber-300 space-y-1 select-all">
-                {activeOrderDetails.deliveredMails.map((mailLine, idx) => (
+                {(activeOrderDetails.deliveredMails || []).map((mailLine, idx) => (
                   <div key={idx} className="border-b border-slate-900/60 pb-1 flex justify-between">
                     <span>{mailLine}</span>
                     <span className="text-slate-600 text-[10px]">#{idx + 1}</span>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../AppContext';
 import { MailBatch, MarketplaceItem, PaymentMethod, MailType } from '../types';
 import {
@@ -60,6 +60,10 @@ export const AdminPanelView: React.FC = () => {
   // Rate settings local form state
   const [ratesForm, setRatesForm] = useState(platformSettings);
 
+  useEffect(() => {
+    setRatesForm(platformSettings);
+  }, [platformSettings]);
+
   // New package modal
   const [showNewPackageModal, setShowNewPackageModal] = useState(false);
   const [newPkgTitle, setNewPkgTitle] = useState('');
@@ -82,8 +86,13 @@ export const AdminPanelView: React.FC = () => {
   // Batch filters
   const [batchStatusFilter, setBatchStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
 
-  const pendingBatchesCount = mailBatches.filter(b => b.status === 'pending').length;
-  const pendingTransactionsCount = transactions.filter(t => t.status === 'pending').length;
+  const userList = allUsers || [];
+  const batchesList = mailBatches || [];
+  const trxList = transactions || [];
+  const marketList = marketplaceItems || [];
+
+  const pendingBatchesCount = batchesList.filter(b => b.status === 'pending').length;
+  const pendingTransactionsCount = trxList.filter(t => t.status === 'pending').length;
 
   const handleSaveRates = (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,7 +231,7 @@ export const AdminPanelView: React.FC = () => {
           </div>
           <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
             <div className="text-slate-400">মোট নিবন্ধিত ইউজার:</div>
-            <div className="text-xl font-black text-white mt-0.5">{allUsers.length} জন</div>
+            <div className="text-xl font-black text-white mt-0.5">{userList.length} জন</div>
           </div>
           <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
             <div className="text-slate-400">বর্তমান লাইভ শিফট:</div>
@@ -278,7 +287,7 @@ export const AdminPanelView: React.FC = () => {
           }`}
         >
           <Package className="w-4 h-4" />
-          <span>মার্কেটপ্লেস ইনভেন্টরি ({marketplaceItems.length})</span>
+          <span>মার্কেটপ্লেস ইনভেন্টরি ({marketList.length})</span>
         </button>
 
         <button
@@ -290,7 +299,7 @@ export const AdminPanelView: React.FC = () => {
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>ইউজার ও ব্যালেন্স ম্যানেজমেন্ট ({allUsers.length})</span>
+          <span>ইউজার ও ব্যালেন্স ম্যানেজমেন্ট ({userList.length})</span>
         </button>
       </div>
 
@@ -325,7 +334,7 @@ export const AdminPanelView: React.FC = () => {
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
-            {mailBatches.filter(b => batchStatusFilter === 'all' || b.status === batchStatusFilter).length === 0 ? (
+            {batchesList.filter(b => batchStatusFilter === 'all' || b.status === batchStatusFilter).length === 0 ? (
               <div className="py-12 text-center text-slate-500 text-sm">
                 এই ফিল্টারে কোনো মেইল ব্যাচ পাওয়া যায়নি।
               </div>
@@ -646,27 +655,27 @@ export const AdminPanelView: React.FC = () => {
                 <input
                   type="text"
                   value={ratesForm.bKashNumber}
-                  onChange={e => setRatesForm({ ...ratesForm, bKashNumber: e.target.value })}
+                  onChange={e => setRatesForm({ ...ratesForm, bKashNumber: e.target.value, bKashType: 'Personal' })}
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] text-slate-400 mb-1">নগদ নম্বর:</label>
+                <label className="block text-[11px] text-slate-400 mb-1">নগদ পার্সোনাল নম্বর:</label>
                 <input
                   type="text"
                   value={ratesForm.nagadNumber}
-                  onChange={e => setRatesForm({ ...ratesForm, nagadNumber: e.target.value })}
+                  onChange={e => setRatesForm({ ...ratesForm, nagadNumber: e.target.value, nagadType: 'Personal' })}
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] text-slate-400 mb-1">রকেট নম্বর:</label>
+                <label className="block text-[11px] text-slate-400 mb-1">রকেট পার্সোনাল নম্বর:</label>
                 <input
                   type="text"
                   value={ratesForm.rocketNumber}
-                  onChange={e => setRatesForm({ ...ratesForm, rocketNumber: e.target.value })}
+                  onChange={e => setRatesForm({ ...ratesForm, rocketNumber: e.target.value, rocketType: 'Personal' })}
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-xs"
                 />
               </div>
@@ -770,7 +779,7 @@ export const AdminPanelView: React.FC = () => {
               <h2 className="text-xl font-black text-white">নিবন্ধিত ইউজার ও ব্যালেন্স মডিফিকেশন</h2>
               <p className="text-xs text-slate-400">ইউজারদের ওয়ালেটে ম্যানুয়ালি ব্যালেন্স অ্যাড বা ডিক্রিজ করুন</p>
             </div>
-            <span className="text-xs font-bold text-amber-400">মোট ইউজার: {allUsers.length} জন</span>
+            <span className="text-xs font-bold text-amber-400">মোট ইউজার: {userList.length} জন</span>
           </div>
 
           <div className="overflow-x-auto">
@@ -787,7 +796,7 @@ export const AdminPanelView: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {allUsers.map(u => (
+                {userList.map(u => (
                   <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
                     <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
                       <span>{u.name}</span>
@@ -853,7 +862,7 @@ export const AdminPanelView: React.FC = () => {
             <div className="grid grid-cols-3 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-slate-950">
                 <span className="text-slate-400">মোট মেইল:</span>
-                <div className="font-bold text-white text-sm">{selectedBatch.mails.length} টি</div>
+                <div className="font-bold text-white text-sm">{selectedBatch.mails?.length || 0} টি</div>
               </div>
               <div className="p-3 rounded-xl bg-slate-950">
                 <span className="text-slate-400">প্রদেয় টাকা:</span>
@@ -867,7 +876,7 @@ export const AdminPanelView: React.FC = () => {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-slate-300">মেইল তালিকা ({selectedBatch.mails.length}টি):</span>
+                <span className="text-xs font-bold text-slate-300">মেইল তালিকা ({selectedBatch.mails?.length || 0}টি):</span>
                 <button
                   onClick={() => downloadBatchTxt(selectedBatch)}
                   className="text-xs text-amber-400 hover:underline flex items-center gap-1"

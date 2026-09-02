@@ -56,6 +56,7 @@ interface AppContextType {
   language: 'bn' | 'en';
   setLanguage: (lang: 'bn' | 'en') => void;
   users: User[];
+  allUsers: User[];
   platformSettings: PlatformSettings;
   updatePlatformSettings: (settings: Partial<PlatformSettings>) => void;
   mailBatches: MailBatch[];
@@ -71,16 +72,23 @@ interface AppContextType {
   marketplaceItems: MarketplaceItem[];
   updateMarketplaceItem: (item: MarketplaceItem) => void;
   addMarketplaceItem: (item: Omit<MarketplaceItem, 'id'>) => void;
+  addMarketplacePackage: (item: Omit<MarketplaceItem, 'id'>) => void;
+  addMarketplaceStock: (itemId: string, newMails: string[]) => void;
   deleteMarketplaceItem: (id: string) => void;
   buyerOrders: BuyerOrder[];
   buyMarketplaceItem: (itemId: string, quantity: number) => { success: boolean; message: string; order?: BuyerOrder };
   transactions: Transaction[];
+  approveTransaction: (trxId: string) => void;
+  rejectTransaction: (trxId: string, reason?: string) => void;
   submitDeposit: (data: { amount: number; method: PaymentMethod; trxId: string; senderNumber: string }) => boolean;
   approveDeposit: (trxId: string) => void;
   rejectDeposit: (trxId: string, reason?: string) => void;
   submitWithdrawal: (data: { amount: number; method: PaymentMethod; accountNumber: string }) => { success: boolean; message: string };
   approveWithdrawal: (trxId: string) => void;
   rejectWithdrawal: (trxId: string, reason?: string) => void;
+  adjustUserBalance: (userId: string, deltaAmount: number, reason: string) => void;
+  updateUserRole: (userId: string, role: 'admin' | 'user') => void;
+  switchUser: (email: string) => void;
   exchangeCurrency: (from: 'BDT' | 'USD', amount: number) => { success: boolean; message: string };
   reviews: Review[];
   addReview: (rating: number, comment: string, shift: string) => void;
@@ -108,7 +116,10 @@ function loadFromStorage<T>(key: string, defaultValue: T): T {
   try {
     const saved = localStorage.getItem(LOCAL_STORAGE_PREFIX + key);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if (parsed !== null && parsed !== undefined) {
+        return parsed;
+      }
     }
   } catch (e) {
     console.error(`Failed to load ${key} from storage:`, e);
@@ -125,45 +136,67 @@ function saveToStorage<T>(key: string, value: T): void {
 }
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User>(() =>
-    loadFromStorage('current_user', initialAdminUser)
-  );
+  const [currentUser, setCurrentUser] = useState<User>(() => {
+    const loaded = loadFromStorage('current_user', initialAdminUser);
+    return loaded && loaded.email ? loaded : initialAdminUser;
+  });
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [language, setLanguage] = useState<'bn' | 'en'>('bn');
 
-  const [users, setUsers] = useState<User[]>(() =>
-    loadFromStorage('users', [initialAdminUser, initialDemoUser])
-  );
+  const [users, setUsers] = useState<User[]>(() => {
+    const loaded = loadFromStorage('users', [initialAdminUser, initialDemoUser]);
+    return Array.isArray(loaded) && loaded.length > 0 ? loaded : [initialAdminUser, initialDemoUser];
+  });
 
-  const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(() =>
-    loadFromStorage('settings', initialSettings)
-  );
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(() => {
+    const loaded = loadFromStorage('settings', initialSettings);
+    const merged = { ...initialSettings, ...(loaded || {}) };
+    // Migrate old demo placeholder numbers if present in existing localStorage
+    if (!merged.bKashNumber || merged.bKashNumber.includes('01812-345678')) {
+      merged.bKashNumber = '01748247931';
+      merged.bKashType = 'Personal';
+    }
+    if (!merged.nagadNumber || merged.nagadNumber.includes('01712-345678')) {
+      merged.nagadNumber = '01748247931';
+      merged.nagadType = 'Personal';
+    }
+    if (!merged.rocketNumber || merged.rocketNumber.includes('01912-345678')) {
+      merged.rocketNumber = '01748247931';
+      merged.rocketType = 'Personal';
+    }
+    return merged;
+  });
 
-  const [mailBatches, setMailBatches] = useState<MailBatch[]>(() =>
-    loadFromStorage('batches', initialMailBatches)
-  );
+  const [mailBatches, setMailBatches] = useState<MailBatch[]>(() => {
+    const loaded = loadFromStorage('batches', initialMailBatches);
+    return Array.isArray(loaded) ? loaded : initialMailBatches;
+  });
 
-  const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>(() =>
-    loadFromStorage('market_items', initialMarketplaceItems)
-  );
+  const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>(() => {
+    const loaded = loadFromStorage('market_items', initialMarketplaceItems);
+    return Array.isArray(loaded) ? loaded : initialMarketplaceItems;
+  });
 
-  const [buyerOrders, setBuyerOrders] = useState<BuyerOrder[]>(() =>
-    loadFromStorage('orders', [])
-  );
+  const [buyerOrders, setBuyerOrders] = useState<BuyerOrder[]>(() => {
+    const loaded = loadFromStorage('orders', []);
+    return Array.isArray(loaded) ? loaded : [];
+  });
 
-  const [transactions, setTransactions] = useState<Transaction[]>(() =>
-    loadFromStorage('transactions', initialTransactions)
-  );
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    const loaded = loadFromStorage('transactions', initialTransactions);
+    return Array.isArray(loaded) ? loaded : initialTransactions;
+  });
 
-  const [reviews, setReviews] = useState<Review[]>(() =>
-    loadFromStorage('reviews', initialReviews)
-  );
+  const [reviews, setReviews] = useState<Review[]>(() => {
+    const loaded = loadFromStorage('reviews', initialReviews);
+    return Array.isArray(loaded) ? loaded : initialReviews;
+  });
 
   const [notifications, setNotifications] = useState<NotificationItem[]>(() => [
     {
       id: 'notif-1',
-      userId: currentUser.id,
+      userId: currentUser?.id || 'admin-sohel',
       title: 'স্বাগতম Mail Factory তে',
       message: 'আপনার অ্যাকাউন্ট সক্রিয় হয়েছে। এখন ফ্রেশ জিমেইল সাবমিট করুন বা মার্কেটপ্লেস থেকে কিনুন।',
       type: 'system',
@@ -172,7 +205,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     },
     {
       id: 'notif-2',
-      userId: currentUser.id,
+      userId: currentUser?.id || 'admin-sohel',
       title: 'লাইভ শিফট রেট আপডেট',
       message: 'ফ্রেশ জিমেইল রেট ৳৯.৫০ এবং রিকভারি মেইল রেট ৳১১.০০ চলমান।',
       type: 'payment',
@@ -220,10 +253,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [reviews]);
 
   // Is Admin Check (strictly considers soheltajbhola@gmail.com and admin role)
+  const currentEmail = (currentUser?.email || '').toLowerCase();
+  const adminList = (platformSettings?.adminEmails || []).map(e => (e || '').toLowerCase());
   const isAdmin =
-    currentUser.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() ||
-    currentUser.role === 'admin' ||
-    platformSettings.adminEmails.map(e => e.toLowerCase()).includes(currentUser.email.toLowerCase());
+    currentEmail === SUPER_ADMIN_EMAIL.toLowerCase() ||
+    currentUser?.role === 'admin' ||
+    adminList.includes(currentEmail);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Date.now().toString() + Math.random().toString(36).substring(2, 5);
@@ -726,6 +761,111 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('সকল নোটিফিকেশন পঠিত হিসেবে চিহ্নিত হয়েছে', 'info');
   };
 
+  const addMarketplacePackage = (item: Omit<MarketplaceItem, 'id'>) => {
+    addMarketplaceItem(item);
+  };
+
+  const addMarketplaceStock = (itemId: string, newMails: string[]) => {
+    setMarketplaceItems(prev =>
+      prev.map(item => {
+        if (item.id === itemId) {
+          const pool = item.credentialsPool || [];
+          return {
+            ...item,
+            credentialsPool: [...pool, ...newMails],
+            stockAvailable: item.stockAvailable + newMails.length,
+          };
+        }
+        return item;
+      })
+    );
+    showToast(`${newMails.length}টি মেইল সফলভাবে স্টকে যুক্ত করা হয়েছে`, 'success');
+  };
+
+  const approveTransaction = (trxId: string) => {
+    const trx = transactions.find(t => t.id === trxId);
+    if (!trx) return;
+    if (trx.type === 'deposit') {
+      approveDeposit(trx.trxId || trx.id);
+    } else if (trx.type === 'withdrawal') {
+      approveWithdrawal(trx.trxId || trx.id);
+    } else {
+      setTransactions(prev =>
+        prev.map(t => (t.id === trxId ? { ...t, status: 'completed' as const } : t))
+      );
+      showToast('লেনদেন অনুমোদন সম্পন্ন হয়েছে', 'success');
+    }
+  };
+
+  const rejectTransaction = (trxId: string, reason?: string) => {
+    const trx = transactions.find(t => t.id === trxId);
+    if (!trx) return;
+    if (trx.type === 'deposit') {
+      rejectDeposit(trx.trxId || trx.id, reason);
+    } else if (trx.type === 'withdrawal') {
+      rejectWithdrawal(trx.trxId || trx.id, reason);
+    } else {
+      setTransactions(prev =>
+        prev.map(t => (t.id === trxId ? { ...t, status: 'rejected' as const, adminNote: reason } : t))
+      );
+      showToast('লেনদেন বাতিল করা হয়েছে', 'info');
+    }
+  };
+
+  const adjustUserBalance = (userId: string, deltaAmount: number, reason: string) => {
+    setUsers(prev =>
+      prev.map(u => {
+        if (u.id === userId) {
+          const newBalance = Math.max(0, Number((u.balanceBdt + deltaAmount).toFixed(2)));
+          return { ...u, balanceBdt: newBalance };
+        }
+        return u;
+      })
+    );
+    if (currentUser.id === userId) {
+      setCurrentUser(u => ({
+        ...u,
+        balanceBdt: Math.max(0, Number((u.balanceBdt + deltaAmount).toFixed(2))),
+      }));
+    }
+    const newTrx: Transaction = {
+      id: `trx-adj-${Date.now()}`,
+      userId,
+      userName: users.find(u => u.id === userId)?.name || 'User',
+      userEmail: users.find(u => u.id === userId)?.email || '',
+      type: deltaAmount >= 0 ? 'bonus' : 'adjustment',
+      amount: Math.abs(deltaAmount),
+      currency: 'BDT',
+      method: 'System',
+      status: 'completed',
+      createdAt: new Date().toISOString(),
+      adminNote: reason,
+    };
+    setTransactions(prev => [newTrx, ...prev]);
+    showToast(`ইউজার ব্যালেন্স ${deltaAmount >= 0 ? '+' : ''}${deltaAmount} ৳ অ্যাডজাস্ট করা হয়েছে।`, 'success');
+  };
+
+  const updateUserRole = (userId: string, role: 'admin' | 'user') => {
+    setUsers(prev => prev.map(u => (u.id === userId ? { ...u, role } : u)));
+    if (currentUser.id === userId) {
+      setCurrentUser(u => ({ ...u, role }));
+    }
+    showToast(`ইউজার রোল ${role} হিসেবে আপডেট করা হয়েছে`, 'success');
+  };
+
+  const switchUser = (email: string) => {
+    const targetEmail = (email || '').toLowerCase();
+    const found = users.find(u => (u.email || '').toLowerCase() === targetEmail);
+    if (found) {
+      setCurrentUser(found);
+      showToast(`${found.name} (${found.role}) হিসেবে লগইন করা হয়েছে`, 'info');
+    } else if (targetEmail === SUPER_ADMIN_EMAIL.toLowerCase() || targetEmail.includes('admin')) {
+      loginAsAdmin();
+    } else {
+      loginAsUser();
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -737,6 +877,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         language,
         setLanguage,
         users,
+        allUsers: users,
         platformSettings,
         updatePlatformSettings,
         mailBatches,
@@ -746,16 +887,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         marketplaceItems,
         updateMarketplaceItem,
         addMarketplaceItem,
+        addMarketplacePackage,
+        addMarketplaceStock,
         deleteMarketplaceItem,
         buyerOrders,
         buyMarketplaceItem,
         transactions,
+        approveTransaction,
+        rejectTransaction,
         submitDeposit,
         approveDeposit,
         rejectDeposit,
         submitWithdrawal,
         approveWithdrawal,
         rejectWithdrawal,
+        adjustUserBalance,
+        updateUserRole,
+        switchUser,
         exchangeCurrency,
         reviews,
         addReview,

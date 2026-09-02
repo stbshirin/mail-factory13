@@ -31,13 +31,17 @@ export const HomeView: React.FC = () => {
     isAdmin,
   } = useApp();
 
-  const totalSold = mailBatches
-    .filter(b => b.status === 'approved')
-    .reduce((sum, b) => sum + b.validMailsCount, 28450);
+  const safeMailBatches = mailBatches || [];
+  const safeMarketplaceItems = marketplaceItems || [];
+  const safeReviews = reviews || [];
 
-  const totalPaidOut = mailBatches
+  const totalSold = safeMailBatches
     .filter(b => b.status === 'approved')
-    .reduce((sum, b) => sum + b.totalAmount, 270275);
+    .reduce((sum, b) => sum + (b.validMailsCount || 0), 28450);
+
+  const totalPaidOut = safeMailBatches
+    .filter(b => b.status === 'approved')
+    .reduce((sum, b) => sum + (b.totalAmount || 0), 270275);
 
   return (
     <div className="space-y-8 pb-12">
@@ -270,7 +274,7 @@ export const HomeView: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {marketplaceItems.slice(0, 3).map(item => (
+          {safeMarketplaceItems.slice(0, 3).map(item => (
             <div
               key={item.id}
               className="bg-slate-900 border border-slate-800 rounded-3xl p-6 hover:border-amber-500/50 transition-all flex flex-col justify-between group shadow-xl"

@@ -351,13 +351,13 @@ export const BuyerMarketplaceView: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-slate-300">
-                  ডেলিভারিকৃত একাউন্টসমূহ ({purchasedOrderResult.deliveredMails.length}টি):
+                  ডেলিভারিকৃত একাউন্টসমূহ ({purchasedOrderResult.deliveredMails?.length || 0}টি):
                 </span>
                 <span className="text-[10px] text-emerald-400 font-medium">✓ ৩ দিন রিপ্লেসমেন্ট সাপোর্ট</span>
               </div>
 
               <div className="max-h-60 overflow-y-auto bg-slate-950 border border-slate-800 rounded-2xl p-4 font-mono text-xs text-amber-300 space-y-1.5 select-all">
-                {purchasedOrderResult.deliveredMails.map((mailLine, idx) => (
+                {(purchasedOrderResult.deliveredMails || []).map((mailLine, idx) => (
                   <div key={idx} className="border-b border-slate-900/60 pb-1 flex justify-between">
                     <span>{mailLine}</span>
                     <span className="text-slate-600 text-[10px]">#{idx + 1}</span>

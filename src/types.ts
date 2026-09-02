@@ -4,7 +4,7 @@ export type MailType = 'fresh' | 'recovery' | 'old' | 'edu' | 'usa' | 'aged';
 export type MailBatchStatus = 'pending' | 'checking' | 'approved' | 'rejected' | 'paid';
 export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled';
 export type PaymentMethod = 'bKash' | 'Nagad' | 'Rocket' | 'Binance' | 'System';
-export type TransactionType = 'deposit' | 'withdraw' | 'mail_sale' | 'marketplace_buy' | 'referral_bonus' | 'exchange';
+export type TransactionType = 'deposit' | 'withdraw' | 'mail_sale' | 'marketplace_buy' | 'referral_bonus' | 'exchange' | 'bonus' | 'adjustment';
 export type TransactionStatus = 'pending' | 'completed' | 'rejected';
 export type Currency = 'BDT' | 'USD';
 
