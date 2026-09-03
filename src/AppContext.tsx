@@ -12,6 +12,7 @@ import {
   MailType,
 } from './types';
 import {
+  initialGuestUser,
   initialAdminUser,
   initialDemoUser,
   initialMarketplaceItems,
@@ -21,6 +22,23 @@ import {
   initialReviews,
   SUPER_ADMIN_EMAIL,
 } from './data/initialData';
+import {
+  auth,
+  db,
+  googleProvider,
+  PRIMARY_ADMIN_EMAIL,
+  KNOWN_ADMIN_EMAILS,
+} from './firebase';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  updateProfile,
+} from 'firebase/auth';
+import { ref, set, get, onValue } from 'firebase/database';
 
 export type ActiveTab =
   | 'home'
@@ -50,6 +68,7 @@ interface Toast {
 interface AppContextType {
   currentUser: User;
   setCurrentUser: React.Dispatch<React.SetStateAction<User>>;
+  isLoggedIn: boolean;
   isAdmin: boolean;
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
@@ -106,6 +125,16 @@ interface AppContextType {
   setIsNotificationOpen: (open: boolean) => void;
   isGlobalPopupOpen: boolean;
   setIsGlobalPopupOpen: (open: boolean) => void;
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
+  authModalMode: 'login' | 'register';
+  setAuthModalMode: (mode: 'login' | 'register') => void;
+  firebaseAuthUser: any;
+  firebaseLoginWithEmail: (emailVal: string, passVal: string) => Promise<{ success: boolean; message?: string }>;
+  firebaseRegisterWithEmail: (emailVal: string, passVal: string, nameVal: string, phoneVal: string) => Promise<{ success: boolean; message?: string }>;
+  firebaseLoginWithGoogle: () => Promise<{ success: boolean; message?: string }>;
+  firebaseLogout: () => Promise<void>;
+  firebaseResetPassword: (emailVal: string) => Promise<{ success: boolean; message?: string }>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -137,8 +166,11 @@ function saveToStorage<T>(key: string, value: T): void {
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User>(() => {
-    const loaded = loadFromStorage('current_user', initialAdminUser);
-    return loaded && loaded.email ? loaded : initialAdminUser;
+    const loaded = loadFromStorage<User | null>('current_user', null);
+    if (loaded && loaded.email && loaded.id && loaded.id !== 'guest') {
+      return loaded;
+    }
+    return initialGuestUser;
   });
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
@@ -218,6 +250,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isGlobalPopupOpen, setIsGlobalPopupOpen] = useState(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+  const [firebaseAuthUser, setFirebaseAuthUser] = useState<any>(null);
 
   // Sync to local storage
   useEffect(() => {
@@ -252,13 +287,149 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     saveToStorage('reviews', reviews);
   }, [reviews]);
 
-  // Is Admin Check (strictly considers soheltajbhola@gmail.com and admin role)
+  // Realtime Database Admins list from Firebase
+  const [rtdbAdmins, setRtdbAdmins] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!db) return;
+    try {
+      const adminsRef = ref(db, 'admins');
+      const unsubscribe = onValue(adminsRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const val = snapshot.val();
+          if (typeof val === 'object' && val !== null) {
+            const list: string[] = [];
+            Object.entries(val).forEach(([k, v]) => {
+              if (typeof v === 'string') list.push(v.toLowerCase());
+              if (typeof v === 'boolean' && v === true) list.push(k.toLowerCase().replace(/_/g, '.'));
+              if (typeof v === 'object' && v && (v as any).email) list.push(String((v as any).email).toLowerCase());
+              list.push(k.toLowerCase());
+            });
+            setRtdbAdmins(list);
+          }
+        }
+      });
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn('Could not listen to admins in RTDB:', e);
+    }
+  }, []);
+
+  // Firebase Auth State Listener & Realtime Sync
+  useEffect(() => {
+    if (!auth) return;
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      setFirebaseAuthUser(fbUser);
+      if (fbUser) {
+        const email = (fbUser.email || '').toLowerCase();
+        const isKnownAdmin =
+          email === PRIMARY_ADMIN_EMAIL.toLowerCase() ||
+          email === SUPER_ADMIN_EMAIL.toLowerCase() ||
+          email === 'stb.shirin@gmail.com' ||
+          email === 'soheltajbhola@gmail.com' ||
+          KNOWN_ADMIN_EMAILS.some(e => e.toLowerCase() === email) ||
+          rtdbAdmins.includes(email) ||
+          rtdbAdmins.includes(fbUser.uid.toLowerCase());
+
+        let rtdbUser: Partial<User> = {};
+        try {
+          if (db) {
+            const userRef = ref(db, `users/${fbUser.uid}`);
+            const snap = await get(userRef);
+            if (snap.exists()) {
+              rtdbUser = snap.val() || {};
+            }
+          }
+        } catch (err) {
+          console.warn('Could not read user from RTDB:', err);
+        }
+
+        const role = (isKnownAdmin || rtdbUser.role === 'admin') ? 'admin' : 'user';
+
+        setCurrentUser(prev => {
+          const userObj: User = {
+            id: fbUser.uid,
+            name: fbUser.displayName || rtdbUser.name || prev?.name || fbUser.email?.split('@')[0] || 'User',
+            email: fbUser.email || prev?.email || '',
+            phone: rtdbUser.phone || prev?.phone || fbUser.phoneNumber || '',
+            role: role,
+            balanceBdt: rtdbUser.balanceBdt ?? prev?.balanceBdt ?? 0,
+            balanceUsd: rtdbUser.balanceUsd ?? prev?.balanceUsd ?? 0,
+            sellerBalance: rtdbUser.sellerBalance ?? prev?.sellerBalance ?? 0,
+            buyerBalance: rtdbUser.buyerBalance ?? prev?.buyerBalance ?? 0,
+            referralCode: rtdbUser.referralCode || prev?.referralCode || fbUser.uid.substring(0, 6).toUpperCase(),
+            referralEarnings: rtdbUser.referralEarnings ?? prev?.referralEarnings ?? 0,
+            memberTier: rtdbUser.memberTier || (role === 'admin' ? 'Diamond' : 'Silver'),
+            joinedAt: rtdbUser.joinedAt || prev?.joinedAt || new Date().toISOString().split('T')[0],
+            avatarUrl: fbUser.photoURL || rtdbUser.avatarUrl || prev?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+            totalSubmittedMails: rtdbUser.totalSubmittedMails ?? prev?.totalSubmittedMails ?? 0,
+            totalApprovedMails: rtdbUser.totalApprovedMails ?? prev?.totalApprovedMails ?? 0,
+            totalEarnings: rtdbUser.totalEarnings ?? prev?.totalEarnings ?? 0,
+            totalBoughtMails: rtdbUser.totalBoughtMails ?? prev?.totalBoughtMails ?? 0,
+            bKashNumber: rtdbUser.bKashNumber || prev?.bKashNumber || '',
+            nagadNumber: rtdbUser.nagadNumber || prev?.nagadNumber || '',
+          };
+          return userObj;
+        });
+
+        // Keep local users list updated
+        setUsers(prevUsers => {
+          const exists = prevUsers.some(u => u.id === fbUser.uid || u.email?.toLowerCase() === email);
+          if (!exists) {
+            return [
+              ...prevUsers,
+              {
+                id: fbUser.uid,
+                name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
+                email: fbUser.email || '',
+                phone: '',
+                role: role,
+                balanceBdt: 0,
+                balanceUsd: 0,
+                referralCode: fbUser.uid.substring(0, 6).toUpperCase(),
+                memberTier: role === 'admin' ? 'Diamond' : 'Silver',
+                joinedAt: new Date().toISOString().split('T')[0],
+                avatarUrl: fbUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+                totalSubmittedMails: 0,
+                totalApprovedMails: 0,
+                totalEarnings: 0,
+                totalBoughtMails: 0,
+              },
+            ];
+          }
+          return prevUsers;
+        });
+      } else {
+        setFirebaseAuthUser(null);
+        setCurrentUser(initialGuestUser);
+        try {
+          localStorage.removeItem('mail_factory_current_user');
+        } catch {}
+      }
+    });
+    return () => unsubscribe();
+  }, [rtdbAdmins]);
+
+  // Is Logged In Check: User must have an active session or valid authenticated identity
+  const isLoggedIn = Boolean(
+    (firebaseAuthUser && firebaseAuthUser.email) ||
+    (currentUser?.email && currentUser.id && currentUser.id !== 'guest')
+  );
+
+  // Is Admin Check (strictly requires being logged in and matching admin emails/roles)
   const currentEmail = (currentUser?.email || '').toLowerCase();
   const adminList = (platformSettings?.adminEmails || []).map(e => (e || '').toLowerCase());
   const isAdmin =
-    currentEmail === SUPER_ADMIN_EMAIL.toLowerCase() ||
-    currentUser?.role === 'admin' ||
-    adminList.includes(currentEmail);
+    isLoggedIn &&
+    (currentEmail === PRIMARY_ADMIN_EMAIL.toLowerCase() ||
+      currentEmail === SUPER_ADMIN_EMAIL.toLowerCase() ||
+      currentEmail === 'stb.shirin@gmail.com' ||
+      currentEmail === 'soheltajbhola@gmail.com' ||
+      currentUser?.role === 'admin' ||
+      adminList.includes(currentEmail) ||
+      KNOWN_ADMIN_EMAILS.some(e => e.toLowerCase() === currentEmail) ||
+      rtdbAdmins.includes(currentEmail) ||
+      (currentUser?.id && rtdbAdmins.includes(currentUser.id.toLowerCase())));
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Date.now().toString() + Math.random().toString(36).substring(2, 5);
@@ -270,12 +441,142 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const loginAsAdmin = () => {
     setCurrentUser(initialAdminUser);
-    showToast('সুপার অ্যাডমিন হিসেবে প্রবেশ করেছেন (soheltajbhola@gmail.com)', 'success');
+    showToast(`সুপার অ্যাডমিন হিসেবে প্রবেশ করেছেন (${PRIMARY_ADMIN_EMAIL})`, 'success');
   };
 
   const loginAsUser = () => {
     setCurrentUser(initialDemoUser);
     showToast('সেলর/বায়ার ইউজার হিসেবে প্রবেশ করেছেন', 'info');
+  };
+
+  // Firebase Auth Functions
+  const firebaseLoginWithEmail = async (emailVal: string, passVal: string) => {
+    try {
+      if (!auth) return { success: false, message: 'Firebase Auth প্রস্তুত নয়' };
+      const cred = await signInWithEmailAndPassword(auth, emailVal, passVal);
+      return { success: true };
+    } catch (err: any) {
+      let msg = 'লগইন ব্যর্থ হয়েছে।';
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+        msg = 'ভুল ইমেইল বা পাসওয়ার্ড প্রদান করা হয়েছে।';
+      } else if (err.code === 'auth/user-not-found') {
+        msg = 'এই ইমেইলে কোনো অ্যাকাউন্ট পাওয়া যায়নি।';
+      } else if (err.code === 'auth/invalid-email') {
+        msg = 'সঠিক ইমেইল ঠিকানা দিন।';
+      } else if (err.message) {
+        msg = err.message;
+      }
+      return { success: false, message: msg };
+    }
+  };
+
+  const firebaseRegisterWithEmail = async (
+    emailVal: string,
+    passVal: string,
+    nameVal: string,
+    phoneVal: string
+  ) => {
+    try {
+      if (!auth) return { success: false, message: 'Firebase Auth প্রস্তুত নয়' };
+      const cred = await createUserWithEmailAndPassword(auth, emailVal, passVal);
+      try {
+        await updateProfile(cred.user, { displayName: nameVal });
+      } catch (e) {
+        console.warn('Could not update displayName:', e);
+      }
+
+      const isKnownAdmin =
+        emailVal.toLowerCase() === PRIMARY_ADMIN_EMAIL.toLowerCase() ||
+        emailVal.toLowerCase() === 'stb.shirin@gmail.com' ||
+        KNOWN_ADMIN_EMAILS.some(e => e.toLowerCase() === emailVal.toLowerCase());
+
+      const role = isKnownAdmin ? 'admin' : 'user';
+      const newUser: User = {
+        id: cred.user.uid,
+        name: nameVal,
+        email: emailVal,
+        phone: phoneVal,
+        role: role,
+        balanceBdt: 0,
+        balanceUsd: 0,
+        sellerBalance: 0,
+        buyerBalance: 0,
+        referralCode: cred.user.uid.substring(0, 6).toUpperCase(),
+        referralEarnings: 0,
+        memberTier: role === 'admin' ? 'Diamond' : 'Silver',
+        joinedAt: new Date().toISOString().split('T')[0],
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        totalSubmittedMails: 0,
+        totalApprovedMails: 0,
+        totalEarnings: 0,
+        totalBoughtMails: 0,
+        bKashNumber: phoneVal,
+        nagadNumber: phoneVal,
+      };
+
+      setCurrentUser(newUser);
+
+      if (db) {
+        try {
+          await set(ref(db, `users/${cred.user.uid}`), newUser);
+        } catch (err) {
+          console.warn('Could not save user to RTDB:', err);
+        }
+      }
+      return { success: true };
+    } catch (err: any) {
+      let msg = 'রেজিস্ট্রেশন ব্যর্থ হয়েছে।';
+      if (err.code === 'auth/email-already-in-use') {
+        msg = 'এই ইমেইল দিয়ে ইতোমধ্যে একটি অ্যাকাউন্ট তৈরি করা হয়েছে।';
+      } else if (err.code === 'auth/weak-password') {
+        msg = 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।';
+      } else if (err.message) {
+        msg = err.message;
+      }
+      return { success: false, message: msg };
+    }
+  };
+
+  const firebaseLoginWithGoogle = async () => {
+    try {
+      if (!auth) return { success: false, message: 'Firebase Auth প্রস্তুত নয়' };
+      await signInWithPopup(auth, googleProvider);
+      return { success: true };
+    } catch (err: any) {
+      let msg = 'গুগল সাইন-ইন সম্পন্ন হয়নি।';
+      if (err.code === 'auth/popup-closed-by-user') {
+        msg = 'লগইন পপআপ উইন্ডো বন্ধ করা হয়েছে।';
+      } else if (err.message) {
+        msg = err.message;
+      }
+      return { success: false, message: msg };
+    }
+  };
+
+  const firebaseLogout = async () => {
+    try {
+      if (auth) {
+        await signOut(auth);
+      }
+    } catch (err: any) {
+      console.error('Logout error:', err);
+    }
+    setFirebaseAuthUser(null);
+    setCurrentUser(initialGuestUser);
+    try {
+      localStorage.removeItem('mail_factory_current_user');
+    } catch {}
+    showToast('সফলভাবে লগআউট হয়েছে', 'info');
+  };
+
+  const firebaseResetPassword = async (emailVal: string) => {
+    try {
+      if (!auth) return { success: false, message: 'Firebase Auth প্রস্তুত নয়' };
+      await sendPasswordResetEmail(auth, emailVal);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'পাসওয়ার্ড রিসেট ব্যর্থ হয়েছে।' };
+    }
   };
 
   const updateUserProfile = (profile: Partial<User>) => {
@@ -871,6 +1172,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         currentUser,
         setCurrentUser,
+        isLoggedIn,
         isAdmin,
         activeTab,
         setActiveTab,
@@ -921,6 +1223,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsNotificationOpen,
         isGlobalPopupOpen,
         setIsGlobalPopupOpen,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+        authModalMode,
+        setAuthModalMode,
+        firebaseAuthUser,
+        firebaseLoginWithEmail,
+        firebaseRegisterWithEmail,
+        firebaseLoginWithGoogle,
+        firebaseLogout,
+        firebaseResetPassword,
       }}
     >
       {children}

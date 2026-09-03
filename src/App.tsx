@@ -16,6 +16,8 @@ import { MemberIdCardView } from './components/MemberIdCardView';
 import { ReviewsView } from './components/ReviewsView';
 import { ProfileSettingsView } from './components/ProfileSettingsView';
 import { AdminPanelView } from './components/AdminPanelView';
+import { AuthModal } from './components/AuthModal';
+import { PRIMARY_ADMIN_EMAIL } from './firebase';
 import {
   Headphones,
   CheckCircle2,
@@ -27,7 +29,16 @@ import {
 } from 'lucide-react';
 
 const AppContent: React.FC = () => {
-  const { activeTab, setActiveTab, toasts, platformSettings, isAdmin } = useApp();
+  const {
+    activeTab,
+    setActiveTab,
+    toasts,
+    platformSettings,
+    isAdmin,
+    isAuthModalOpen,
+    setIsAuthModalOpen,
+    authModalMode,
+  } = useApp();
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -141,10 +152,17 @@ const AppContent: React.FC = () => {
           </div>
 
           <div className="text-slate-500 text-[11px]">
-            Cloud Fire Admin: <strong className="text-slate-400">soheltajbhola@gmail.com</strong>
+            Cloud Fire Admin: <strong className="text-slate-400">{PRIMARY_ADMIN_EMAIL}</strong>
           </div>
         </div>
       </footer>
+
+      {/* Auth Modal for Login / Registration */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialMode={authModalMode}
+      />
 
       {/* Mobile Bottom Navigation */}
       <BottomNav />

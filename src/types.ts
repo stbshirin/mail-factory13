@@ -16,6 +16,8 @@ export interface User {
   role: UserRole;
   balanceBdt: number;
   balanceUsd: number;
+  sellerBalance?: number;
+  buyerBalance?: number;
   referralCode: string;
   referredBy?: string;
   referralEarnings: number;

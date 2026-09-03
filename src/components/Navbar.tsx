@@ -19,11 +19,15 @@ import {
   HelpCircle,
   ArrowRightLeft,
   ChevronDown,
+  LogIn,
+  LogOut,
+  UserPlus,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const {
     currentUser,
+    isLoggedIn,
     isAdmin,
     activeTab,
     setActiveTab,
@@ -34,6 +38,10 @@ export const Navbar: React.FC = () => {
     loginAsAdmin,
     loginAsUser,
     platformSettings,
+    setIsAuthModalOpen,
+    setAuthModalMode,
+    firebaseLogout,
+    firebaseAuthUser,
   } = useApp();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -44,42 +52,49 @@ export const Navbar: React.FC = () => {
   return (
     <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-white shadow-lg">
       {/* Top Ticker / Notification Bar */}
-      {platformSettings.announcementActive && (
-        <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 text-slate-950 px-4 py-1 text-xs font-semibold flex items-center justify-between">
-          <div className="flex items-center gap-2 max-w-5xl mx-auto overflow-hidden text-center justify-center">
-            <span className="bg-slate-900 text-amber-400 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
-              NOTICE
-            </span>
-            <span className="truncate">{platformSettings.announcement}</span>
-          </div>
+      <div className="bg-slate-950/90 border-b border-slate-800/80 px-3 sm:px-6 py-1.5 text-xs font-semibold flex items-center justify-between">
+        <div className="flex items-center gap-2 overflow-hidden text-left">
+          <span className="relative flex h-2 w-2 flex-shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span className="text-amber-400 font-bold truncate flex items-center gap-1.5">
+            ⚡ {platformSettings.activeShift === 'Evening' || true ? 'সন্ধ্যা শিফট চালু: ' : 'লাইভ শিফট: '}
+            <span className="text-slate-200 font-normal">রেট ৳১০.৫০/মেইল!</span>
+          </span>
         </div>
-      )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo & Brand */}
+        <button
+          onClick={() => setLanguage(language === 'bn' ? 'en' : 'bn')}
+          className="text-xs font-semibold text-slate-200 hover:text-white flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 px-2.5 py-0.5 rounded-lg transition-colors flex-shrink-0 ml-2"
+        >
+          <span className="text-amber-400">🌐</span>
+          <span>{language === 'bn' ? 'English' : 'বাংলা'}</span>
+        </button>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-16">
+          {/* Logo & Brand - Extra Compact Size */}
           <div
             onClick={() => {
               setActiveTab('home');
               setIsMobileMenuOpen(false);
             }}
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-1.5 cursor-pointer group flex-shrink-0"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
-              <Mail className="w-5 h-5 text-slate-950 stroke-[2.5]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
-                  Mail Factory
-                </span>
-                <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-1.5 py-0.5 rounded">
-                  PRO
-                </span>
+            <div className="w-6 h-6 rounded-md bg-slate-950 border border-amber-500/40 p-0.5 flex items-center justify-center shadow-xs shadow-amber-500/10 group-hover:scale-105 transition-transform flex-shrink-0">
+              <div className="w-full h-full rounded bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center">
+                <Mail className="w-3 h-3 text-slate-950 stroke-[2.5]" />
               </div>
-              <p className="text-[10px] text-slate-400 -mt-0.5">
-                {language === 'bn' ? 'বিশ্বস্ত জিমেইল বায়িং ও সেলিং প্ল্যাটফর্ম' : 'Trusted Mail Marketplace'}
-              </p>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="font-black text-xs sm:text-sm tracking-tight text-white whitespace-nowrap">
+                Mail<span className="text-amber-400">Factory</span>
+              </span>
+              <span className="bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-[8px] px-1 py-0.5 rounded leading-none">
+                PRO
+              </span>
             </div>
           </div>
 
@@ -87,73 +102,73 @@ export const Navbar: React.FC = () => {
           <nav className="hidden lg:flex items-center gap-1">
             <button
               onClick={() => setActiveTab('sell')}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 activeTab === 'sell'
-                  ? 'bg-amber-500 text-slate-950 shadow-md font-semibold'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
               }`}
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
               <span>{language === 'bn' ? 'মেইল সেল' : 'Sell Mail'}</span>
             </button>
 
             <button
               onClick={() => setActiveTab('buy')}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 activeTab === 'buy'
-                  ? 'bg-amber-500 text-slate-950 shadow-md font-semibold'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
               }`}
             >
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingBag className="w-3.5 h-3.5" />
               <span>{language === 'bn' ? 'মার্কেটপ্লেস' : 'Marketplace'}</span>
             </button>
 
             <button
               onClick={() => setActiveTab('wallet')}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 activeTab === 'wallet' || activeTab === 'deposit' || activeTab === 'withdraw'
-                  ? 'bg-amber-500 text-slate-950 shadow-md font-semibold'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
               }`}
             >
-              <Wallet className="w-4 h-4" />
+              <Wallet className="w-3.5 h-3.5" />
               <span>{language === 'bn' ? 'ওয়ালেট' : 'Wallet'}</span>
             </button>
 
             <button
               onClick={() => setActiveTab('exchange')}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 activeTab === 'exchange'
-                  ? 'bg-amber-500 text-slate-950 shadow-md font-semibold'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
               }`}
             >
-              <ArrowRightLeft className="w-4 h-4" />
+              <ArrowRightLeft className="w-3.5 h-3.5" />
               <span>{language === 'bn' ? 'এক্সচেঞ্জ' : 'Exchange'}</span>
             </button>
 
             <button
               onClick={() => setActiveTab('leaderboard')}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 activeTab === 'leaderboard'
-                  ? 'bg-amber-500 text-slate-950 shadow-md font-semibold'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
               }`}
             >
-              <Award className="w-4 h-4" />
+              <Award className="w-3.5 h-3.5" />
               <span>{language === 'bn' ? 'লিডারবোর্ড' : 'Leaderboard'}</span>
             </button>
 
             <button
               onClick={() => setActiveTab('reviews')}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 activeTab === 'reviews'
-                  ? 'bg-amber-500 text-slate-950 shadow-md font-semibold'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
               }`}
             >
-              <Star className="w-4 h-4" />
+              <Star className="w-3.5 h-3.5" />
               <span>{language === 'bn' ? 'রিভিউ' : 'Reviews'}</span>
             </button>
 
@@ -161,47 +176,34 @@ export const Navbar: React.FC = () => {
             {isAdmin && (
               <button
                 onClick={() => setActiveTab('admin')}
-                className={`px-3 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-1.5 ml-1 border ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ml-1 border ${
                   activeTab === 'admin'
                     ? 'bg-emerald-500 text-slate-950 border-emerald-400'
                     : 'bg-emerald-950/60 text-emerald-300 border-emerald-600/40 hover:bg-emerald-900/60'
                 }`}
               >
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                 <span>{language === 'bn' ? 'অ্যাডমিন প্যানেল' : 'Admin Panel'}</span>
               </button>
             )}
           </nav>
 
-          {/* Right Action Area */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Wallet Balance Badge */}
-            <div
-              onClick={() => setActiveTab('wallet')}
-              className="hidden sm:flex items-center gap-2 bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 px-3 py-1.5 rounded-xl cursor-pointer transition-colors"
-            >
-              <div className="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400">
-                <Wallet className="w-4 h-4" />
-              </div>
-              <div className="text-left">
-                <div className="text-[10px] text-slate-400 font-medium leading-none">
-                  {language === 'bn' ? 'ওয়ালেট ব্যালেন্স' : 'Wallet'}
-                </div>
-                <div className="text-sm font-bold text-amber-400 leading-tight">
-                  ৳{currentUser.balanceBdt.toFixed(2)}
-                </div>
-              </div>
+          {/* Right Action Area - Note: Balance has been completely removed as requested */}
+          <div className="flex items-center gap-2">
+            {/* Quick Auth Button - Only shown when not logged in */}
+            {!isLoggedIn && (
               <button
-                onClick={e => {
-                  e.stopPropagation();
-                  setActiveTab('deposit');
+                onClick={() => {
+                  setAuthModalMode('login');
+                  setIsAuthModalOpen(true);
                 }}
-                title="Deposit Funds"
-                className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center hover:bg-amber-400 transition-colors ml-1"
+                className="px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1 transition-colors shadow-sm"
+                title="লগ-ইন বা রেজিস্ট্রেশন"
               >
-                <PlusCircle className="w-3.5 h-3.5" />
+                <LogIn className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span className="hidden sm:inline">লগইন / রেজিস্টার</span>
               </button>
-            </div>
+            )}
 
             {/* Notification Bell */}
             <button
@@ -209,7 +211,7 @@ export const Navbar: React.FC = () => {
               className="relative p-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 transition-colors"
               aria-label="Notifications"
             >
-              <Bell className="w-5 h-5" />
+              <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
                   {unreadCount}
@@ -226,138 +228,188 @@ export const Navbar: React.FC = () => {
               {language === 'bn' ? 'বাং' : 'EN'}
             </button>
 
-            {/* User Profile & Role Switch Dropdown */}
+            {/* User Profile / Account Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/70 transition-colors"
+                className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/70 transition-colors"
               >
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center font-bold text-xs">
-                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
-                </div>
-                <div className="hidden md:block text-left">
-                  <div className="text-xs font-semibold text-white leading-none truncate max-w-[110px]">
-                    {currentUser.name}
-                  </div>
-                  <div className="text-[10px] text-amber-400 font-mono mt-0.5 leading-none">
-                    {isAdmin ? 'Super Admin' : 'Seller'}
-                  </div>
-                </div>
+                {isLoggedIn ? (
+                  <>
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center font-bold text-xs">
+                      {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                    <div className="hidden md:block text-left">
+                      <div className="text-xs font-semibold text-white leading-none truncate max-w-[100px]">
+                        {currentUser.name}
+                      </div>
+                      <div className="text-[10px] text-amber-400 font-mono mt-0.5 leading-none">
+                        {isAdmin ? 'Admin' : 'Member'}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-xs">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <div className="hidden md:block text-left">
+                      <div className="text-xs font-semibold text-white leading-none">
+                        লগইন
+                      </div>
+                      <div className="text-[10px] text-amber-400 font-mono mt-0.5 leading-none">
+                        অ্যাকাউন্ট
+                      </div>
+                    </div>
+                  </>
+                )}
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden md:block" />
               </button>
 
               {/* User Dropdown Menu */}
               {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl py-2 z-50 text-sm">
-                  <div className="px-4 py-2 border-b border-slate-800">
-                    <p className="font-semibold text-white truncate">{currentUser.name}</p>
-                    <p className="text-xs text-slate-400 truncate">{currentUser.email}</p>
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                        {currentUser.memberTier} Member
-                      </span>
-                      {isAdmin && (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                          Cloud Admin
-                        </span>
-                      )}
+                <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl py-3 px-3 z-50 text-sm">
+                  {!isLoggedIn ? (
+                    /* Guest / Unauthenticated: ONLY Login and Registration options */
+                    <div className="text-center py-1">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-2.5 text-amber-400 shadow-inner">
+                        <LogIn className="w-6 h-6 stroke-[2.2]" />
+                      </div>
+                      <p className="font-bold text-white text-sm">MailFactory অ্যাকাউন্ট</p>
+                      <p className="text-[11px] text-slate-400 mt-1 mb-3.5 px-1 leading-relaxed">
+                        লগইন করে আপনার ওয়ালেট, জিমেইল সেল, মার্কেটপ্লেস ও অর্ডার ড্যাশবোর্ড এক্সেস করুন
+                      </p>
+
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            setAuthModalMode('login');
+                            setIsAuthModalOpen(true);
+                          }}
+                          className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-500/20 active:scale-95"
+                        >
+                          <LogIn className="w-4 h-4 stroke-[2.5]" />
+                          <span>লগ-ইন করুন (Login)</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            setAuthModalMode('register');
+                            setIsAuthModalOpen(true);
+                          }}
+                          className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700 hover:border-slate-600 flex items-center justify-center gap-2 transition-all active:scale-95"
+                        >
+                          <UserPlus className="w-4 h-4 text-amber-400" />
+                          <span>নতুন রেজিস্ট্রেশন (Register)</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    /* Authenticated: All features visible only AFTER login */
+                    <div>
+                      <div className="px-2 py-1.5 border-b border-slate-800">
+                        <p className="font-semibold text-white truncate">{currentUser.name || 'User'}</p>
+                        <p className="text-xs text-slate-400 truncate">{currentUser.email}</p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            {currentUser.memberTier || 'Silver'} Member
+                          </span>
+                          {isAdmin && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                              Cloud Admin
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-                  {/* Navigation Links */}
-                  <div className="py-1">
-                    {isAdmin && (
-                      <button
-                        onClick={() => {
-                          setActiveTab('admin');
-                          setIsUserMenuOpen(false);
-                        }}
-                        className="w-full text-left px-4 py-2 text-emerald-400 hover:bg-emerald-950/40 flex items-center gap-2.5 font-semibold"
-                      >
-                        <ShieldCheck className="w-4 h-4" />
-                        <span>অ্যাডমিন ম্যানেজমেন্ট প্যানেল</span>
-                      </button>
-                    )}
+                      {/* Navigation Links */}
+                      <div className="py-1">
+                        {isAdmin && (
+                          <button
+                            onClick={() => {
+                              setActiveTab('admin');
+                              setIsUserMenuOpen(false);
+                            }}
+                            className="w-full text-left px-3 py-2 text-emerald-400 hover:bg-emerald-950/40 rounded-lg flex items-center gap-2.5 font-semibold text-xs transition-colors"
+                          >
+                            <ShieldCheck className="w-4 h-4" />
+                            <span>অ্যাডমিন ম্যানেজমেন্ট প্যানেল</span>
+                          </button>
+                        )}
 
-                    <button
-                      onClick={() => {
-                        setActiveTab('id_card');
-                        setIsUserMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-slate-300 hover:bg-slate-800 flex items-center gap-2.5"
-                    >
-                      <IdCard className="w-4 h-4 text-amber-400" />
-                      <span>মেম্বার আইডি কার্ড (ID Card)</span>
-                    </button>
+                        <button
+                          onClick={() => {
+                            setActiveTab('wallet');
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2.5 text-xs transition-colors"
+                        >
+                          <Wallet className="w-4 h-4 text-amber-400" />
+                          <span>আমার ওয়ালেট ও ডিপোজিট</span>
+                        </button>
 
-                    <button
-                      onClick={() => {
-                        setActiveTab('orders');
-                        setIsUserMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-slate-300 hover:bg-slate-800 flex items-center gap-2.5"
-                    >
-                      <ShoppingBag className="w-4 h-4 text-sky-400" />
-                      <span>আমার ক্রয়কৃত অর্ডার (Orders)</span>
-                    </button>
+                        <button
+                          onClick={() => {
+                            setActiveTab('id_card');
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2.5 text-xs transition-colors"
+                        >
+                          <IdCard className="w-4 h-4 text-amber-400" />
+                          <span>মেম্বার আইডি কার্ড (ID Card)</span>
+                        </button>
 
-                    <button
-                      onClick={() => {
-                        setActiveTab('transactions');
-                        setIsUserMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-slate-300 hover:bg-slate-800 flex items-center gap-2.5"
-                    >
-                      <RefreshCw className="w-4 h-4 text-emerald-400" />
-                      <span>লেনদেন হিস্ট্রি (Transactions)</span>
-                    </button>
+                        <button
+                          onClick={() => {
+                            setActiveTab('orders');
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2.5 text-xs transition-colors"
+                        >
+                          <ShoppingBag className="w-4 h-4 text-sky-400" />
+                          <span>আমার ক্রয়কৃত অর্ডার (Orders)</span>
+                        </button>
 
-                    <button
-                      onClick={() => {
-                        setActiveTab('profile');
-                        setIsUserMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-slate-300 hover:bg-slate-800 flex items-center gap-2.5"
-                    >
-                      <Settings className="w-4 h-4 text-slate-400" />
-                      <span>প্রোফাইল সেটিংস</span>
-                    </button>
-                  </div>
+                        <button
+                          onClick={() => {
+                            setActiveTab('transactions');
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2.5 text-xs transition-colors"
+                        >
+                          <RefreshCw className="w-4 h-4 text-emerald-400" />
+                          <span>লেনদেন হিস্ট্রি (Transactions)</span>
+                        </button>
 
-                  {/* Role Switcher Helper for Easy Testing */}
-                  <div className="border-t border-slate-800 pt-2 pb-1 px-3">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1.5 px-1">
-                      Quick Role Switcher
-                    </p>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <button
-                        onClick={() => {
-                          loginAsAdmin();
-                          setIsUserMenuOpen(false);
-                        }}
-                        className={`text-xs py-1.5 px-2 rounded-lg font-medium border text-center transition-all ${
-                          isAdmin
-                            ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold'
-                            : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
-                        }`}
-                      >
-                        👑 Admin
-                      </button>
-                      <button
-                        onClick={() => {
-                          loginAsUser();
-                          setIsUserMenuOpen(false);
-                        }}
-                        className={`text-xs py-1.5 px-2 rounded-lg font-medium border text-center transition-all ${
-                          !isAdmin
-                            ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold'
-                            : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
-                        }`}
-                      >
-                        👤 User
-                      </button>
+                        <button
+                          onClick={() => {
+                            setActiveTab('profile');
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2.5 text-xs transition-colors"
+                        >
+                          <Settings className="w-4 h-4 text-slate-400" />
+                          <span>প্রোফাইল সেটিংস</span>
+                        </button>
+                      </div>
+
+                      {/* Logout Action */}
+                      <div className="border-t border-slate-800 pt-2">
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            firebaseLogout();
+                          }}
+                          className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 flex items-center gap-2 transition-colors"
+                        >
+                          <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                          <span>লগআউট (Logout)</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
@@ -376,31 +428,30 @@ export const Navbar: React.FC = () => {
       {/* Mobile Drawer Navigation */}
       {isMobileMenuOpen && (
         <div className="lg:hidden border-t border-slate-800 bg-slate-900 px-4 pt-3 pb-5 space-y-1">
-          <div className="p-3 bg-slate-800/80 rounded-xl mb-3 flex items-center justify-between">
-            <div>
-              <div className="text-xs text-slate-400">ব্যালেন্স:</div>
-              <div className="text-lg font-bold text-amber-400">৳{currentUser.balanceBdt.toFixed(2)}</div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setActiveTab('deposit');
-                  setIsMobileMenuOpen(false);
-                }}
-                className="px-3 py-1.5 bg-amber-500 text-slate-950 text-xs font-bold rounded-lg"
-              >
-                + ডিপোজিট
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('withdraw');
-                  setIsMobileMenuOpen(false);
-                }}
-                className="px-3 py-1.5 bg-slate-700 text-white text-xs font-medium rounded-lg"
-              >
-                উইথড্র
-              </button>
-            </div>
+          {/* Quick Auth in Mobile Drawer */}
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <button
+              onClick={() => {
+                setAuthModalMode('login');
+                setIsAuthModalOpen(true);
+                setIsMobileMenuOpen(false);
+              }}
+              className="py-2 px-3 bg-amber-500 text-slate-950 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>লগইন করুন</span>
+            </button>
+            <button
+              onClick={() => {
+                setAuthModalMode('register');
+                setIsAuthModalOpen(true);
+                setIsMobileMenuOpen(false);
+              }}
+              className="py-2 px-3 bg-slate-800 border border-slate-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5"
+            >
+              <UserPlus className="w-4 h-4 text-amber-400" />
+              <span>রেজিস্ট্রেশন</span>
+            </button>
           </div>
 
           <button
@@ -492,6 +543,46 @@ export const Navbar: React.FC = () => {
               <span>👑 অ্যাডমিন কন্ট্রোল প্যানেল</span>
             </button>
           )}
+
+          <div className="pt-2 border-t border-slate-800">
+            {!isLoggedIn ? (
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    setAuthModalMode('login');
+                    setIsAuthModalOpen(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>লগ-ইন করুন (Login)</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setAuthModalMode('register');
+                    setIsAuthModalOpen(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center gap-2 transition-all"
+                >
+                  <UserPlus className="w-4 h-4 text-amber-400" />
+                  <span>নতুন রেজিস্ট্রেশন (Register)</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  firebaseLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-950/30 flex items-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>লগআউট করুন</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
     </header>
