@@ -175,7 +175,9 @@ export interface NotificationItem {
   userId: string;
   title: string;
   message: string;
-  type: 'payment' | 'order' | 'system' | 'review';
+  type: 'payment' | 'order' | 'system' | 'review' | 'mail_sale' | 'deposit' | 'exchange';
+  category?: 'mail_sold' | 'deposit_confirmed' | 'exchange_offer' | 'general';
+  amount?: number;
   read: boolean;
   timestamp: string;
   link?: string;

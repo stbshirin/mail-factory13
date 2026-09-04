@@ -112,6 +112,7 @@ interface AppContextType {
   reviews: Review[];
   addReview: (rating: number, comment: string, shift: string) => void;
   notifications: NotificationItem[];
+  addNotification: (notif: Omit<NotificationItem, 'id' | 'timestamp'> & { timestamp?: string }) => void;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
   toasts: Toast[];
@@ -225,26 +226,59 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return Array.isArray(loaded) ? loaded : initialReviews;
   });
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>(() => [
+  const initialNotifications: NotificationItem[] = [
     {
       id: 'notif-1',
       userId: currentUser?.id || 'admin-sohel',
-      title: 'স্বাগতম Mail Factory তে',
-      message: 'আপনার অ্যাকাউন্ট সক্রিয় হয়েছে। এখন ফ্রেশ জিমেইল সাবমিট করুন বা মার্কেটপ্লেস থেকে কিনুন।',
-      type: 'system',
+      title: 'মেইল লিস্টিং বিক্রয় সফল! (+৳৪৫০.০০)',
+      message: 'আপনার "Fresh Gmail Shift 1" ব্যাচের ৪৫টি জিমেইল ভেরিফাই ও বিক্রয় সম্পন্ন হয়েছে। ওয়ালেটে ৳৪৫০.০০ যুক্ত হয়েছে।',
+      type: 'mail_sale',
+      category: 'mail_sold',
+      amount: 450,
       read: false,
-      timestamp: new Date().toLocaleTimeString('bn-BD'),
+      timestamp: 'আজ দুপুর ১২:৪৫',
+      link: 'sell',
     },
     {
       id: 'notif-2',
       userId: currentUser?.id || 'admin-sohel',
-      title: 'লাইভ শিফট রেট আপডেট',
-      message: 'ফ্রেশ জিমেইল রেট ৳৯.৫০ এবং রিকভারি মেইল রেট ৳১১.০০ চলমান।',
-      type: 'payment',
+      title: 'ওয়ালেট ডিপোজিট কনফার্মড (+৳১,০০০.০০)',
+      message: 'বিকাশ TrxID: 9G7B88X2 এর মাধ্যমে ৳১,০০০.০০ ডিপোজিট সফলভাবে ভেরিফাই ও মূল ওয়ালেটে জমা হয়েছে।',
+      type: 'deposit',
+      category: 'deposit_confirmed',
+      amount: 1000,
+      read: false,
+      timestamp: 'আজ সকাল ১১:১৫',
+      link: 'wallet',
+    },
+    {
+      id: 'notif-3',
+      userId: currentUser?.id || 'admin-sohel',
+      title: 'নতুন কারেন্সি এক্সচেঞ্জ অফার রেট!',
+      message: 'লাইভ কারেন্সি এক্সচেঞ্জ রেট আপডেট হয়েছে: 1 USD = ৳১২২.৫০ BDT। এখনই তাৎক্ষণিক BDT ⇄ USD কনভার্ট করুন!',
+      type: 'exchange',
+      category: 'exchange_offer',
       read: false,
       timestamp: 'আজ সকাল ১০:০০',
+      link: 'exchange',
     },
-  ]);
+    {
+      id: 'notif-4',
+      userId: currentUser?.id || 'admin-sohel',
+      title: 'স্বাগতম Mail Factory তে',
+      message: 'আপনার অ্যাকাউন্ট সক্রিয় হয়েছে। এখন ফ্রেশ জিমেইল সাবমিট করুন বা মার্কেটপ্লেস থেকে কিনুন।',
+      type: 'system',
+      category: 'general',
+      read: true,
+      timestamp: 'গতকাল',
+      link: 'home',
+    },
+  ];
+
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
+    const loaded = loadFromStorage('notifications', initialNotifications);
+    return Array.isArray(loaded) && loaded.length > 0 ? loaded : initialNotifications;
+  });
 
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
@@ -286,6 +320,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     saveToStorage('reviews', reviews);
   }, [reviews]);
+
+  useEffect(() => {
+    saveToStorage('notifications', notifications);
+  }, [notifications]);
 
   // Realtime Database Admins list from Firebase
   const [rtdbAdmins, setRtdbAdmins] = useState<string[]>([]);
@@ -331,46 +369,66 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           rtdbAdmins.includes(email) ||
           rtdbAdmins.includes(fbUser.uid.toLowerCase());
 
-        let rtdbUser: Partial<User> = {};
+        const role = isKnownAdmin ? 'admin' : 'user';
+
+        // 1. Immediately set user to ensure zero latency and immediate isLoggedIn = true
+        setCurrentUser(prev => ({
+          id: fbUser.uid,
+          name: fbUser.displayName || prev?.name || fbUser.email?.split('@')[0] || 'User',
+          email: fbUser.email || prev?.email || '',
+          phone: prev?.phone || fbUser.phoneNumber || '',
+          role: role,
+          balanceBdt: prev?.balanceBdt ?? 0,
+          balanceUsd: prev?.balanceUsd ?? 0,
+          sellerBalance: prev?.sellerBalance ?? 0,
+          buyerBalance: prev?.buyerBalance ?? 0,
+          referralCode: prev?.referralCode || fbUser.uid.substring(0, 6).toUpperCase(),
+          referralEarnings: prev?.referralEarnings ?? 0,
+          memberTier: prev?.memberTier || (role === 'admin' ? 'Diamond' : 'Silver'),
+          joinedAt: prev?.joinedAt || new Date().toISOString().split('T')[0],
+          avatarUrl: fbUser.photoURL || prev?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+          totalSubmittedMails: prev?.totalSubmittedMails ?? 0,
+          totalApprovedMails: prev?.totalApprovedMails ?? 0,
+          totalEarnings: prev?.totalEarnings ?? 0,
+          totalBoughtMails: prev?.totalBoughtMails ?? 0,
+          bKashNumber: prev?.bKashNumber || '',
+          nagadNumber: prev?.nagadNumber || '',
+        }));
+
+        // 2. Fetch and merge additional RTDB data in the background
         try {
           if (db) {
             const userRef = ref(db, `users/${fbUser.uid}`);
             const snap = await get(userRef);
             if (snap.exists()) {
-              rtdbUser = snap.val() || {};
+              const rtdbUser: Partial<User> = snap.val() || {};
+              const resolvedRole = (isKnownAdmin || rtdbUser.role === 'admin') ? 'admin' : 'user';
+              setCurrentUser(prev => ({
+                ...prev,
+                name: rtdbUser.name || prev.name,
+                phone: rtdbUser.phone || prev.phone,
+                role: resolvedRole,
+                balanceBdt: rtdbUser.balanceBdt ?? prev.balanceBdt,
+                balanceUsd: rtdbUser.balanceUsd ?? prev.balanceUsd,
+                sellerBalance: rtdbUser.sellerBalance ?? prev.sellerBalance,
+                buyerBalance: rtdbUser.buyerBalance ?? prev.buyerBalance,
+                referralCode: rtdbUser.referralCode || prev.referralCode,
+                referralEarnings: rtdbUser.referralEarnings ?? prev.referralEarnings,
+                memberTier: rtdbUser.memberTier || prev.memberTier,
+                joinedAt: rtdbUser.joinedAt || prev.joinedAt,
+                avatarUrl: rtdbUser.avatarUrl || prev.avatarUrl,
+                totalSubmittedMails: rtdbUser.totalSubmittedMails ?? prev.totalSubmittedMails,
+                totalApprovedMails: rtdbUser.totalApprovedMails ?? prev.totalApprovedMails,
+                totalEarnings: rtdbUser.totalEarnings ?? prev.totalEarnings,
+                totalBoughtMails: rtdbUser.totalBoughtMails ?? prev.totalBoughtMails,
+                bKashNumber: rtdbUser.bKashNumber || prev.bKashNumber,
+                nagadNumber: rtdbUser.nagadNumber || prev.nagadNumber,
+              }));
             }
           }
         } catch (err) {
           console.warn('Could not read user from RTDB:', err);
         }
-
-        const role = (isKnownAdmin || rtdbUser.role === 'admin') ? 'admin' : 'user';
-
-        setCurrentUser(prev => {
-          const userObj: User = {
-            id: fbUser.uid,
-            name: fbUser.displayName || rtdbUser.name || prev?.name || fbUser.email?.split('@')[0] || 'User',
-            email: fbUser.email || prev?.email || '',
-            phone: rtdbUser.phone || prev?.phone || fbUser.phoneNumber || '',
-            role: role,
-            balanceBdt: rtdbUser.balanceBdt ?? prev?.balanceBdt ?? 0,
-            balanceUsd: rtdbUser.balanceUsd ?? prev?.balanceUsd ?? 0,
-            sellerBalance: rtdbUser.sellerBalance ?? prev?.sellerBalance ?? 0,
-            buyerBalance: rtdbUser.buyerBalance ?? prev?.buyerBalance ?? 0,
-            referralCode: rtdbUser.referralCode || prev?.referralCode || fbUser.uid.substring(0, 6).toUpperCase(),
-            referralEarnings: rtdbUser.referralEarnings ?? prev?.referralEarnings ?? 0,
-            memberTier: rtdbUser.memberTier || (role === 'admin' ? 'Diamond' : 'Silver'),
-            joinedAt: rtdbUser.joinedAt || prev?.joinedAt || new Date().toISOString().split('T')[0],
-            avatarUrl: fbUser.photoURL || rtdbUser.avatarUrl || prev?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-            totalSubmittedMails: rtdbUser.totalSubmittedMails ?? prev?.totalSubmittedMails ?? 0,
-            totalApprovedMails: rtdbUser.totalApprovedMails ?? prev?.totalApprovedMails ?? 0,
-            totalEarnings: rtdbUser.totalEarnings ?? prev?.totalEarnings ?? 0,
-            totalBoughtMails: rtdbUser.totalBoughtMails ?? prev?.totalBoughtMails ?? 0,
-            bKashNumber: rtdbUser.bKashNumber || prev?.bKashNumber || '',
-            nagadNumber: rtdbUser.nagadNumber || prev?.nagadNumber || '',
-          };
-          return userObj;
-        });
 
         // Keep local users list updated
         setUsers(prevUsers => {
@@ -401,10 +459,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         });
       } else {
         setFirebaseAuthUser(null);
-        setCurrentUser(initialGuestUser);
-        try {
-          localStorage.removeItem('mail_factory_current_user');
-        } catch {}
+        setCurrentUser(prev => {
+          // If the user deliberately switched to demo admin or demo user, keep it
+          if (prev?.id === 'admin-sohel' || prev?.id === 'demo-user-1') {
+            return prev;
+          }
+          // If we already have a persistent authenticated identity stored, don't clear on temporary null
+          if (prev?.id && prev?.id !== 'guest' && prev?.email && prev.email !== '') {
+            return prev;
+          }
+          return initialGuestUser;
+        });
       }
     });
     return () => unsubscribe();
@@ -454,6 +519,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       if (!auth) return { success: false, message: 'Firebase Auth প্রস্তুত নয়' };
       const cred = await signInWithEmailAndPassword(auth, emailVal, passVal);
+      const fbUser = cred.user;
+      setFirebaseAuthUser(fbUser);
+      const cleanEmail = (fbUser.email || emailVal).toLowerCase();
+      const isKnownAdmin =
+        cleanEmail === PRIMARY_ADMIN_EMAIL.toLowerCase() ||
+        cleanEmail === SUPER_ADMIN_EMAIL.toLowerCase() ||
+        cleanEmail === 'stb.shirin@gmail.com' ||
+        cleanEmail === 'soheltajbhola@gmail.com' ||
+        KNOWN_ADMIN_EMAILS.some(e => e.toLowerCase() === cleanEmail);
+      const role = isKnownAdmin ? 'admin' : 'user';
+
+      const userObj: User = {
+        id: fbUser.uid,
+        name: fbUser.displayName || cleanEmail.split('@')[0] || 'User',
+        email: cleanEmail,
+        phone: fbUser.phoneNumber || '',
+        role: role,
+        balanceBdt: 0,
+        balanceUsd: 0,
+        sellerBalance: 0,
+        buyerBalance: 0,
+        referralCode: fbUser.uid.substring(0, 6).toUpperCase(),
+        referralEarnings: 0,
+        memberTier: role === 'admin' ? 'Diamond' : 'Silver',
+        joinedAt: new Date().toISOString().split('T')[0],
+        avatarUrl: fbUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        totalSubmittedMails: 0,
+        totalApprovedMails: 0,
+        totalEarnings: 0,
+        totalBoughtMails: 0,
+      };
+
+      setCurrentUser(userObj);
+      saveToStorage('current_user', userObj);
       return { success: true };
     } catch (err: any) {
       let msg = 'লগইন ব্যর্থ হয়েছে।';
@@ -540,7 +639,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const firebaseLoginWithGoogle = async () => {
     try {
       if (!auth) return { success: false, message: 'Firebase Auth প্রস্তুত নয়' };
-      await signInWithPopup(auth, googleProvider);
+      const cred = await signInWithPopup(auth, googleProvider);
+      const fbUser = cred.user;
+      setFirebaseAuthUser(fbUser);
+      const cleanEmail = (fbUser.email || '').toLowerCase();
+      const isKnownAdmin =
+        cleanEmail === PRIMARY_ADMIN_EMAIL.toLowerCase() ||
+        cleanEmail === SUPER_ADMIN_EMAIL.toLowerCase() ||
+        cleanEmail === 'stb.shirin@gmail.com' ||
+        cleanEmail === 'soheltajbhola@gmail.com' ||
+        KNOWN_ADMIN_EMAILS.some(e => e.toLowerCase() === cleanEmail);
+      const role = isKnownAdmin ? 'admin' : 'user';
+
+      const userObj: User = {
+        id: fbUser.uid,
+        name: fbUser.displayName || cleanEmail.split('@')[0] || 'User',
+        email: cleanEmail,
+        phone: fbUser.phoneNumber || '',
+        role: role,
+        balanceBdt: 0,
+        balanceUsd: 0,
+        sellerBalance: 0,
+        buyerBalance: 0,
+        referralCode: fbUser.uid.substring(0, 6).toUpperCase(),
+        referralEarnings: 0,
+        memberTier: role === 'admin' ? 'Diamond' : 'Silver',
+        joinedAt: new Date().toISOString().split('T')[0],
+        avatarUrl: fbUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        totalSubmittedMails: 0,
+        totalApprovedMails: 0,
+        totalEarnings: 0,
+        totalBoughtMails: 0,
+      };
+
+      setCurrentUser(userObj);
+      saveToStorage('current_user', userObj);
       return { success: true };
     } catch (err: any) {
       let msg = 'গুগল সাইন-ইন সম্পন্ন হয়নি।';
@@ -589,6 +722,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updatePlatformSettings = (newSettings: Partial<PlatformSettings>) => {
+    if (
+      newSettings.usdToBdtRate !== undefined &&
+      newSettings.usdToBdtRate !== platformSettings.usdToBdtRate
+    ) {
+      addNotification({
+        userId: 'all',
+        title: 'নতুন কারেন্সি এক্সচেঞ্জ অফার রেট!',
+        message: `BDT ⇄ USD লাইভ এক্সচেঞ্জ রেট আপডেট হয়েছে: 1 USD = ৳${newSettings.usdToBdtRate} BDT। এখনই তাৎক্ষণিক এক্সচেঞ্জ করুন!`,
+        type: 'exchange',
+        category: 'exchange_offer',
+        read: false,
+        link: 'exchange',
+      });
+    }
     setPlatformSettings(prev => ({ ...prev, ...newSettings }));
     showToast('প্ল্যাটফর্ম সেটিংস ও রেট আপডেট করা হয়েছে', 'success');
   };
@@ -725,6 +872,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setTransactions(prev => [newTrx, ...prev]);
 
+    // Alert seller about mail sold
+    addNotification({
+      userId: batch.userId,
+      title: `মেইল লিস্টিং বিক্রয় সফল! (+৳${batch.totalAmount.toFixed(2)})`,
+      message: `আপনার "${batch.batchName}" লিস্টিংয়ের ${batch.validMailsCount}টি জিমেইল ভেরিফাই ও সেল সম্পন্ন হয়েছে। ওয়ালেটে ৳${batch.totalAmount.toFixed(2)} যুক্ত করা হয়েছে।`,
+      type: 'mail_sale',
+      category: 'mail_sold',
+      amount: batch.totalAmount,
+      read: false,
+      link: 'sell',
+    });
+
     showToast(`মেইল ব্যাচ অ্যাপ্রুভ হয়েছে এবং সেলার ওয়ালেটে ৳${batch.totalAmount} যুক্ত করা হয়েছে।`, 'success');
   };
 
@@ -834,6 +993,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setTransactions(prev => [newTrx, ...prev]);
 
+    // Alert buyer about order delivery
+    addNotification({
+      userId: currentUser.id,
+      title: `মেইল প্যাকেজ ডেলিভারি সম্পন্ন (${quantity}টি)`,
+      message: `${quantity}টি ${item.title} জিমেইল সফলভাবে ক্রয় ও তাৎক্ষণিক ডেলিভারি হয়েছে (মোট: ৳${totalPrice})।`,
+      type: 'order',
+      category: 'general',
+      amount: totalPrice,
+      read: false,
+      link: 'buy',
+    });
+
+    if (item.sellerId && item.sellerId !== currentUser.id) {
+      // Alert listing owner that their mail listing was sold
+      addNotification({
+        userId: item.sellerId,
+        title: `মেইল লিস্টিং বিক্রয় সফল! (+৳${totalPrice})`,
+        message: `আপনার "${item.title}" লিস্টিং থেকে ${quantity}টি জিমেইল সফলভাবে সেল হয়েছে। ওয়ালেটে টাকা যুক্ত হয়েছে।`,
+        type: 'mail_sale',
+        category: 'mail_sold',
+        amount: totalPrice,
+        read: false,
+        link: 'sell',
+      });
+    }
+
     showToast(`অর্ডার সফল! ${quantity}টি জিমেইল তাৎক্ষণিক ডেলিভারি দেওয়া হয়েছে।`, 'success');
     return { success: true, message: 'অর্ডার সফল হয়েছে!', order: newOrder };
   };
@@ -894,11 +1079,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const approveDeposit = (trxId: string) => {
-    const trx = transactions.find(t => t.id === trxId);
+    const trx = transactions.find(t => t.id === trxId || t.trxId === trxId);
     if (!trx || trx.status !== 'pending') return;
 
     setTransactions(prev =>
-      prev.map(t => (t.id === trxId ? { ...t, status: 'completed', processedAt: new Date().toISOString() } : t))
+      prev.map(t => (t.id === trx.id ? { ...t, status: 'completed', processedAt: new Date().toISOString() } : t))
     );
 
     // Credit user balance
@@ -912,6 +1097,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         balanceBdt: Number((u.balanceBdt + trx.amount).toFixed(2)),
       }));
     }
+
+    // Alert user that deposit is confirmed
+    addNotification({
+      userId: trx.userId,
+      title: `ওয়ালেট ডিপোজিট কনফার্মড (+৳${trx.amount.toFixed(2)})`,
+      message: `আপনার TrxID: ${trx.trxId || trx.id} এর মাধ্যমে ৳${trx.amount.toFixed(2)} ডিপোজিট ভেরিফাইড এবং মেইন ওয়ালেটে ক্রেডিট হয়েছে।`,
+      type: 'deposit',
+      category: 'deposit_confirmed',
+      amount: trx.amount,
+      read: false,
+      link: 'wallet',
+    });
 
     showToast(`ডিপোজিট অ্যাপ্রুভ হয়েছে। ৳${trx.amount} যুক্ত করা হয়েছে।`, 'success');
   };
@@ -1018,6 +1215,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         balanceBdt: Number((u.balanceBdt - amount).toFixed(2)),
         balanceUsd: Number((u.balanceUsd + usdReceived).toFixed(2)),
       }));
+
+      // Alert currency exchange success
+      addNotification({
+        userId: currentUser.id,
+        title: 'কারেন্সি এক্সচেঞ্জ সম্পন্ন (BDT ➔ USD)',
+        message: `৳${amount} BDT সফলভাবে এক্সচেঞ্জ হয়ে $${usdReceived} USD ওয়ালেটে জমা হয়েছে (রেট: ৳${rate})।`,
+        type: 'exchange',
+        category: 'exchange_offer',
+        amount: usdReceived,
+        read: false,
+        link: 'exchange',
+      });
+
       showToast(`৳${amount} রূপান্তর করে $${usdReceived} USD ওয়ালেটে জমা হয়েছে`, 'success');
       return { success: true, message: 'এক্সচেঞ্জ সফল!' };
     } else {
@@ -1030,6 +1240,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         balanceUsd: Number((u.balanceUsd - amount).toFixed(2)),
         balanceBdt: Number((u.balanceBdt + bdtReceived).toFixed(2)),
       }));
+
+      // Alert currency exchange success
+      addNotification({
+        userId: currentUser.id,
+        title: 'কারেন্সি এক্সচেঞ্জ সম্পন্ন (USD ➔ BDT)',
+        message: `$${amount} USD সফলভাবে এক্সচেঞ্জ হয়ে ৳${bdtReceived} BDT ওয়ালেটে জমা হয়েছে (রেট: ৳${rate})।`,
+        type: 'exchange',
+        category: 'exchange_offer',
+        amount: bdtReceived,
+        read: false,
+        link: 'exchange',
+      });
+
       showToast(`$${amount} USD রূপান্তর করে ৳${bdtReceived} BDT ওয়ালেটে জমা হয়েছে`, 'success');
       return { success: true, message: 'এক্সচেঞ্জ সফল!' };
     }
@@ -1051,6 +1274,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setReviews(prev => [newRev, ...prev]);
     showToast('আপনার মূল্যবান রিভিউ পোস্ট করার জন্য ধন্যবাদ!', 'success');
+  };
+
+  const addNotification = (notif: Omit<NotificationItem, 'id' | 'timestamp'> & { timestamp?: string }) => {
+    const newNotif: NotificationItem = {
+      ...notif,
+      id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: notif.timestamp || new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+    };
+    setNotifications(prev => [newNotif, ...prev]);
   };
 
   const markNotificationRead = (id: string) => {
@@ -1084,30 +1316,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const approveTransaction = (trxId: string) => {
-    const trx = transactions.find(t => t.id === trxId);
+    const trx = transactions.find(t => t.id === trxId || t.trxId === trxId);
     if (!trx) return;
     if (trx.type === 'deposit') {
-      approveDeposit(trx.trxId || trx.id);
-    } else if (trx.type === 'withdrawal') {
-      approveWithdrawal(trx.trxId || trx.id);
+      approveDeposit(trx.id);
+    } else if (trx.type === 'withdrawal' || trx.type === 'withdraw') {
+      approveWithdrawal(trx.id);
     } else {
       setTransactions(prev =>
-        prev.map(t => (t.id === trxId ? { ...t, status: 'completed' as const } : t))
+        prev.map(t => (t.id === trx.id ? { ...t, status: 'completed' as const } : t))
       );
       showToast('লেনদেন অনুমোদন সম্পন্ন হয়েছে', 'success');
     }
   };
 
   const rejectTransaction = (trxId: string, reason?: string) => {
-    const trx = transactions.find(t => t.id === trxId);
+    const trx = transactions.find(t => t.id === trxId || t.trxId === trxId);
     if (!trx) return;
     if (trx.type === 'deposit') {
-      rejectDeposit(trx.trxId || trx.id, reason);
-    } else if (trx.type === 'withdrawal') {
-      rejectWithdrawal(trx.trxId || trx.id, reason);
+      rejectDeposit(trx.id, reason);
+    } else if (trx.type === 'withdrawal' || trx.type === 'withdraw') {
+      rejectWithdrawal(trx.id, reason);
     } else {
       setTransactions(prev =>
-        prev.map(t => (t.id === trxId ? { ...t, status: 'rejected' as const, adminNote: reason } : t))
+        prev.map(t => (t.id === trx.id ? { ...t, status: 'rejected' as const, adminNote: reason } : t))
       );
       showToast('লেনদেন বাতিল করা হয়েছে', 'info');
     }
@@ -1210,6 +1442,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         reviews,
         addReview,
         notifications,
+        addNotification,
         markNotificationRead,
         markAllNotificationsRead,
         toasts,

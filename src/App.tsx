@@ -17,6 +17,7 @@ import { ReviewsView } from './components/ReviewsView';
 import { ProfileSettingsView } from './components/ProfileSettingsView';
 import { AdminPanelView } from './components/AdminPanelView';
 import { AuthModal } from './components/AuthModal';
+import { PWAInstallButton } from './components/PWAInstallButton';
 import { PRIMARY_ADMIN_EMAIL } from './firebase';
 import {
   Headphones,
@@ -129,30 +130,36 @@ const AppContent: React.FC = () => {
         </a>
       </aside>
 
-      {/* Desktop & Tablet Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/80 py-8 px-4 sm:px-8 text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-black text-white">MAIL FACTORY</span>
-            <span>— জিমেইল বিক্রি ও ক্রয় প্ল্যাটফর্ম</span>
+      {/* Desktop & Mobile Responsive Footer */}
+      <footer className="border-t border-slate-900 bg-slate-950/90 py-8 px-4 sm:px-8 text-xs text-slate-400 pb-24 sm:pb-8">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left">
+            <span className="font-black text-white text-sm tracking-wider">MAIL FACTORY</span>
+            <span className="hidden sm:inline text-slate-600">•</span>
+            <span className="text-slate-400">ট্রাস্টেড জিমেইল ক্রয়-বিক্রয় ও এক্সচেঞ্জ প্ল্যাটফর্ম</span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-[11px]">
-            <button onClick={() => setActiveTab('home')} className="hover:text-amber-400">হোম</button>
-            <button onClick={() => setActiveTab('sell')} className="hover:text-amber-400">মেইল সেল</button>
-            <button onClick={() => setActiveTab('buy')} className="hover:text-amber-400">মার্কেটপ্লেস</button>
-            <button onClick={() => setActiveTab('wallet')} className="hover:text-amber-400">ওয়ালেট</button>
-            <button onClick={() => setActiveTab('referral')} className="hover:text-amber-400">লিডারবোর্ড</button>
-            <button onClick={() => setActiveTab('reviews')} className="hover:text-amber-400">রিভিউ</button>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[11px]">
+            <button onClick={() => setActiveTab('home')} className="hover:text-amber-400 transition-colors">হোম</button>
+            <button onClick={() => setActiveTab('sell')} className="hover:text-amber-400 transition-colors">মেইল সেল</button>
+            <button onClick={() => setActiveTab('buy')} className="hover:text-amber-400 transition-colors">মার্কেটপ্লেস</button>
+            <button onClick={() => setActiveTab('wallet')} className="hover:text-amber-400 transition-colors">ওয়ালেট</button>
+            <button onClick={() => setActiveTab('exchange')} className="hover:text-amber-400 transition-colors">এক্সচেঞ্জ</button>
+            <button onClick={() => setActiveTab('referral')} className="hover:text-amber-400 transition-colors">লিডারবোর্ড</button>
+            <button onClick={() => setActiveTab('reviews')} className="hover:text-amber-400 transition-colors">রিভিউ</button>
             {isAdmin && (
-              <button onClick={() => setActiveTab('admin')} className="text-emerald-400 font-bold">
+              <button onClick={() => setActiveTab('admin')} className="text-emerald-400 font-bold hover:underline">
                 অ্যাডমিন প্যানেল
               </button>
             )}
           </div>
 
-          <div className="text-slate-500 text-[11px]">
-            Cloud Fire Admin: <strong className="text-slate-400">{PRIMARY_ADMIN_EMAIL}</strong>
+          {/* PWA Install Button & Admin info */}
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <PWAInstallButton />
+            <div className="text-slate-500 text-[11px]">
+              Admin: <strong className="text-slate-400 font-mono">{PRIMARY_ADMIN_EMAIL}</strong>
+            </div>
           </div>
         </div>
       </footer>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../AppContext';
+import { NotificationCenterDropdown } from './NotificationCenterDropdown';
 import {
   Mail,
   Wallet,
@@ -34,6 +35,7 @@ export const Navbar: React.FC = () => {
     language,
     setLanguage,
     notifications,
+    isNotificationOpen,
     setIsNotificationOpen,
     loginAsAdmin,
     loginAsUser,
@@ -205,19 +207,31 @@ export const Navbar: React.FC = () => {
               </button>
             )}
 
-            {/* Notification Bell */}
-            <button
-              onClick={() => setIsNotificationOpen(true)}
-              className="relative p-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 transition-colors"
-              aria-label="Notifications"
-            >
-              <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
+            {/* Notification Center Dropdown & Bell */}
+            <div className="relative">
+              <button
+                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                className={`relative p-2 rounded-xl border transition-colors ${
+                  isNotificationOpen
+                    ? 'bg-amber-500/20 border-amber-500/60 text-amber-300 shadow-sm'
+                    : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-700/60'
+                }`}
+                aria-label="Notifications"
+                title="নোটিফিকেশন সেন্টার"
+              >
+                <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              <NotificationCenterDropdown
+                isOpen={isNotificationOpen}
+                onClose={() => setIsNotificationOpen(false)}
+              />
+            </div>
 
             {/* Language Switch */}
             <button
@@ -428,31 +442,63 @@ export const Navbar: React.FC = () => {
       {/* Mobile Drawer Navigation */}
       {isMobileMenuOpen && (
         <div className="lg:hidden border-t border-slate-800 bg-slate-900 px-4 pt-3 pb-5 space-y-1">
-          {/* Quick Auth in Mobile Drawer */}
-          <div className="grid grid-cols-2 gap-2 mb-3">
-            <button
-              onClick={() => {
-                setAuthModalMode('login');
-                setIsAuthModalOpen(true);
-                setIsMobileMenuOpen(false);
-              }}
-              className="py-2 px-3 bg-amber-500 text-slate-950 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5"
-            >
-              <LogIn className="w-4 h-4" />
-              <span>লগইন করুন</span>
-            </button>
-            <button
-              onClick={() => {
-                setAuthModalMode('register');
-                setIsAuthModalOpen(true);
-                setIsMobileMenuOpen(false);
-              }}
-              className="py-2 px-3 bg-slate-800 border border-slate-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5"
-            >
-              <UserPlus className="w-4 h-4 text-amber-400" />
-              <span>রেজিস্ট্রেশন</span>
-            </button>
-          </div>
+          {/* User Info or Quick Auth in Mobile Drawer */}
+          {!isLoggedIn ? (
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <button
+                onClick={() => {
+                  setAuthModalMode('login');
+                  setIsAuthModalOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="py-2.5 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-transform"
+              >
+                <LogIn className="w-4 h-4 stroke-[2.5]" />
+                <span>লগইন করুন</span>
+              </button>
+              <button
+                onClick={() => {
+                  setAuthModalMode('register');
+                  setIsAuthModalOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="py-2.5 px-3 bg-slate-800 hover:bg-slate-750 border border-slate-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+              >
+                <UserPlus className="w-4 h-4 text-amber-400" />
+                <span>নতুন রেজিস্টার</span>
+              </button>
+            </div>
+          ) : (
+            <div className="mb-3 p-3 rounded-2xl bg-gradient-to-r from-slate-800/90 via-slate-800/60 to-slate-900 border border-slate-700/70">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center font-black text-sm shadow-md flex-shrink-0">
+                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-white text-sm truncate">{currentUser.name || 'User'}</p>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex-shrink-0">
+                      {currentUser.memberTier || 'Silver'}
+                    </span>
+                    {isAdmin && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex-shrink-0">
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 truncate">{currentUser.email}</p>
+                </div>
+              </div>
+              <div className="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-xs">
+                <span className="text-slate-400">ব্যালেন্স:</span>
+                <div className="flex items-center gap-2 font-mono font-bold">
+                  <span className="text-amber-400">৳{(currentUser.balanceBdt || 0).toLocaleString()}</span>
+                  <span className="text-slate-600">|</span>
+                  <span className="text-emerald-400">${(currentUser.balanceUsd || 0).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <button
             onClick={() => {
@@ -531,6 +577,26 @@ export const Navbar: React.FC = () => {
             <span>ডিজিটাল মেম্বার কার্ড</span>
           </button>
 
+          <button
+            onClick={() => {
+              setIsNotificationOpen(true);
+              setIsMobileMenuOpen(false);
+            }}
+            className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <Bell className="w-5 h-5 text-amber-400" />
+              <span>নোটিফিকেশন সেন্টার</span>
+            </div>
+            {unreadCount > 0 ? (
+              <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black">
+                {unreadCount} নতুন
+              </span>
+            ) : (
+              <span className="text-[11px] text-slate-500">সব পঠিত</span>
+            )}
+          </button>
+
           {isAdmin && (
             <button
               onClick={() => {
@@ -546,41 +612,34 @@ export const Navbar: React.FC = () => {
 
           <div className="pt-2 border-t border-slate-800">
             {!isLoggedIn ? (
-              <div className="space-y-2">
-                <button
-                  onClick={() => {
-                    setAuthModalMode('login');
-                    setIsAuthModalOpen(true);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span>লগ-ইন করুন (Login)</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setAuthModalMode('register');
-                    setIsAuthModalOpen(true);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center gap-2 transition-all"
-                >
-                  <UserPlus className="w-4 h-4 text-amber-400" />
-                  <span>নতুন রেজিস্ট্রেশন (Register)</span>
-                </button>
+              <div className="p-2 rounded-xl bg-slate-800/40 text-center">
+                <p className="text-[11px] text-slate-400">
+                  অ্যাকাউন্টে প্রবেশ করে সহজে মেইল সেল ও বাই করুন
+                </p>
               </div>
             ) : (
-              <button
-                onClick={() => {
-                  firebaseLogout();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-950/30 flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>লগআউট করুন</span>
-              </button>
+              <div className="space-y-1">
+                <button
+                  onClick={() => {
+                    setActiveTab('profile');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 flex items-center gap-2"
+                >
+                  <Settings className="w-4 h-4 text-slate-400" />
+                  <span>প্রোফাইল ও অ্যাকাউন্ট সেটিংস</span>
+                </button>
+                <button
+                  onClick={() => {
+                    firebaseLogout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-950/30 flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>লগআউট করুন (Logout)</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
