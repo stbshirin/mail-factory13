@@ -10,7 +10,8 @@ export const firebaseConfig = {
   projectId: "mail-fact20",
   storageBucket: "mail-fact20.firebasestorage.app",
   messagingSenderId: "538739421300",
-  appId: "1:538739421300:web:fba647302c943d0df92121"
+  appId: "1:538739421300:web:fba647302c943d0df92121",
+  databaseURL: "https://mail-fact20-default-rtdb.firebaseio.com"
 };
 
 let app: FirebaseApp;

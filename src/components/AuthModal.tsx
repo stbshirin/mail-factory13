@@ -108,7 +108,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         }
         const res = await firebaseRegisterWithEmail(email.trim(), password, name.trim(), phone.trim());
         if (res.success) {
-          showToast('রেজিস্ট্রেশন সফলভাবে সম্পন্ন হয়েছে! ৳২৫ বোনাস যুক্ত হয়েছে।', 'success');
+          showToast(res.message || 'রেজিস্ট্রেশন সফলভাবে সম্পন্ন হয়েছে! ৳২৫ বোনাস যুক্ত হয়েছে।', 'success');
           onClose();
         } else {
           setErrorMessage(res.message || 'রেজিস্ট্রেশন ব্যর্থ হয়েছে।');
@@ -240,9 +240,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {/* Alert Messages */}
           {resetSent && (
-            <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-              <span>পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে সফলভাবে পাঠানো হয়েছে! ইনবক্স বা স্প্যাম চেক করুন।</span>
+            <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300 text-xs space-y-2">
+              <div className="flex items-center gap-2 font-bold text-sm">
+                <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <span>পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে!</span>
+              </div>
+              <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                আমরা <span className="font-bold text-emerald-700 dark:text-emerald-300">{email}</span> ঠিকানায় লিঙ্ক পাঠিয়েছি।
+              </p>
+              <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-emerald-300 dark:border-emerald-800 text-[11px] text-slate-700 dark:text-slate-300 space-y-1">
+                <div className="font-bold text-amber-600 dark:text-amber-400">💡 গুরুত্বপূর্ণ নির্দেশিকা:</div>
+                <div>• আপনার Gmail এর <strong>Primary Inbox</strong> চেক করুন।</div>
+                <div>• ইনবক্সে না পেলে অবশ্যই <strong>Spam / Junk (স্প্যাম)</strong> অথবা <strong>All Mail</strong> ফোল্ডারটি চেক করুন।</div>
+                <div>• ইমেইলের ভেতর দেওয়া লিঙ্কে ক্লিক করে নতুন পাসওয়ার্ড সেট করুন।</div>
+              </div>
             </div>
           )}
 
@@ -381,18 +392,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             )}
 
             {mode === 'register' && (
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="agree"
-                  checked={agreeTerms}
-                  onChange={e => setAgreeTerms(e.target.checked)}
-                  className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 cursor-pointer"
-                />
-                <label htmlFor="agree" className="text-[11px] text-slate-600 dark:text-slate-300 cursor-pointer font-medium">
-                  I agree to the Terms & Conditions (শর্তাবলী মেনে নিচ্ছি)
-                </label>
-              </div>
+              <>
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="agree"
+                    checked={agreeTerms}
+                    onChange={e => setAgreeTerms(e.target.checked)}
+                    className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 cursor-pointer"
+                  />
+                  <label htmlFor="agree" className="text-[11px] text-slate-600 dark:text-slate-300 cursor-pointer font-medium">
+                    I agree to the Terms & Conditions (শর্তাবলী মেনে নিচ্ছি)
+                  </label>
+                </div>
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-700 dark:text-amber-300">
+                  ✉️ রেজিস্ট্রেশন শেষে আপনার ইনবক্স অথবা স্প্যাম (Spam) ফোল্ডারে ভেরিফিকেশন লিঙ্ক পাঠানো হবে।
+                </div>
+              </>
             )}
 
             <button

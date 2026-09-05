@@ -25,6 +25,7 @@ import {
 import {
   auth,
   db,
+  firestore,
   googleProvider,
   PRIMARY_ADMIN_EMAIL,
   KNOWN_ADMIN_EMAILS,
@@ -39,6 +40,16 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { ref, set, get, onValue } from 'firebase/database';
+import { collection, onSnapshot } from 'firebase/firestore';
+import {
+  saveBatchToFirebase,
+  saveUserToFirebase,
+  sendVerificationEmailToUser,
+  sendPasswordReset,
+  syncAllDataToFirebase,
+  testFirebaseConnection,
+  FirebaseConnectionStatus,
+} from './services/firebaseSyncService';
 
 export type ActiveTab =
   | 'home'
@@ -136,6 +147,9 @@ interface AppContextType {
   firebaseLoginWithGoogle: () => Promise<{ success: boolean; message?: string }>;
   firebaseLogout: () => Promise<void>;
   firebaseResetPassword: (emailVal: string) => Promise<{ success: boolean; message?: string }>;
+  resendVerificationEmail: () => Promise<{ success: boolean; message?: string }>;
+  syncFirebaseData: () => Promise<{ batchesCount: number; usersCount: number; errors: string[] }>;
+  checkFirebaseHealth: () => Promise<FirebaseConnectionStatus>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -350,6 +364,75 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return () => unsubscribe();
     } catch (e) {
       console.warn('Could not listen to admins in RTDB:', e);
+    }
+  }, []);
+
+  // Realtime listener for mail batches from Cloud Firestore
+  useEffect(() => {
+    if (!firestore) return;
+    try {
+      const colRef = collection(firestore, 'mail_batches');
+      const unsubscribe = onSnapshot(
+        colRef,
+        snapshot => {
+          if (!snapshot.empty) {
+            const remoteBatches: MailBatch[] = [];
+            snapshot.forEach(docSnap => {
+              const data = docSnap.data() as MailBatch;
+              if (data && data.id) {
+                remoteBatches.push(data);
+              }
+            });
+            if (remoteBatches.length > 0) {
+              setMailBatches(prev => {
+                const map = new Map<string, MailBatch>();
+                prev.forEach(b => map.set(b.id, b));
+                remoteBatches.forEach(b => map.set(b.id, b));
+                return Array.from(map.values()).sort(
+                  (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+                );
+              });
+            }
+          }
+        },
+        err => {
+          console.warn('Firestore mail_batches listen error:', err);
+        }
+      );
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn('Could not setup Firestore batch listener:', e);
+    }
+  }, []);
+
+  // Realtime listener for mail batches from Realtime Database
+  useEffect(() => {
+    if (!db) return;
+    try {
+      const batchesRef = ref(db, 'batches');
+      const unsubscribe = onValue(batchesRef, snapshot => {
+        if (snapshot.exists()) {
+          const val = snapshot.val();
+          if (val && typeof val === 'object') {
+            const list: MailBatch[] = Object.values(val);
+            if (list.length > 0) {
+              setMailBatches(prev => {
+                const map = new Map<string, MailBatch>();
+                prev.forEach(b => map.set(b.id, b));
+                list.forEach(b => {
+                  if (b && b.id) map.set(b.id, b);
+                });
+                return Array.from(map.values()).sort(
+                  (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+                );
+              });
+            }
+          }
+        }
+      });
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn('Could not listen to batches in RTDB:', e);
     }
   }, []);
 
@@ -584,6 +667,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.warn('Could not update displayName:', e);
       }
 
+      // Send verification email to user
+      let verificationSent = false;
+      try {
+        const verifyRes = await sendVerificationEmailToUser(cred.user);
+        verificationSent = verifyRes.success;
+      } catch (e) {
+        console.warn('Could not send verification email on register:', e);
+      }
+
       const isKnownAdmin =
         emailVal.toLowerCase() === PRIMARY_ADMIN_EMAIL.toLowerCase() ||
         emailVal.toLowerCase() === 'stb.shirin@gmail.com' ||
@@ -615,20 +707,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       setCurrentUser(newUser);
 
-      if (db) {
-        try {
-          await set(ref(db, `users/${cred.user.uid}`), newUser);
-        } catch (err) {
-          console.warn('Could not save user to RTDB:', err);
-        }
-      }
-      return { success: true };
+      // Save user to Firebase (both Firestore and RTDB)
+      saveUserToFirebase(newUser).catch(err => console.warn('Could not save user to Firebase:', err));
+
+      return {
+        success: true,
+        message: verificationSent
+          ? 'রেজিস্ট্রেশন সফল! আপনার ইমেইল ইনবক্স অথবা স্প্যাম (Spam) ফোল্ডারে ভেরিফিকেশন লিঙ্ক পাঠানো হয়েছে।'
+          : 'রেজিস্ট্রেশন সফলভাবে সম্পন্ন হয়েছে!',
+      };
     } catch (err: any) {
       let msg = 'রেজিস্ট্রেশন ব্যর্থ হয়েছে।';
       if (err.code === 'auth/email-already-in-use') {
         msg = 'এই ইমেইল দিয়ে ইতোমধ্যে একটি অ্যাকাউন্ট তৈরি করা হয়েছে।';
       } else if (err.code === 'auth/weak-password') {
         msg = 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।';
+      } else if (err.code === 'auth/invalid-email') {
+        msg = 'ইমেইল এড্রেস সঠিক নয়।';
       } else if (err.message) {
         msg = err.message;
       }
@@ -674,6 +769,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       setCurrentUser(userObj);
       saveToStorage('current_user', userObj);
+
+      // Save Google authenticated user to Firebase
+      saveUserToFirebase(userObj).catch(err => console.warn('Could not save user to Firebase:', err));
+
       return { success: true };
     } catch (err: any) {
       let msg = 'গুগল সাইন-ইন সম্পন্ন হয়নি।';
@@ -703,13 +802,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const firebaseResetPassword = async (emailVal: string) => {
-    try {
-      if (!auth) return { success: false, message: 'Firebase Auth প্রস্তুত নয়' };
-      await sendPasswordResetEmail(auth, emailVal);
-      return { success: true };
-    } catch (err: any) {
-      return { success: false, message: err.message || 'পাসওয়ার্ড রিসেট ব্যর্থ হয়েছে।' };
+    const res = await sendPasswordReset(emailVal);
+    return res;
+  };
+
+  const resendVerificationEmail = async () => {
+    if (auth?.currentUser) {
+      const res = await sendVerificationEmailToUser(auth.currentUser);
+      if (res.success) {
+        showToast(res.message || 'ভেরিফিকেশন ইমেইল পাঠানো হয়েছে!', 'success');
+      } else {
+        showToast(res.message || 'ইমেইল পাঠানো সম্ভব হয়নি।', 'error');
+      }
+      return res;
     }
+    showToast('লগইন করা ইউজার পাওয়া যায়নি। দয়া করে সাইন-ইন করুন।', 'error');
+    return { success: false, message: 'লগইন করা নেই।' };
+  };
+
+  const syncFirebaseData = async () => {
+    showToast('Firebase ক্লাউডে ডাটা সিঙ্ক হচ্ছে...', 'info');
+    const res = await syncAllDataToFirebase(mailBatches, users, transactions);
+    if (res.errors.length === 0) {
+      showToast(`${res.batchesCount}টি ব্যাচ এবং ${res.usersCount}টি ইউজার Firebase এ সিঙ্ক সম্পন্ন হয়েছে!`, 'success');
+    } else {
+      showToast(`${res.batchesCount}টি ব্যাচ সিঙ্ক হয়েছে (${res.errors.length}টি ওয়ার্নিং)`, 'info');
+    }
+    return res;
+  };
+
+  const checkFirebaseHealth = async () => {
+    return testFirebaseConnection();
   };
 
   const updateUserProfile = (profile: Partial<User>) => {
@@ -804,13 +927,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setMailBatches(prev => [newBatch, ...prev]);
 
-    // Update user submitted mail statistics
-    setCurrentUser(prev => ({
-      ...prev,
-      totalSubmittedMails: prev.totalSubmittedMails + validCount,
-    }));
+    // Save batch & all individual submitted mails to Firebase (Firestore & RTDB)
+    saveBatchToFirebase(newBatch).then(res => {
+      if (res.success) {
+        console.log('[Firebase] Successfully synced submitted batch to Firebase:', newBatch.id);
+      } else {
+        console.warn('[Firebase] Notice while saving batch to Firebase:', res.error);
+      }
+    }).catch(err => {
+      console.warn('[Firebase] Error syncing batch to Firebase:', err);
+    });
 
-    showToast(`সফলভাবে ${validCount}টি জিমেইল সাবমিট হয়েছে! অ্যাডমিন রিভিউ শিফটে ভেরিফাই করবে।`, 'success');
+    // Update user submitted mail statistics
+    setCurrentUser(prev => {
+      const updated = {
+        ...prev,
+        totalSubmittedMails: prev.totalSubmittedMails + validCount,
+      };
+      saveUserToFirebase(updated).catch(() => {});
+      return updated;
+    });
+
+    showToast(`সফলভাবে ${validCount}টি জিমেইল সাবমিট হয়েছে এবং Firebase এ সংরক্ষিত হয়েছে!`, 'success');
     return true;
   };
 
@@ -819,17 +957,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const batch = mailBatches.find(b => b.id === batchId);
     if (!batch) return;
 
+    const updatedBatch: MailBatch = {
+      ...batch,
+      status: 'approved',
+      reviewedAt: new Date().toISOString(),
+      reviewedBy: currentUser.email,
+    };
+
     setMailBatches(prev =>
-      prev.map(b =>
-        b.id === batchId
-          ? {
-              ...b,
-              status: 'approved',
-              reviewedAt: new Date().toISOString(),
-              reviewedBy: currentUser.email,
-            }
-          : b
-      )
+      prev.map(b => (b.id === batchId ? updatedBatch : b))
+    );
+
+    // Sync updated batch status to Firebase
+    saveBatchToFirebase(updatedBatch).catch(err =>
+      console.warn('[Firebase] Error updating approved batch in Firebase:', err)
     );
 
     // Credit seller's wallet balance
@@ -888,6 +1029,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const rejectMailBatch = (batchId: string, reason: string) => {
+    const batch = mailBatches.find(b => b.id === batchId);
+    if (batch) {
+      const updatedBatch: MailBatch = {
+        ...batch,
+        status: 'rejected',
+        rejectReason: reason,
+        reviewedAt: new Date().toISOString(),
+        reviewedBy: currentUser.email,
+      };
+      saveBatchToFirebase(updatedBatch).catch(() => {});
+    }
+
     setMailBatches(prev =>
       prev.map(b =>
         b.id === batchId
@@ -1466,6 +1619,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         firebaseLoginWithGoogle,
         firebaseLogout,
         firebaseResetPassword,
+        resendVerificationEmail,
+        syncFirebaseData,
+        checkFirebaseHealth,
       }}
     >
       {children}

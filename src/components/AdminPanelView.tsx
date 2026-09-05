@@ -23,6 +23,10 @@ import {
   ArrowRight,
   TrendingUp,
   Key,
+  Database,
+  MailCheck,
+  HelpCircle,
+  Send,
 } from 'lucide-react';
 
 export const AdminPanelView: React.FC = () => {
@@ -46,11 +50,40 @@ export const AdminPanelView: React.FC = () => {
     switchUser,
     showToast,
     isAdmin,
+    syncFirebaseData,
+    checkFirebaseHealth,
   } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState<
     'batches' | 'transactions' | 'rates' | 'inventory' | 'users'
   >('batches');
+
+  const [isSyncingFirebase, setIsSyncingFirebase] = useState(false);
+  const [showFirebaseTroubleshooting, setShowFirebaseTroubleshooting] = useState(false);
+  const [firebaseStatusInfo, setFirebaseStatusInfo] = useState<{
+    firestore: boolean;
+    rtdb: boolean;
+    auth: boolean;
+    lastTested: string;
+  } | null>(null);
+
+  const handleManualFirebaseSync = async () => {
+    setIsSyncingFirebase(true);
+    try {
+      await syncFirebaseData();
+      const status = await checkFirebaseHealth();
+      setFirebaseStatusInfo({
+        firestore: status.firestoreConnected,
+        rtdb: status.rtdbConnected,
+        auth: status.authConfigured,
+        lastTested: new Date().toLocaleTimeString(),
+      });
+    } catch (e: any) {
+      showToast('Firebase সিঙ্ক ত্রুটি: ' + (e?.message || 'Unknown'), 'error');
+    } finally {
+      setIsSyncingFirebase(false);
+    }
+  };
 
   // Batch inspection modal state
   const [selectedBatch, setSelectedBatch] = useState<MailBatch | null>(null);
@@ -306,6 +339,98 @@ export const AdminPanelView: React.FC = () => {
       {/* SUBTAB 1: MAIL BATCHES REVIEW */}
       {activeSubTab === 'batches' && (
         <div className="space-y-6">
+          {/* Firebase Cloud Sync & Email Diagnostics Banner */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950/40 border border-slate-700/80 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0 mt-0.5">
+                  <Database className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm sm:text-base font-black text-white">
+                      Firebase ক্লাউড ডাটাবেজ ও ইমেইল সার্ভিস
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
+                      স্বয়ংক্রিয় সিঙ্ক সক্রিয়
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    সেলারদের সাবমিট করা সকল জিমেইল রিয়েলটাইমে Cloud Firestore (<code className="text-amber-300 font-mono text-[11px]">mail_batches</code>, <code className="text-amber-300 font-mono text-[11px]">submitted_emails</code>) এবং Realtime Database এ সেভ হচ্ছে।
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowFirebaseTroubleshooting(!showFirebaseTroubleshooting)}
+                  className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-bold transition-all flex items-center gap-1.5"
+                >
+                  <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{showFirebaseTroubleshooting ? 'নির্দেশিকা লুকান' : 'ইমেইল হেল্প'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleManualFirebaseSync}
+                  disabled={isSyncingFirebase}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/20 disabled:opacity-50 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncingFirebase ? 'animate-spin' : ''}`} />
+                  <span>{isSyncingFirebase ? 'সিঙ্ক হচ্ছে...' : 'Firebase এ সিঙ্ক করুন'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Troubleshooting Guide Accordion */}
+            {showFirebaseTroubleshooting && (
+              <div className="p-4 rounded-2xl bg-slate-950/60 border border-amber-500/30 text-xs space-y-3 animate-fadeIn">
+                <div className="font-bold text-amber-300 flex items-center gap-2">
+                  <MailCheck className="w-4 h-4" />
+                  <span>Firebase থেকে ইমেইল না পৌঁছালে করণীয় (Troubleshooting Checklist):</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-slate-300 text-[11px] leading-relaxed">
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                    <div className="font-bold text-white flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px]">1</span>
+                      <span>Spam / Junk ফোল্ডার চেক করুন</span>
+                    </div>
+                    <p className="text-slate-400">
+                      Firebase-এর ডিফল্ট নোরেপ্লাই (<code className="text-indigo-300">noreply@mail-fact20.firebaseapp.com</code>) ঠিকানা থেকে আসা পাসওয়ার্ড রিসেট বা ভেরিফিকেশন ইমেইল অনেক সময় জিমেইলের <strong>Spam / Junk</strong> অথবা <strong>All Mail</strong> ফোল্ডারে জমা হয়।
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                    <div className="font-bold text-white flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px]">2</span>
+                      <span>Firebase Console - Templates সক্রিয় করুন</span>
+                    </div>
+                    <p className="text-slate-400">
+                      Firebase Console &gt; <strong>Authentication</strong> &gt; <strong>Templates</strong> ট্যাবে গিয়ে "Password reset" এবং "Email address verification" টেমপ্লেট সক্রিয় ও কনফিগার করা রয়েছে কি না নিশ্চিত করুন।
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                    <div className="font-bold text-white flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px]">3</span>
+                      <span>Authorized Domains চেক করুন</span>
+                    </div>
+                    <p className="text-slate-400">
+                      Firebase Console &gt; <strong>Authentication</strong> &gt; <strong>Settings</strong> &gt; <strong>Authorized domains</strong> এ আপনার বর্তমান ওয়েব ডোমেন তালিকাভুক্ত থাকা বাধ্যতামূলক।
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                    <div className="font-bold text-white flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px]">4</span>
+                      <span>জিমেইল ডেটাবেজ ভিউ</span>
+                    </div>
+                    <p className="text-slate-400">
+                      অ্যাপে সেলারদের সাবমিট করা জিমেইলগুলো স্বয়ংক্রিয়ভাবে ক্লাউড ডেটাবেজে জমা হচ্ছে। "Firebase এ সিঙ্ক করুন" বাটনে ক্লিক করলে লোকাল সব ব্যাচও ক্লাউডে আপডেট হবে।
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
             <div className="flex gap-2">
               {[
