@@ -24,6 +24,7 @@ import {
   initialReviews,
   SUPER_ADMIN_EMAIL,
 } from './data/initialData';
+import { getTranslation, TranslationKey } from './translations';
 import {
   auth,
   db,
@@ -123,18 +124,60 @@ interface AppContextType {
   updateUserRole: (userId: string, role: UserRole) => void;
   updateUserStatus: (userId: string, isBanned: boolean) => void;
   updateUserTier: (userId: string, tier: MemberTier) => void;
+  updateMemberByAdmin: (
+    userId: string,
+    data: {
+      name?: string;
+      phone?: string;
+      role?: UserRole;
+      tier?: MemberTier;
+      isBanned?: boolean;
+      balanceBdt?: number;
+    }
+  ) => { success: boolean; message: string };
   deleteUser: (userId: string) => { success: boolean; message: string };
-  addUserManually: (userData: { name: string; email: string; phone?: string; role?: UserRole; tier?: MemberTier; initialBalance?: number }) => { success: boolean; message: string };
+  addUserManually: (userData: {
+    name: string;
+    email: string;
+    phone?: string;
+    role?: UserRole;
+    tier?: MemberTier;
+    initialBalance?: number;
+    initialBalanceBdt?: number;
+  }) => { success: boolean; message: string };
   switchUser: (email: string) => void;
   exchangeCurrency: (from: 'BDT' | 'USD', amount: number) => { success: boolean; message: string };
   reviews: Review[];
-  addReview: (rating: number, comment: string, shift: string) => void;
+  addReview: (rating: number, comment: string, shift: string) => boolean;
+  approveReview: (reviewId: string) => void;
+  rejectReview: (reviewId: string) => void;
+  deleteReview: (reviewId: string) => void;
   notifications: NotificationItem[];
   addNotification: (notif: Omit<NotificationItem, 'id' | 'timestamp'> & { timestamp?: string }) => void;
+  sendAdminNotification: (
+    targetOrOptions:
+      | 'all'
+      | string
+      | {
+          title: string;
+          message: string;
+          type?: NotificationItem['type'];
+          category?: NotificationItem['category'];
+          targetUserId?: string;
+          target?: string;
+          actionTab?: string;
+          link?: string;
+        },
+    title?: string,
+    message?: string,
+    type?: NotificationItem['type'],
+    category?: NotificationItem['category']
+  ) => void;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
   deleteNotification: (id: string) => void;
   clearAllNotifications: () => void;
+  t: (key: TranslationKey) => string;
   toasts: Toast[];
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   loginAsAdmin: () => void;
@@ -198,7 +241,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
-  const [language, setLanguage] = useState<'bn' | 'en'>('bn');
+  const [language, setLanguageState] = useState<'bn' | 'en'>(() => {
+    try {
+      const saved = localStorage.getItem('mailfactory_lang');
+      return saved === 'en' || saved === 'bn' ? saved : 'bn';
+    } catch {
+      return 'bn';
+    }
+  });
+
+  const setLanguage = (lang: 'bn' | 'en') => {
+    setLanguageState(lang);
+    try {
+      localStorage.setItem('mailfactory_lang', lang);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const t = (key: TranslationKey): string => {
+    return getTranslation(key, language);
+  };
 
   const [users, setUsers] = useState<User[]>(() => {
     const loaded = loadFromStorage('users', [initialAdminUser, initialDemoUser]);
@@ -951,6 +1014,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     payoutAccount: string;
     shiftName: string;
   }): boolean => {
+    if (!isLoggedIn || !currentUser.email || currentUser.id === 'guest') {
+      setIsAuthModalOpen(true);
+      showToast('মেইল সেল করার পূর্বে অনুগ্রহ করে লগ-ইন অথবা রেজিস্ট্রেশন করুন', 'error');
+      return false;
+    }
+
     const lines = data.rawText
       .split('\n')
       .map(l => l.trim())
@@ -1142,6 +1211,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     itemId: string,
     quantity: number
   ): { success: boolean; message: string; order?: BuyerOrder } => {
+    if (!isLoggedIn || !currentUser.email || currentUser.id === 'guest') {
+      setIsAuthModalOpen(true);
+      return { success: false, message: 'কেনাকাটা করার পূর্বে অনুগ্রহ করে লগ-ইন অথবা রেজিস্ট্রেশন করুন।' };
+    }
+
     const item = marketplaceItems.find(i => i.id === itemId);
     if (!item) return { success: false, message: 'প্যাকেজ পাওয়া যায়নি।' };
 
@@ -1282,6 +1356,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     trxId: string;
     senderNumber: string;
   }): boolean => {
+    if (!isLoggedIn || !currentUser.email || currentUser.id === 'guest') {
+      setIsAuthModalOpen(true);
+      showToast('ডিপোজিট করার পূর্বে অনুগ্রহ করে লগ-ইন অথবা রেজিস্ট্রেশন করুন', 'error');
+      return false;
+    }
+
     if (data.amount < platformSettings.minDepositBdt) {
       showToast(`সর্বনিম্ন ডিপোজিট ৳${platformSettings.minDepositBdt}`, 'error');
       return false;
@@ -1491,22 +1571,122 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const addReview = (rating: number, comment: string, shift: string) => {
+  const addReview = (rating: number, comment: string, shift: string): boolean => {
+    if (!isLoggedIn || !currentUser.email || currentUser.id === 'guest') {
+      setIsAuthModalOpen(true);
+      showToast('রিভিউ আবেদন করার পূর্বে অনুগ্রহ করে লগ-ইন অথবা রেজিস্ট্রেশন করুন', 'error');
+      return false;
+    }
+
     const newRev: Review = {
       id: `rev-${Date.now()}`,
       userId: currentUser.id,
-      userName: currentUser.name,
+      userName: currentUser.name || 'ইউজার',
       userEmail: currentUser.email,
       rating,
       comment,
       shift,
       date: 'আজকের শিফট',
       verifiedSale: true,
-      likes: 1,
-      status: 'approved',
+      likes: 0,
+      status: 'pending',
     };
     setReviews(prev => [newRev, ...prev]);
-    showToast('আপনার মূল্যবান রিভিউ পোস্ট করার জন্য ধন্যবাদ!', 'success');
+
+    // Add alert notification for admin
+    addNotification({
+      userId: 'all',
+      title: 'নতুন রিভিউ আবেদন জমা হয়েছে',
+      message: `${currentUser.name} একটি নতুন রিভিউ সাবমিট করেছেন। অ্যাডমিন প্যানেল থেকে অনুমোদন করুন।`,
+      type: 'review',
+      category: 'general',
+      read: false,
+      link: 'admin',
+    });
+
+    showToast('আপনার রিভিউটি সফলভাবে জমা হয়েছে! অ্যাডমিনের পর্যালোচনার পর এটি পাবলিক করা হবে।', 'success');
+    return true;
+  };
+
+  const approveReview = (reviewId: string) => {
+    setReviews(prev =>
+      prev.map(r => (r.id === reviewId ? { ...r, status: 'approved' } : r))
+    );
+    showToast('রিভিউটি সফলভাবে অনুমোদন (Approved) করা হয়েছে', 'success');
+  };
+
+  const rejectReview = (reviewId: string) => {
+    setReviews(prev =>
+      prev.map(r => (r.id === reviewId ? { ...r, status: 'rejected' } : r))
+    );
+    showToast('রিভিউটি বাতিল (Rejected) করা হয়েছে', 'info');
+  };
+
+  const deleteReview = (reviewId: string) => {
+    setReviews(prev => prev.filter(r => r.id !== reviewId));
+    showToast('রিভিউটি মুছে ফেলা হয়েছে', 'info');
+  };
+
+  const sendAdminNotification = (
+    targetOrOptions:
+      | 'all'
+      | string
+      | {
+          title: string;
+          message: string;
+          type?: NotificationItem['type'];
+          category?: NotificationItem['category'];
+          targetUserId?: string;
+          target?: string;
+          actionTab?: string;
+          link?: string;
+        },
+    argTitle?: string,
+    argMessage?: string,
+    argType?: NotificationItem['type'],
+    argCategory?: NotificationItem['category']
+  ) => {
+    let target = 'all';
+    let title = '';
+    let message = '';
+    let type: NotificationItem['type'] = 'system';
+    let category: NotificationItem['category'] = 'general';
+    let link = 'home';
+
+    if (typeof targetOrOptions === 'object' && targetOrOptions !== null) {
+      target = targetOrOptions.targetUserId || targetOrOptions.target || 'all';
+      title = targetOrOptions.title || '';
+      message = targetOrOptions.message || '';
+      type = targetOrOptions.type || 'system';
+      category = targetOrOptions.category || 'general';
+      link = targetOrOptions.actionTab || targetOrOptions.link || 'home';
+    } else {
+      target = targetOrOptions || 'all';
+      title = argTitle || '';
+      message = argMessage || '';
+      type = argType || 'system';
+      category = argCategory || 'general';
+    }
+
+    const newNotif: NotificationItem = {
+      id: `notif-admin-${Date.now()}`,
+      userId: target,
+      title: title || 'নতুন নোটিফিকেশন',
+      message: message || '',
+      type,
+      category,
+      read: false,
+      timestamp: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+      link,
+    };
+
+    setNotifications(prev => [newNotif, ...prev]);
+    showToast(
+      target === 'all'
+        ? 'সকল মেম্বারদের কাছে নোটিফিকেশন সফলভাবে ব্রডকাস্ট করা হয়েছে!'
+        : 'নির্দিষ্ট মেম্বারের কাছে নোটিফিকেশন সফলভাবে পাঠানো হয়েছে!',
+      'success'
+    );
   };
 
   const addNotification = (notif: Omit<NotificationItem, 'id' | 'timestamp'> & { timestamp?: string }) => {
@@ -1765,6 +1945,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: true, message: 'ইউজার মুছে ফেলা হয়েছে' };
   };
 
+  const updateMemberByAdmin = (
+    userId: string,
+    data: {
+      name?: string;
+      phone?: string;
+      role?: UserRole;
+      tier?: MemberTier;
+      isBanned?: boolean;
+      balanceBdt?: number;
+    }
+  ): { success: boolean; message: string } => {
+    const target = users.find(u => u.id === userId);
+    if (!target) return { success: false, message: 'ইউজার পাওয়া যায়নি' };
+
+    let updatedUser: User | null = null;
+    setUsers(prev =>
+      prev.map(u => {
+        if (u.id === userId) {
+          updatedUser = {
+            ...u,
+            name: data.name !== undefined && data.name.trim() !== '' ? data.name.trim() : u.name,
+            phone: data.phone !== undefined ? data.phone.trim() : u.phone,
+            role: data.role !== undefined ? data.role : u.role,
+            memberTier: data.tier !== undefined ? data.tier : u.memberTier,
+            isBanned: data.isBanned !== undefined ? data.isBanned : u.isBanned,
+            balanceBdt: data.balanceBdt !== undefined ? Number(data.balanceBdt) : u.balanceBdt,
+          };
+          return updatedUser;
+        }
+        return u;
+      })
+    );
+
+    if (currentUser.id === userId && updatedUser) {
+      setCurrentUser(prev => ({ ...prev, ...updatedUser }));
+    }
+
+    if (updatedUser) {
+      saveUserToFirebase(updatedUser).catch(err =>
+        console.warn('Sync updated user to Firebase error:', err)
+      );
+    }
+    showToast('মেম্বার তথ্য সফলভাবে আপডেট হয়েছে', 'success');
+    return { success: true, message: 'আপডেট সম্পন্ন' };
+  };
+
   const addUserManually = (userData: {
     name: string;
     email: string;
@@ -1772,6 +1998,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     role?: UserRole;
     tier?: MemberTier;
     initialBalance?: number;
+    initialBalanceBdt?: number;
   }): { success: boolean; message: string } => {
     const cleanEmail = userData.email.trim().toLowerCase();
     if (!cleanEmail) return { success: false, message: 'ইমেইল আবশ্যক' };
@@ -1779,6 +2006,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { success: false, message: 'এই ইমেইলে ইতিপূর্বেই ইউজার রয়েছে' };
     }
 
+    const initialBal = Number(userData.initialBalance ?? userData.initialBalanceBdt) || 0;
     const newId = `user-manual-${Date.now()}`;
     const newUser: User = {
       id: newId,
@@ -1786,7 +2014,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       email: cleanEmail,
       phone: userData.phone?.trim() || '',
       role: userData.role || 'user',
-      balanceBdt: userData.initialBalance ? Number(userData.initialBalance) : 0,
+      balanceBdt: initialBal,
       balanceUsd: 0,
       sellerBalance: 0,
       buyerBalance: 0,
@@ -1861,18 +2089,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateUserRole,
         updateUserStatus,
         updateUserTier,
+        updateMemberByAdmin,
         deleteUser,
         addUserManually,
         switchUser,
         exchangeCurrency,
         reviews,
         addReview,
+        approveReview,
+        rejectReview,
+        deleteReview,
         notifications,
         addNotification,
+        sendAdminNotification,
         markNotificationRead,
         markAllNotificationsRead,
         deleteNotification,
         clearAllNotifications,
+        t,
         toasts,
         showToast,
         loginAsAdmin,

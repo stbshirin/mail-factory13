@@ -23,6 +23,8 @@ export const SellersView: React.FC = () => {
     submitMailBatch,
     mailBatches,
     showToast,
+    isLoggedIn,
+    setIsAuthModalOpen,
   } = useApp();
 
   const [mailType, setMailType] = useState<MailType>('fresh');
@@ -55,6 +57,11 @@ export const SellersView: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLoggedIn || !currentUser.email || currentUser.id === 'guest') {
+      setIsAuthModalOpen(true);
+      showToast('রেজিস্ট্রেশন / লগ-ইন করার আগ মুহূর্তে কোনো প্রকার মেইল বিক্রি করা যাবে না।', 'error');
+      return;
+    }
     if (lines.length < platformSettings.minMailSubmission) {
       showToast(`সর্বনিম্ন ${platformSettings.minMailSubmission}টি জিমেইল সাবমিট করতে হবে`, 'error');
       return;
@@ -99,6 +106,29 @@ export const SellersView: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Guest Notice Banner */}
+      {(!isLoggedIn || !currentUser.email || currentUser.id === 'guest') && (
+        <div className="bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-slate-900 border border-amber-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-white">রেজিস্ট্রেশন / লগ-ইন আবশ্যক</div>
+              <div className="text-xs text-slate-300 mt-0.5">
+                রেজিস্ট্রেশন বা লগ-ইন করার আগ মুহূর্তে কোনো প্রকার মেইল বিক্রি বা সাবমিট করতে পারবেন না।
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md transition-all whitespace-nowrap"
+          >
+            লগ-ইন / রেজিস্ট্রেশন করুন ↗
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left 2 Cols: Submission Form */}

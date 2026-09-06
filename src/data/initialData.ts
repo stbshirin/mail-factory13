@@ -8,6 +8,17 @@ export const initialSettings: PlatformSettings = {
   mailBuyingRateAged: 14.50,
   mailBuyingRateUsa: 18.00,
   mailBuyingRateEdu: 25.00,
+  // Selling rates
+  mailSellingRateFresh: 18.00,
+  mailSellingRateRecovery: 25.00,
+  mailSellingRateAged: 45.00,
+  mailSellingRateUsa: 65.00,
+  mailSellingRateEdu: 85.00,
+  // Custom texts
+  heroHeadline: 'বিশ্বস্ত জিমেইল ক্রয়-বিক্রয় ও মাইক্রো-আর্নিং প্ল্যাটফর্ম',
+  heroSubtitle: 'নিরাপদে ফ্রেশ ও ওল্ড জিমেইল অ্যাকাউন্ট ক্রয় করুন অথবা নিজের তৈরি করা জিমেইল সাবমিট করে বিকাশ ও নগদে সরাসরি টাকা উইথড্র নিন।',
+  tickerNotice: 'সন্ধ্যা শিফট চালু: রেট ৳১০.৫০/মেইল!',
+  shiftBonusText: 'শিফট চলাকালীন সময়ে মেইল জমা দিয়ে অতিরিক্ত বোনাস ক্যাশ উপভোগ করুন।',
   isBuyingOpen: true,
   minMailSubmission: 5,
   minWithdrawalBdt: 100,

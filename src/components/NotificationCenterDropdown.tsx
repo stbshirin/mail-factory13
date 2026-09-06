@@ -72,9 +72,14 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
   if (!isOpen) return null;
 
   // Filter notifications relevant to the current user or global broadcasts
-  const userNotifications = (notifications || []).filter(
-    n => n.userId === currentUser.id || n.userId === 'all' || !n.userId
-  );
+  const userNotifications = (notifications || []).filter(n => {
+    if (!n) return false;
+    if (currentUser?.role === 'admin') return true;
+    if (n.userId === 'all' || !n.userId) return true;
+    if (currentUser?.id && n.userId === currentUser.id) return true;
+    if (currentUser?.email && n.userId === currentUser.email) return true;
+    return false;
+  });
 
   const unreadCount = userNotifications.filter(n => !n.read).length;
 
@@ -133,6 +138,13 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
         </div>
       );
     }
+    if (notif.type === 'warning' || notif.type === 'alert') {
+      return (
+        <div className="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center flex-shrink-0 shadow-sm">
+          <Sparkles className="w-5 h-5" />
+        </div>
+      );
+    }
     return (
       <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/40 text-blue-400 flex items-center justify-center flex-shrink-0 shadow-sm">
         <Info className="w-5 h-5" />
@@ -165,7 +177,20 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
         </span>
       );
     }
-    return null;
+    if (notif.type === 'warning' || notif.type === 'alert') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/40">
+          <Sparkles className="w-2.5 h-2.5" />
+          <span>জরুরি অ্যালার্ট</span>
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-500/20 text-blue-400 border border-blue-500/40">
+        <Sparkles className="w-2.5 h-2.5" />
+        <span>অফিসিয়াল নোটিশ</span>
+      </span>
+    );
   };
 
   return (

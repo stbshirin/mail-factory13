@@ -38,6 +38,9 @@ import {
   Mail,
   Ban,
   UserCog,
+  Bell,
+  Star,
+  MessageSquare,
 } from 'lucide-react';
 
 export const AdminPanelView: React.FC = () => {
@@ -59,6 +62,7 @@ export const AdminPanelView: React.FC = () => {
     updateUserRole,
     updateUserStatus,
     updateUserTier,
+    updateMemberByAdmin,
     deleteUser,
     addUserManually,
     currentUser,
@@ -68,11 +72,28 @@ export const AdminPanelView: React.FC = () => {
     syncFirebaseData,
     checkFirebaseHealth,
     firebaseResetPassword,
+    reviews,
+    approveReview,
+    rejectReview,
+    deleteReview,
+    notifications,
+    sendAdminNotification,
+    t,
   } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState<
-    'batches' | 'transactions' | 'rates' | 'inventory' | 'users'
+    'batches' | 'transactions' | 'rates' | 'inventory' | 'users' | 'notifications' | 'reviews'
   >('batches');
+
+  // Admin Notification States
+  const [notifTarget, setNotifTarget] = useState<string>('all');
+  const [notifTitle, setNotifTitle] = useState('');
+  const [notifMessage, setNotifMessage] = useState('');
+  const [notifType, setNotifType] = useState<'info' | 'success' | 'warning' | 'alert'>('info');
+  const [notifActionTab, setNotifActionTab] = useState('');
+
+  // Admin Reviews Filter
+  const [reviewStatusFilter, setReviewStatusFilter] = useState<'all' | 'pending' | 'approved'>('pending');
 
   const [isSyncingFirebase, setIsSyncingFirebase] = useState(false);
   const [showFirebaseTroubleshooting, setShowFirebaseTroubleshooting] = useState(false);
@@ -185,9 +206,12 @@ export const AdminPanelView: React.FC = () => {
 
   // Edit Member Modal State
   const [editMemberModalUser, setEditMemberModalUser] = useState<User | null>(null);
+  const [editName, setEditName] = useState('');
   const [editRole, setEditRole] = useState<UserRole>('user');
   const [editTier, setEditTier] = useState<MemberTier>('Silver');
   const [editPhone, setEditPhone] = useState('');
+  const [editBalanceBdt, setEditBalanceBdt] = useState<number>(0);
+  const [editIsBanned, setEditIsBanned] = useState(false);
 
   // Delete User Confirm Modal State
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<User | null>(null);
@@ -202,6 +226,24 @@ export const AdminPanelView: React.FC = () => {
 
   const pendingBatchesCount = batchesList.filter(b => b.status === 'pending').length;
   const pendingTransactionsCount = trxList.filter(t => t.status === 'pending').length;
+  const pendingReviewsCount = (reviews || []).filter(r => r.status === 'pending').length;
+
+  const handleSendNotification = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!notifTitle.trim() || !notifMessage.trim()) {
+      showToast('শিরোনাম এবং বার্তার বিবরণ লিখুন', 'error');
+      return;
+    }
+    sendAdminNotification({
+      targetUserId: notifTarget,
+      title: notifTitle.trim(),
+      message: notifMessage.trim(),
+      type: notifType,
+      actionTab: notifActionTab || undefined,
+    });
+    setNotifTitle('');
+    setNotifMessage('');
+  };
 
   const handleSaveRates = (e: React.FormEvent) => {
     e.preventDefault();
@@ -285,10 +327,15 @@ export const AdminPanelView: React.FC = () => {
   const handleSaveEditMemberSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editMemberModalUser) return;
-    updateUserRole(editMemberModalUser.id, editRole);
-    updateUserTier(editMemberModalUser.id, editTier);
+    updateMemberByAdmin(editMemberModalUser.id, {
+      name: editName.trim(),
+      phone: editPhone.trim(),
+      role: editRole,
+      tier: editTier,
+      isBanned: editIsBanned,
+      balanceBdt: Number(editBalanceBdt) || 0,
+    });
     setEditMemberModalUser(null);
-    showToast('মেম্বার প্রোফাইল সফলভাবে আপডেট হয়েছে', 'success');
   };
 
   const handleConfirmDeleteUser = () => {
@@ -462,6 +509,30 @@ export const AdminPanelView: React.FC = () => {
         >
           <Users className="w-4 h-4" />
           <span>ইউজার ও ব্যালেন্স ম্যানেজমেন্ট ({userList.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('notifications')}
+          className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+            activeSubTab === 'notifications'
+              ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
+              : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800'
+          }`}
+        >
+          <Bell className="w-4 h-4" />
+          <span>নোটিফিকেশন পাঠান</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('reviews')}
+          className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+            activeSubTab === 'reviews'
+              ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
+              : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800'
+          }`}
+        >
+          <Star className="w-4 h-4" />
+          <span>রিভিউ অনুমোদন ({pendingReviewsCount})</span>
         </button>
       </div>
 
@@ -895,6 +966,136 @@ export const AdminPanelView: React.FC = () => {
                     value={ratesForm.mailBuyingRateUsa}
                     onChange={e => setRatesForm({ ...ratesForm, mailBuyingRateUsa: Number(e.target.value) })}
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">Edu জিমেইল (Edu):</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={ratesForm.mailBuyingRateEdu || 12}
+                    onChange={e => setRatesForm({ ...ratesForm, mailBuyingRateEdu: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Selling Rates Section */}
+            <div className="space-y-4 p-5 rounded-2xl bg-slate-950 border border-slate-800">
+              <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                <span>মার্কেটপ্লেসে জিমেইল বিক্রয় রেট (বায়ারদের ক্রয় মূল্য BDT):</span>
+              </h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">ফ্রেশ জিমেইল (Fresh):</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={ratesForm.mailSellingRateFresh || 12.0}
+                    onChange={e => setRatesForm({ ...ratesForm, mailSellingRateFresh: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">রিকভারি জিমেইল (Recovery):</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={ratesForm.mailSellingRateRecovery || 15.0}
+                    onChange={e => setRatesForm({ ...ratesForm, mailSellingRateRecovery: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">পুরাতন জিমেইল (Aged):</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={ratesForm.mailSellingRateAged || 25.0}
+                    onChange={e => setRatesForm({ ...ratesForm, mailSellingRateAged: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">USA IP জিমেইল:</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={ratesForm.mailSellingRateUsa || 35.0}
+                    onChange={e => setRatesForm({ ...ratesForm, mailSellingRateUsa: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">Edu মেইল (Edu):</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={ratesForm.mailSellingRateEdu || 45.0}
+                    onChange={e => setRatesForm({ ...ratesForm, mailSellingRateEdu: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Custom Texts Section */}
+            <div className="space-y-4 p-5 rounded-2xl bg-slate-950 border border-slate-800 md:col-span-2">
+              <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2">
+                <Edit2 className="w-4 h-4" />
+                <span>ওয়েবসাইটের যেকোনো ধরনের লেখা পরিবর্তন (Custom Content & Notice):</span>
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">হোম পেজ হেডলাইন (Main Headline):</label>
+                  <input
+                    type="text"
+                    value={ratesForm.heroHeadline || ''}
+                    placeholder="বিশ্বস্ত জিমেইল ক্রয়-বিক্রয় ও মাইক্রো-আর্নিং প্ল্যাটফর্ম"
+                    onChange={e => setRatesForm({ ...ratesForm, heroHeadline: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">হোম পেজ সাবটাইটেল (Subtitle):</label>
+                  <input
+                    type="text"
+                    value={ratesForm.heroSubtitle || ''}
+                    placeholder="নিরাপদে ফ্রেশ ও ওল্ড জিমেইল অ্যাকাউন্ট ক্রয় করুন অথবা নিজের তৈরি করা জিমেইল সাবমিট করে বিকাশ ও নগদে সরাসরি টাকা উইথড্র নিন।"
+                    onChange={e => setRatesForm({ ...ratesForm, heroSubtitle: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">ঘোষণা স্ক্রল নোটিশ (Ticker Notice):</label>
+                  <input
+                    type="text"
+                    value={ratesForm.tickerNotice || ''}
+                    placeholder="মেইল ফ্যাক্টরি বিডি-তে স্বাগতম! আজকের স্পেশাল বোনাস রেট চলছে।"
+                    onChange={e => setRatesForm({ ...ratesForm, tickerNotice: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">শিফট বোনাস নোটিশ টেক্সট:</label>
+                  <input
+                    type="text"
+                    value={ratesForm.shiftBonusText || ''}
+                    placeholder="প্রতিদিন সকাল ৮টা থেকে রাত ১১টা পর্যন্ত ফ্রেশ জিমেইলে অতিরিক্ত ৫০ পয়সা বোনাস রেট প্রযোজ্য।"
+                    onChange={e => setRatesForm({ ...ratesForm, shiftBonusText: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs"
                   />
                 </div>
               </div>
@@ -1348,7 +1549,7 @@ export const AdminPanelView: React.FC = () => {
                           {/* Tier */}
                           <td className="py-3.5 px-4">
                             <select
-                              value={u.tier || 'Silver'}
+                              value={u.memberTier || (u as any).tier || 'Silver'}
                               onChange={e => updateUserTier(u.id, e.target.value as MemberTier)}
                               className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[11px] font-semibold text-amber-300 focus:outline-none focus:border-amber-500 cursor-pointer"
                             >
@@ -1419,9 +1620,12 @@ export const AdminPanelView: React.FC = () => {
                               <button
                                 onClick={() => {
                                   setEditMemberModalUser(u);
+                                  setEditName(u.name || '');
                                   setEditRole(u.role);
-                                  setEditTier(u.tier || 'Silver');
+                                  setEditTier(u.memberTier || (u as any).tier || 'Silver');
                                   setEditPhone(u.phone || '');
+                                  setEditBalanceBdt(u.balanceBdt || 0);
+                                  setEditIsBanned(!!u.isBanned);
                                 }}
                                 className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
                                 title="মেম্বার এডিট করুন"
@@ -1467,6 +1671,365 @@ export const AdminPanelView: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB 6: NOTIFICATIONS MANAGEMENT */}
+      {activeSubTab === 'notifications' && (
+        <div className="space-y-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+            <div className="border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-white">অ্যাডমিন নোটিফিকেশন সেন্টার</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    একজন নির্দিষ্ট ইউজারকে অথবা সকল ব্যবহারকারীকে একই সাথে নোটিশ বা সতর্কবার্তা পাঠান।
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleSendNotification} className="space-y-5 bg-slate-950 p-5 sm:p-6 rounded-2xl border border-slate-800">
+              <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2">
+                <Send className="w-4 h-4" />
+                <span>নতুন নোটিফিকেশন তৈরি করুন:</span>
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Target Audience */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    প্রাপক নির্বাচন করুন (Target Audience):
+                  </label>
+                  <select
+                    value={notifTarget}
+                    onChange={e => setNotifTarget(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs font-medium focus:border-amber-500 outline-none"
+                  >
+                    <option value="all">📢 সকল ইউজার (Broadcast to Everyone)</option>
+                    <optgroup label="নির্দিষ্ট ব্যবহারকারী (Individual User)">
+                      {userList.map(u => (
+                        <option key={u.id} value={u.id}>
+                          👤 {u.name || 'User'} ({u.email || u.phone || u.id})
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </div>
+
+                {/* Notification Type */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    বার্তার ধরণ (Notification Type):
+                  </label>
+                  <select
+                    value={notifType}
+                    onChange={e => setNotifType(e.target.value as any)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs font-medium focus:border-amber-500 outline-none"
+                  >
+                    <option value="info">ℹ️ তথ্যমূলক সাধারণ নোটিশ (Info)</option>
+                    <option value="success">✅ সাফল্য বা বোনাস বার্তা (Success)</option>
+                    <option value="warning">⚠️ সতর্কতা নোটিশ (Warning)</option>
+                    <option value="alert">🚨 জরুরি অ্যালার্ট (Urgent Alert)</option>
+                  </select>
+                </div>
+
+                {/* Title */}
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    নোটিফিকেশন শিরোনাম (Title):
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={notifTitle}
+                    onChange={e => setNotifTitle(e.target.value)}
+                    placeholder="যেমন: আজকের নাইট শিফটে মেইল রেট বৃদ্ধি করা হয়েছে!"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs placeholder:text-slate-500 focus:border-amber-500 outline-none"
+                  />
+                </div>
+
+                {/* Message */}
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    বার্তা বিবরণ (Message Content):
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={notifMessage}
+                    onChange={e => setNotifMessage(e.target.value)}
+                    placeholder="বিস্তারিত বিবরণ লিখুন যা ইউজারদের নোটিফিকেশন বক্সে প্রদর্শিত হবে..."
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs placeholder:text-slate-500 focus:border-amber-500 outline-none"
+                  />
+                </div>
+
+                {/* Optional Action Tab */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    ক্লিক করলে রিডাইরেক্ট ট্যাব (ঐচ্ছিক):
+                  </label>
+                  <select
+                    value={notifActionTab}
+                    onChange={e => setNotifActionTab(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs font-medium focus:border-amber-500 outline-none"
+                  >
+                    <option value="">কোন রিডাইরেক্ট নেই (None)</option>
+                    <option value="sell">সেল ফ্যাক্টরি (Sell Mails)</option>
+                    <option value="buy">মার্কেটপ্লেস (Buy Mails)</option>
+                    <option value="wallet">ওয়ালেট ও উইথড্র (Wallet)</option>
+                    <option value="reviews">রিভিউ পেজ (Reviews)</option>
+                  </select>
+                </div>
+
+                <div className="flex items-end">
+                  <button
+                    type="submit"
+                    className="w-full py-2.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>নোটিফিকেশন পাঠান</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {/* Notifications History */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-white flex items-center justify-between">
+                <span>সম্প্রতি প্রেরিত নোটিফিকেশন তালিকা ({notifications?.length || 0}):</span>
+              </h3>
+
+              {(!notifications || notifications.length === 0) ? (
+                <div className="p-8 text-center text-slate-400 text-xs bg-slate-950 rounded-2xl border border-slate-800">
+                  এখনও কোনো নোটিফিকেশন পাঠানো হয়নি।
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {notifications.slice(0, 15).map(n => (
+                    <div
+                      key={n.id}
+                      className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            n.type === 'alert' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' :
+                            n.type === 'warning' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
+                            n.type === 'success' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+                            'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                          }`}>
+                            {n.type?.toUpperCase() || 'INFO'}
+                          </span>
+                          <span className="text-xs font-bold text-white">{n.title}</span>
+                          <span className="text-[10px] text-slate-400">
+                            {n.targetUserId === 'all' ? (
+                              <span className="text-amber-400 font-semibold">[📢 সবাইকে প্রেরিত]</span>
+                            ) : (
+                              <span className="text-sky-400 font-semibold">[👤 নির্দিষ্ট গ্রাহক: {n.targetUserId}]</span>
+                            )}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-300">{n.message}</p>
+                      </div>
+
+                      <div className="text-right text-[11px] text-slate-400 flex-shrink-0 font-mono">
+                        {new Date(n.timestamp).toLocaleString('bn-BD', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB 7: REVIEWS APPROVAL WORKFLOW */}
+      {activeSubTab === 'reviews' && (
+        <div className="space-y-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Star className="w-5 h-5 fill-amber-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-white">ইউজার রিভিউ ম্যানেজমেন্ট ও অনুমোদন</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    হোম পেজে পাবলিক হওয়ার পূর্বে ব্যবহারকারীদের আবেদনকৃত রিভিউ রিভিউ করুন এবং অনুমোদন দিন।
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setReviewStatusFilter('pending')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    reviewStatusFilter === 'pending'
+                      ? 'bg-amber-500 text-slate-950 font-black shadow-md'
+                      : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  ⏳ অপেক্ষারত ({pendingReviewsCount})
+                </button>
+                <button
+                  onClick={() => setReviewStatusFilter('approved')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    reviewStatusFilter === 'approved'
+                      ? 'bg-emerald-500 text-slate-950 font-black shadow-md'
+                      : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  ✓ অনুমোদিত ({(reviews || []).filter(r => r.status === 'approved').length})
+                </button>
+                <button
+                  onClick={() => setReviewStatusFilter('all')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    reviewStatusFilter === 'all'
+                      ? 'bg-slate-700 text-white font-black'
+                      : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  সব ({reviews?.length || 0})
+                </button>
+              </div>
+            </div>
+
+            {/* Reviews List */}
+            {(!reviews || reviews.length === 0) ? (
+              <div className="p-12 text-center text-slate-400 text-xs bg-slate-950 rounded-2xl border border-slate-800">
+                কোনো রিভিউ এখনও সাবমিট করা হয়নি।
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {reviews
+                  .filter(r => {
+                    if (reviewStatusFilter === 'pending') return r.status === 'pending';
+                    if (reviewStatusFilter === 'approved') return r.status === 'approved';
+                    return true;
+                  })
+                  .map(rev => (
+                    <div
+                      key={rev.id}
+                      className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3.5 flex flex-col justify-between"
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-white text-sm">{rev.userName}</span>
+                              {rev.shift && (
+                                <span className="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] text-slate-300 border border-slate-700">
+                                  {rev.shift}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-slate-400">{rev.date}</span>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-1">
+                            {/* Rating Stars */}
+                            <div className="flex items-center gap-0.5 text-amber-400">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-3.5 h-3.5 ${
+                                    i < rev.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-600'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+
+                            {/* Status Badge */}
+                            {rev.status === 'approved' && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                ✓ পাবলিক অনুমোদিত
+                              </span>
+                            )}
+                            {rev.status === 'pending' && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
+                                ⏳ অপেক্ষারত
+                              </span>
+                            )}
+                            {rev.status === 'rejected' && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                ✕ বাতিল
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Comment */}
+                        <p className="text-xs text-slate-200 leading-relaxed bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
+                          "{rev.comment}"
+                        </p>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/60">
+                        {rev.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => {
+                                approveReview(rev.id);
+                                showToast('রিভিউ অনুমোদিত হয়েছে এবং হোম পেজে পাবলিক করা হয়েছে!', 'success');
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-emerald-600/20"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>অনুমোদন করুন</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                rejectReview(rev.id);
+                                showToast('রিভিউটি বাতিল করা হয়েছে', 'info');
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white font-semibold text-xs flex items-center gap-1.5 transition-all"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              <span>বাতিল</span>
+                            </button>
+                          </>
+                        )}
+                        {rev.status === 'approved' && (
+                          <button
+                            onClick={() => {
+                              rejectReview(rev.id);
+                              showToast('রিভিউটি প্রত্যাহার করা হয়েছে', 'info');
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
+                          >
+                            পাবলিক বাতিল
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (window.confirm('আপনি কি নিশ্চিত যে এই রিভিউটি স্থায়ীভাবে মুছে ফেলতে চান?')) {
+                              deleteReview(rev.id);
+                              showToast('রিভিউ মুছে ফেলা হয়েছে', 'success');
+                            }
+                          }}
+                          className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all"
+                          title="মুছে ফেলুন"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1944,6 +2507,18 @@ readymail2@gmail.com:Pass#2026:rec2@outlook.com`}
 
             <form onSubmit={handleSaveEditMemberSubmit} className="space-y-4">
               <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">মেম্বার নাম (Name):</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  placeholder="মেম্বারের পুরো নাম"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">ইমেইল (অপরিবর্তনীয়):</label>
                 <input
                   type="text"
@@ -1954,30 +2529,69 @@ readymail2@gmail.com:Pass#2026:rec2@outlook.com`}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">রোল (Role):</label>
-                <select
-                  value={editRole}
-                  onChange={e => setEditRole(e.target.value as UserRole)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
-                >
-                  <option value="user">User (সাধারণ মেম্বার)</option>
-                  <option value="moderator">Moderator (মডারেটর)</option>
-                  <option value="admin">Admin (অ্যাডমিন)</option>
-                </select>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">ফোন নম্বর (Phone):</label>
+                <input
+                  type="text"
+                  value={editPhone}
+                  onChange={e => setEditPhone(e.target.value)}
+                  placeholder="01XXXXXXXXX"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-blue-500"
+                />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">টায়ার (Tier):</label>
-                <select
-                  value={editTier}
-                  onChange={e => setEditTier(e.target.value as MemberTier)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
-                >
-                  <option value="Bronze">Bronze (ব্রোঞ্জ)</option>
-                  <option value="Silver">Silver (সিলভার)</option>
-                  <option value="Gold">Gold (গোল্ড)</option>
-                  <option value="Diamond">Diamond (ডায়মন্ড)</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">রোল (Role):</label>
+                  <select
+                    value={editRole}
+                    onChange={e => setEditRole(e.target.value as UserRole)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="user">User (সাধারণ মেম্বার)</option>
+                    <option value="moderator">Moderator (মডারেটর)</option>
+                    <option value="admin">Admin (অ্যাডমিন)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">টায়ার (Tier):</label>
+                  <select
+                    value={editTier}
+                    onChange={e => setEditTier(e.target.value as MemberTier)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="Bronze">Bronze (ব্রোঞ্জ)</option>
+                    <option value="Silver">Silver (সিলভার)</option>
+                    <option value="Gold">Gold (গোল্ড)</option>
+                    <option value="Diamond">Diamond (ডায়মন্ড)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">ওয়ালেট ব্যালেন্স (BDT):</label>
+                  <input
+                    type="number"
+                    value={editBalanceBdt}
+                    onChange={e => setEditBalanceBdt(Number(e.target.value))}
+                    min="0"
+                    step="any"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-amber-300 font-bold text-xs focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">অ্যাকাউন্ট স্ট্যাটাস:</label>
+                  <select
+                    value={editIsBanned ? 'banned' : 'active'}
+                    onChange={e => setEditIsBanned(e.target.value === 'banned')}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="active">Active (সক্রিয়)</option>
+                    <option value="banned">Banned (স্থগিত/ব্যান)</option>
+                  </select>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-2">

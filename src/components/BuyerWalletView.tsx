@@ -12,7 +12,9 @@ import {
   AlertCircle,
   RefreshCw,
   ExternalLink,
+  Shield,
 } from 'lucide-react';
+import { maskPhoneNumber } from '../utils/maskUtils';
 
 export const BuyerWalletView: React.FC = () => {
   const { currentUser, setActiveTab, transactions } = useApp();
@@ -163,7 +165,24 @@ export const BuyerWalletView: React.FC = () => {
                       {trx.type === 'deposit' || trx.type === 'mail_sale' ? '+' : '-'}৳{trx.amount.toFixed(2)}
                     </td>
                     <td className="py-3 px-4 font-mono text-slate-400">
-                      {trx.trxId || trx.accountNumber || trx.adminNote || 'System'}
+                      {trx.trxId ? (
+                        <div className="flex flex-col">
+                          <span className="text-white font-semibold">{trx.trxId}</span>
+                          {trx.senderNumber && (
+                            <span className="text-[11px] text-slate-400 inline-flex items-center gap-1">
+                              <Shield className="w-3 h-3 text-emerald-400" />
+                              {maskPhoneNumber(trx.senderNumber)}
+                            </span>
+                          )}
+                        </div>
+                      ) : trx.accountNumber ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Shield className="w-3 h-3 text-emerald-400" />
+                          {maskPhoneNumber(trx.accountNumber)}
+                        </span>
+                      ) : (
+                        trx.adminNote || 'System'
+                      )}
                     </td>
                     <td className="py-3 px-4">
                       {trx.status === 'completed' && (

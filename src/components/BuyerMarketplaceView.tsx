@@ -21,6 +21,8 @@ export const BuyerMarketplaceView: React.FC = () => {
     marketplaceItems,
     buyMarketplaceItem,
     currentUser,
+    isLoggedIn,
+    setIsAuthModalOpen,
     setActiveTab,
     showToast,
   } = useApp();
@@ -48,6 +50,11 @@ export const BuyerMarketplaceView: React.FC = () => {
   });
 
   const handleOpenPurchaseModal = (item: MarketplaceItem) => {
+    if (!isLoggedIn || !currentUser.email || currentUser.id === 'guest') {
+      setIsAuthModalOpen(true);
+      showToast('রেজিস্ট্রেশন / লগ-ইন করার আগ মুহূর্তে কোনো প্রকার কেনা কাটা করতে পারবেন না।', 'error');
+      return;
+    }
     setActiveItemForPurchase(item);
     setPurchaseQuantity(item.minOrder || 5);
   };
@@ -106,6 +113,29 @@ export const BuyerMarketplaceView: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Guest Notice Banner */}
+      {(!isLoggedIn || !currentUser.email || currentUser.id === 'guest') && (
+        <div className="bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-slate-900 border border-amber-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-white">রেজিস্ট্রেশন / লগ-ইন আবশ্যক</div>
+              <div className="text-xs text-slate-300 mt-0.5">
+                রেজিস্ট্রেশন বা লগ-ইন করার আগ মুহূর্তে কোনো প্রকার প্যাকেজ কেনাকাটা করতে পারবেন না।
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md transition-all whitespace-nowrap"
+          >
+            লগ-ইন / রেজিস্ট্রেশন করুন ↗
+          </button>
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg flex flex-wrap items-center justify-between gap-4">

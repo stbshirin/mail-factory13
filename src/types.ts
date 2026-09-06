@@ -120,6 +120,17 @@ export interface PlatformSettings {
   mailBuyingRateAged: number;
   mailBuyingRateUsa: number;
   mailBuyingRateEdu: number;
+  // Selling rates
+  mailSellingRateFresh: number;
+  mailSellingRateRecovery: number;
+  mailSellingRateAged: number;
+  mailSellingRateUsa: number;
+  mailSellingRateEdu: number;
+  // Custom texts & notices
+  heroHeadline: string;
+  heroSubtitle: string;
+  tickerNotice: string;
+  shiftBonusText: string;
   isBuyingOpen: boolean;
   minMailSubmission: number;
   minWithdrawalBdt: number;
@@ -156,7 +167,7 @@ export interface Review {
   date: string;
   verifiedSale: boolean;
   likes: number;
-  status: 'approved' | 'pending';
+  status: 'approved' | 'pending' | 'rejected';
 }
 
 export interface LeaderboardUser {

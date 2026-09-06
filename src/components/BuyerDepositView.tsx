@@ -10,10 +10,12 @@ import {
   HelpCircle,
   QrCode,
   ArrowLeft,
+  ShieldCheck,
+  Lock,
 } from 'lucide-react';
 
 export const BuyerDepositView: React.FC = () => {
-  const { platformSettings, submitDeposit, setActiveTab, showToast } = useApp();
+  const { platformSettings, submitDeposit, setActiveTab, showToast, isLoggedIn, currentUser, setIsAuthModalOpen } = useApp();
 
   const [method, setMethod] = useState<PaymentMethod>('bKash');
   const [amount, setAmount] = useState<number>(500);
@@ -46,6 +48,11 @@ export const BuyerDepositView: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLoggedIn || !currentUser.email || currentUser.id === 'guest') {
+      setIsAuthModalOpen(true);
+      showToast('ডিপোজিট করার পূর্বে অনুগ্রহ করে লগ-ইন অথবা রেজিস্ট্রেশন করুন', 'error');
+      return;
+    }
     if (amount < platformSettings.minDepositBdt) {
       showToast(`সর্বনিম্ন ডিপোজিট ৳${platformSettings.minDepositBdt}`, 'error');
       return;
@@ -185,6 +192,10 @@ export const BuyerDepositView: React.FC = () => {
               className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500"
               required
             />
+            <div className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs">
+              <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>কে কত টাকা ডিপোজিট করেছেন তাদের ফোন নাম্বার সুরক্ষিত থাকে এবং কেউ দেখতে পারবে না।</span>
+            </div>
           </div>
 
           <button

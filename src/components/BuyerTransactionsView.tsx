@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../AppContext';
 import { TransactionType } from '../types';
-import { RefreshCw, Search, ArrowUpRight, PlusCircle, ArrowDownLeft, DollarSign } from 'lucide-react';
+import { RefreshCw, Search, ArrowUpRight, PlusCircle, ArrowDownLeft, DollarSign, Shield } from 'lucide-react';
+import { maskPhoneNumber } from '../utils/maskUtils';
 
 export const BuyerTransactionsView: React.FC = () => {
   const { transactions, currentUser } = useApp();
@@ -106,7 +107,24 @@ export const BuyerTransactionsView: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3.5 px-4 font-mono text-slate-400">
-                      {trx.trxId || trx.accountNumber || trx.adminNote || 'System'}
+                      {trx.trxId ? (
+                        <div className="flex flex-col">
+                          <span className="text-white font-semibold">{trx.trxId}</span>
+                          {trx.senderNumber && (
+                            <span className="text-[11px] text-slate-400 inline-flex items-center gap-1">
+                              <Shield className="w-3 h-3 text-emerald-400" />
+                              {maskPhoneNumber(trx.senderNumber)}
+                            </span>
+                          )}
+                        </div>
+                      ) : trx.accountNumber ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Shield className="w-3 h-3 text-emerald-400" />
+                          {maskPhoneNumber(trx.accountNumber)}
+                        </span>
+                      ) : (
+                        trx.adminNote || 'System'
+                      )}
                     </td>
                     <td className="py-3.5 px-4">
                       {trx.status === 'completed' && (
