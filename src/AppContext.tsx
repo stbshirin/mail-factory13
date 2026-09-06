@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   User,
+  UserRole,
+  MemberTier,
   MailBatch,
   MarketplaceItem,
   BuyerOrder,
@@ -44,6 +46,7 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import {
   saveBatchToFirebase,
   saveUserToFirebase,
+  deleteUserFromFirebase,
   sendVerificationEmailToUser,
   sendPasswordReset,
   syncAllDataToFirebase,
@@ -116,8 +119,12 @@ interface AppContextType {
   submitWithdrawal: (data: { amount: number; method: PaymentMethod; accountNumber: string }) => { success: boolean; message: string };
   approveWithdrawal: (trxId: string) => void;
   rejectWithdrawal: (trxId: string, reason?: string) => void;
-  adjustUserBalance: (userId: string, deltaAmount: number, reason: string) => void;
-  updateUserRole: (userId: string, role: 'admin' | 'user') => void;
+  adjustUserBalance: (userId: string, deltaAmount: number, reason: string, currency?: 'BDT' | 'USD') => void;
+  updateUserRole: (userId: string, role: UserRole) => void;
+  updateUserStatus: (userId: string, isBanned: boolean) => void;
+  updateUserTier: (userId: string, tier: MemberTier) => void;
+  deleteUser: (userId: string) => { success: boolean; message: string };
+  addUserManually: (userData: { name: string; email: string; phone?: string; role?: UserRole; tier?: MemberTier; initialBalance?: number }) => { success: boolean; message: string };
   switchUser: (email: string) => void;
   exchangeCurrency: (from: 'BDT' | 'USD', amount: number) => { success: boolean; message: string };
   reviews: Review[];
@@ -126,6 +133,8 @@ interface AppContextType {
   addNotification: (notif: Omit<NotificationItem, 'id' | 'timestamp'> & { timestamp?: string }) => void;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
+  deleteNotification: (id: string) => void;
+  clearAllNotifications: () => void;
   toasts: Toast[];
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   loginAsAdmin: () => void;
@@ -433,6 +442,77 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return () => unsubscribe();
     } catch (e) {
       console.warn('Could not listen to batches in RTDB:', e);
+    }
+  }, []);
+
+  // Realtime listener for all registered users from Cloud Firestore
+  useEffect(() => {
+    if (!firestore) return;
+    try {
+      const colRef = collection(firestore, 'users');
+      const unsubscribe = onSnapshot(
+        colRef,
+        snapshot => {
+          if (!snapshot.empty) {
+            const remoteUsers: User[] = [];
+            snapshot.forEach(docSnap => {
+              const data = docSnap.data() as User;
+              if (data && data.id) {
+                remoteUsers.push(data);
+              }
+            });
+            if (remoteUsers.length > 0) {
+              setUsers(prev => {
+                const map = new Map<string, User>();
+                prev.forEach(u => map.set(u.id, u));
+                remoteUsers.forEach(u => {
+                  const existing = map.get(u.id);
+                  map.set(u.id, { ...existing, ...u });
+                });
+                return Array.from(map.values());
+              });
+            }
+          }
+        },
+        err => {
+          console.warn('[Firebase] Firestore users listen error:', err);
+        }
+      );
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn('Could not setup Firestore users listener:', e);
+    }
+  }, []);
+
+  // Realtime listener for users from Realtime Database
+  useEffect(() => {
+    if (!db) return;
+    try {
+      const usersRef = ref(db, 'users');
+      const unsubscribe = onValue(usersRef, snapshot => {
+        if (snapshot.exists()) {
+          const val = snapshot.val();
+          if (val && typeof val === 'object') {
+            const list: User[] = Object.values(val);
+            if (list.length > 0) {
+              setUsers(prev => {
+                const map = new Map<string, User>();
+                prev.forEach(u => map.set(u.id, u));
+                list.forEach(u => {
+                  if (u && u.id) {
+                    const existing = map.get(u.id);
+                    map.set(u.id, { ...existing, ...u });
+                  }
+                });
+                return Array.from(map.values());
+              });
+            }
+          }
+        }
+      });
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn('Could not listen to users in RTDB:', e);
     }
   }, []);
 
@@ -1447,6 +1527,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('সকল নোটিফিকেশন পঠিত হিসেবে চিহ্নিত হয়েছে', 'info');
   };
 
+  const deleteNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+    showToast('সকল নোটিফিকেশন মুছে ফেলা হয়েছে', 'info');
+  };
+
   const addMarketplacePackage = (item: Omit<MarketplaceItem, 'id'>) => {
     addMarketplaceItem(item);
   };
@@ -1498,22 +1587,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const adjustUserBalance = (userId: string, deltaAmount: number, reason: string) => {
+  const adjustUserBalance = (
+    userId: string,
+    deltaAmount: number,
+    reason: string,
+    currency: 'BDT' | 'USD' = 'BDT'
+  ) => {
+    let updatedUser: User | null = null;
     setUsers(prev =>
       prev.map(u => {
         if (u.id === userId) {
-          const newBalance = Math.max(0, Number((u.balanceBdt + deltaAmount).toFixed(2)));
-          return { ...u, balanceBdt: newBalance };
+          const newBdt =
+            currency === 'BDT'
+              ? Math.max(0, Number((u.balanceBdt + deltaAmount).toFixed(2)))
+              : u.balanceBdt;
+          const newUsd =
+            currency === 'USD'
+              ? Math.max(0, Number((u.balanceUsd + deltaAmount).toFixed(2)))
+              : u.balanceUsd;
+          updatedUser = { ...u, balanceBdt: newBdt, balanceUsd: newUsd };
+          return updatedUser;
         }
         return u;
       })
     );
+
     if (currentUser.id === userId) {
-      setCurrentUser(u => ({
-        ...u,
-        balanceBdt: Math.max(0, Number((u.balanceBdt + deltaAmount).toFixed(2))),
-      }));
+      setCurrentUser(u => {
+        const newBdt =
+          currency === 'BDT'
+            ? Math.max(0, Number((u.balanceBdt + deltaAmount).toFixed(2)))
+            : u.balanceBdt;
+        const newUsd =
+          currency === 'USD'
+            ? Math.max(0, Number((u.balanceUsd + deltaAmount).toFixed(2)))
+            : u.balanceUsd;
+        return { ...u, balanceBdt: newBdt, balanceUsd: newUsd };
+      });
     }
+
+    if (updatedUser) {
+      saveUserToFirebase(updatedUser).catch(err =>
+        console.warn('Could not sync user balance to Firebase:', err)
+      );
+    }
+
     const newTrx: Transaction = {
       id: `trx-adj-${Date.now()}`,
       userId,
@@ -1521,22 +1639,173 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       userEmail: users.find(u => u.id === userId)?.email || '',
       type: deltaAmount >= 0 ? 'bonus' : 'adjustment',
       amount: Math.abs(deltaAmount),
-      currency: 'BDT',
+      currency: currency,
       method: 'System',
       status: 'completed',
       createdAt: new Date().toISOString(),
       adminNote: reason,
     };
     setTransactions(prev => [newTrx, ...prev]);
-    showToast(`ইউজার ব্যালেন্স ${deltaAmount >= 0 ? '+' : ''}${deltaAmount} ৳ অ্যাডজাস্ট করা হয়েছে।`, 'success');
+
+    // Send user notification about the balance adjustment
+    addNotification({
+      userId,
+      title: deltaAmount >= 0 ? 'ওয়ালেটে ব্যালেন্স জমা হয়েছে' : 'ওয়ালেট ব্যালেন্স সমন্বয় হয়েছে',
+      message: `এডমিন প্যানেল থেকে আপনার ওয়ালেটে ${deltaAmount >= 0 ? '+' : '-'}${Math.abs(deltaAmount)} ${currency} অ্যাডজাস্ট করা হয়েছে। কারণ: ${reason}`,
+      type: 'payment',
+      category: 'general',
+      amount: Math.abs(deltaAmount),
+      read: false,
+      link: 'wallet',
+    });
+
+    showToast(
+      `ইউজার ব্যালেন্স ${deltaAmount >= 0 ? '+' : ''}${deltaAmount} ${currency} সফলভাবে অ্যাডজাস্ট করা হয়েছে।`,
+      'success'
+    );
   };
 
-  const updateUserRole = (userId: string, role: 'admin' | 'user') => {
-    setUsers(prev => prev.map(u => (u.id === userId ? { ...u, role } : u)));
+  const updateUserRole = (userId: string, role: UserRole) => {
+    let updatedUser: User | null = null;
+    setUsers(prev =>
+      prev.map(u => {
+        if (u.id === userId) {
+          updatedUser = { ...u, role };
+          return updatedUser;
+        }
+        return u;
+      })
+    );
     if (currentUser.id === userId) {
       setCurrentUser(u => ({ ...u, role }));
     }
-    showToast(`ইউজার রোল ${role} হিসেবে আপডেট করা হয়েছে`, 'success');
+    if (updatedUser) {
+      saveUserToFirebase(updatedUser).catch(err =>
+        console.warn('Sync role to Firebase error:', err)
+      );
+    }
+    showToast(`ইউজার রোল সফলভাবে ${role.toUpperCase()} হিসেবে আপডেট করা হয়েছে`, 'success');
+  };
+
+  const updateUserStatus = (userId: string, isBanned: boolean) => {
+    const target = users.find(u => u.id === userId);
+    if (
+      target &&
+      (target.email === 'soheltajbhola@gmail.com' || target.email === 'stb.shirin@gmail.com')
+    ) {
+      showToast('সুপার এডমিন অ্যাকাউন্ট স্থগিত করা সম্ভব নয়!', 'error');
+      return;
+    }
+    let updatedUser: User | null = null;
+    setUsers(prev =>
+      prev.map(u => {
+        if (u.id === userId) {
+          updatedUser = { ...u, isBanned };
+          return updatedUser;
+        }
+        return u;
+      })
+    );
+    if (currentUser.id === userId) {
+      setCurrentUser(u => ({ ...u, isBanned }));
+    }
+    if (updatedUser) {
+      saveUserToFirebase(updatedUser).catch(err =>
+        console.warn('Sync status to Firebase error:', err)
+      );
+    }
+    showToast(
+      isBanned
+        ? 'মেম্বার অ্যাকাউন্ট সফলভাবে ব্যান/স্থগিত করা হয়েছে'
+        : 'মেম্বার অ্যাকাউন্ট সক্রিয় করা হয়েছে',
+      isBanned ? 'error' : 'success'
+    );
+  };
+
+  const updateUserTier = (userId: string, tier: MemberTier) => {
+    let updatedUser: User | null = null;
+    setUsers(prev =>
+      prev.map(u => {
+        if (u.id === userId) {
+          updatedUser = { ...u, memberTier: tier };
+          return updatedUser;
+        }
+        return u;
+      })
+    );
+    if (currentUser.id === userId) {
+      setCurrentUser(u => ({ ...u, memberTier: tier }));
+    }
+    if (updatedUser) {
+      saveUserToFirebase(updatedUser).catch(err =>
+        console.warn('Sync tier to Firebase error:', err)
+      );
+    }
+    showToast(`মেম্বারশিপ টায়ার ${tier} হিসেবে সফলভাবে আপডেট করা হয়েছে`, 'success');
+  };
+
+  const deleteUser = (userId: string): { success: boolean; message: string } => {
+    const target = users.find(u => u.id === userId);
+    if (!target) return { success: false, message: 'ইউজার পাওয়া যায়নি' };
+    if (
+      target.email === 'soheltajbhola@gmail.com' ||
+      target.email === 'stb.shirin@gmail.com'
+    ) {
+      return { success: false, message: 'সুপার এডমিন অ্যাকাউন্ট ডিলিট করা যাবে না' };
+    }
+    if (currentUser.id === userId) {
+      return { success: false, message: 'আপনি নিজের অ্যাকাউন্ট ডিলিট করতে পারবেন না' };
+    }
+
+    setUsers(prev => prev.filter(u => u.id !== userId));
+    deleteUserFromFirebase(userId).catch(err =>
+      console.warn('Could not delete user from Firebase:', err)
+    );
+    showToast(`ইউজার (${target.name}) সফলভাবে ডিলিট করা হয়েছে`, 'success');
+    return { success: true, message: 'ইউজার মুছে ফেলা হয়েছে' };
+  };
+
+  const addUserManually = (userData: {
+    name: string;
+    email: string;
+    phone?: string;
+    role?: UserRole;
+    tier?: MemberTier;
+    initialBalance?: number;
+  }): { success: boolean; message: string } => {
+    const cleanEmail = userData.email.trim().toLowerCase();
+    if (!cleanEmail) return { success: false, message: 'ইমেইল আবশ্যক' };
+    if (users.some(u => (u.email || '').toLowerCase() === cleanEmail)) {
+      return { success: false, message: 'এই ইমেইলে ইতিপূর্বেই ইউজার রয়েছে' };
+    }
+
+    const newId = `user-manual-${Date.now()}`;
+    const newUser: User = {
+      id: newId,
+      name: userData.name.trim() || 'New Member',
+      email: cleanEmail,
+      phone: userData.phone?.trim() || '',
+      role: userData.role || 'user',
+      balanceBdt: userData.initialBalance ? Number(userData.initialBalance) : 0,
+      balanceUsd: 0,
+      sellerBalance: 0,
+      buyerBalance: 0,
+      referralCode: `REF${Math.floor(100000 + Math.random() * 900000)}`,
+      referralEarnings: 0,
+      memberTier: userData.tier || 'Silver',
+      joinedAt: new Date().toISOString().split('T')[0],
+      totalSubmittedMails: 0,
+      totalApprovedMails: 0,
+      totalEarnings: 0,
+      totalBoughtMails: 0,
+    };
+
+    setUsers(prev => [newUser, ...prev]);
+    saveUserToFirebase(newUser).catch(err =>
+      console.warn('Could not save new user to Firebase:', err)
+    );
+    showToast(`মেম্বার (${newUser.name}) সফলভাবে যুক্ত করা হয়েছে!`, 'success');
+    return { success: true, message: 'মেম্বার যুক্ত হয়েছে' };
   };
 
   const switchUser = (email: string) => {
@@ -1590,6 +1859,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         rejectWithdrawal,
         adjustUserBalance,
         updateUserRole,
+        updateUserStatus,
+        updateUserTier,
+        deleteUser,
+        addUserManually,
         switchUser,
         exchangeCurrency,
         reviews,
@@ -1598,6 +1871,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addNotification,
         markNotificationRead,
         markAllNotificationsRead,
+        deleteNotification,
+        clearAllNotifications,
         toasts,
         showToast,
         loginAsAdmin,

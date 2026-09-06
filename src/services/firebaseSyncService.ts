@@ -214,51 +214,97 @@ export async function saveUserToFirebase(user: User): Promise<{ success: boolean
 }
 
 /**
+ * Delete user from Firebase (Firestore and Realtime Database)
+ */
+export async function deleteUserFromFirebase(userId: string): Promise<boolean> {
+  let deleted = false;
+  if (firestore) {
+    try {
+      const { deleteDoc } = await import('firebase/firestore');
+      const userDocRef = doc(firestore, 'users', userId);
+      await deleteDoc(userDocRef);
+      deleted = true;
+    } catch (err) {
+      console.warn('[Firebase] Firestore delete user error:', err);
+    }
+  }
+  if (db) {
+    try {
+      const { remove } = await import('firebase/database');
+      const userRef = ref(db, `users/${userId}`);
+      await remove(userRef);
+      deleted = true;
+    } catch (err) {
+      console.warn('[Firebase] RTDB delete user error:', err);
+    }
+  }
+  return deleted;
+}
+
+/**
  * Trigger email verification to Firebase user
  */
-export async function sendVerificationEmailToUser(firebaseUser: FirebaseUser): Promise<{ success: boolean; message?: string }> {
+export async function sendVerificationEmailToUser(firebaseUser: FirebaseUser): Promise<{ success: boolean; message?: string; code?: string }> {
   try {
+    if (!firebaseUser) {
+      return { success: false, message: 'ইউজার লগইন করা নেই।' };
+    }
     await sendEmailVerification(firebaseUser);
     return {
       success: true,
-      message: 'ভেরিফিকেশন ইমেইল সফলভাবে পাঠানো হয়েছে। অনুগ্রহ করে ইনবক্স বা স্প্যাম ফোল্ডার চেক করুন।',
+      message: 'ভেরিফিকেশন ইমেইল সফলভাবে পাঠানো হয়েছে। অনুগ্রহ করে আপনার ইনবক্স অথবা স্প্যাম (Spam/Junk) ফোল্ডার চেক করুন।',
     };
   } catch (err: any) {
-    console.warn('Verification email error:', err);
+    console.warn('[Firebase] Verification email error:', err);
     let msg = 'ভেরিফিকেশন ইমেইল পাঠানো সম্ভব হয়নি।';
-    if (err.code === 'auth/too-many-requests') {
-      msg = 'অতিরিক্ত অনুরোধ করা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।';
+    const code = err.code || '';
+    if (code === 'auth/too-many-requests') {
+      msg = 'অতিরিক্ত অনুরোধ করা হয়েছে। ফায়ারবেস সিকিউরিটির জন্য কিছুক্ষণ পর আবার চেষ্টা করুন।';
+    } else if (code === 'auth/user-token-expired') {
+      msg = 'সেশন মেয়াদোত্তীর্ণ হয়েছে। অনুগ্রহ করে পুনরায় লগইন করে চেষ্টা করুন।';
+    } else if (code === 'auth/network-request-failed') {
+      msg = 'ইন্টারনেট সংযোগে সমস্যা হয়েছে। সংযোগ পরীক্ষা করুন।';
     } else if (err.message) {
-      msg = err.message;
+      msg = `ত্রুটি (${code || 'unknown'}): ${err.message}`;
     }
-    return { success: false, message: msg };
+    return { success: false, message: msg, code };
   }
 }
 
 /**
  * Trigger password reset email from Firebase Auth
  */
-export async function sendPasswordReset(emailVal: string): Promise<{ success: boolean; message?: string }> {
+export async function sendPasswordReset(emailVal: string): Promise<{ success: boolean; message?: string; code?: string }> {
   try {
     if (!auth) return { success: false, message: 'Firebase Auth প্রস্তুত নয়।' };
-    await sendPasswordResetEmail(auth, emailVal.trim());
+    const cleanEmail = (emailVal || '').trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { success: false, message: 'অনুগ্রহ করে সঠিক জিমেইল বা ইমেইল ঠিকানা দিন।' };
+    }
+    
+    await sendPasswordResetEmail(auth, cleanEmail);
     return {
       success: true,
-      message: 'পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে সফলভাবে পাঠানো হয়েছে!',
+      message: `পাসওয়ার্ড রিসেট লিংক (${cleanEmail}) ঠিকানায় পাঠানো হয়েছে! আপনার ইনবক্স এবং স্প্যাম (Spam / Junk) ফোল্ডার চেক করুন।`,
     };
   } catch (err: any) {
-    console.warn('Password reset error:', err);
+    console.warn('[Firebase] Password reset error:', err);
     let msg = 'পাসওয়ার্ড রিসেট ইমেইল পাঠানো সম্ভব হয়নি।';
-    if (err.code === 'auth/user-not-found') {
-      msg = 'এই ইমেইলে কোনো অ্যাকাউন্ট পাওয়া যায়নি।';
-    } else if (err.code === 'auth/invalid-email') {
-      msg = 'সঠিক ইমেইল ঠিকানা প্রদান করুন।';
-    } else if (err.code === 'auth/too-many-requests') {
-      msg = 'অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।';
+    const code = err.code || '';
+    if (code === 'auth/user-not-found') {
+      msg = 'এই ইমেইলে কোনো ফায়ারবেস একাউন্ট পাওয়া যায়নি। অনুগ্রহ করে সঠিক জিমেইল দিন।';
+    } else if (code === 'auth/invalid-email') {
+      msg = 'সঠিক ফরম্যাটের ইমেইল ঠিকানা প্রদান করুন।';
+    } else if (code === 'auth/too-many-requests') {
+      msg = 'অতিরিক্ত রিকোয়েস্ট পাঠানো হয়েছে। ফায়ারবেস সিকিউরিটির কারণে কিছুক্ষণ অপেক্ষা করে আবার চেষ্টা করুন।';
+    } else if (code === 'auth/unauthorized-continue-uri') {
+      msg = 'ফায়ারবেস কনসোলে ডোমেইনটি Authorized Domains তালিকায় যুক্ত করা নেই।';
+    } else if (code === 'auth/network-request-failed') {
+      msg = 'নেটওয়ার্ক রিকোয়েস্ট ব্যর্থ হয়েছে। ইন্টারনেট সংযোগ পরীক্ষা করুন।';
     } else if (err.message) {
-      msg = err.message;
+      msg = `ত্রুটি (${code || 'error'}): ${err.message}`;
     }
-    return { success: false, message: msg };
+    return { success: false, message: msg, code };
   }
 }
 

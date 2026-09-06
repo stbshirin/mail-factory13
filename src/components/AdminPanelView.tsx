@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../AppContext';
-import { MailBatch, MarketplaceItem, PaymentMethod, MailType } from '../types';
+import { MailBatch, MarketplaceItem, PaymentMethod, MailType, User, UserRole, MemberTier } from '../types';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -27,6 +27,17 @@ import {
   MailCheck,
   HelpCircle,
   Send,
+  UserPlus,
+  UserCheck,
+  UserX,
+  Trash2,
+  Shield,
+  Award,
+  Filter,
+  Phone,
+  Mail,
+  Ban,
+  UserCog,
 } from 'lucide-react';
 
 export const AdminPanelView: React.FC = () => {
@@ -46,12 +57,17 @@ export const AdminPanelView: React.FC = () => {
     allUsers,
     adjustUserBalance,
     updateUserRole,
+    updateUserStatus,
+    updateUserTier,
+    deleteUser,
+    addUserManually,
     currentUser,
     switchUser,
     showToast,
     isAdmin,
     syncFirebaseData,
     checkFirebaseHealth,
+    firebaseResetPassword,
   } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState<
@@ -60,6 +76,35 @@ export const AdminPanelView: React.FC = () => {
 
   const [isSyncingFirebase, setIsSyncingFirebase] = useState(false);
   const [showFirebaseTroubleshooting, setShowFirebaseTroubleshooting] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState(currentUser?.email || 'stb.shirin@gmail.com');
+  const [isTestingEmail, setIsTestingEmail] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message?: string; code?: string } | null>(null);
+
+  const handleSendTestEmail = async () => {
+    if (!testEmailAddress.trim()) {
+      showToast('অনুগ্রহ করে টেস্ট ইমেইল ঠিকানা লিখুন', 'error');
+      return;
+    }
+    setIsTestingEmail(true);
+    setTestEmailResult(null);
+    try {
+      const res = await firebaseResetPassword(testEmailAddress.trim());
+      setTestEmailResult(res);
+      if (res.success) {
+        showToast('টেস্ট ইমেইল পাঠানো হয়েছে! ইনবক্স অথবা Spam ফোল্ডার চেক করুন।', 'success');
+      } else {
+        showToast(res.message || 'ইমেইল পাঠানো ব্যর্থ হয়েছে', 'error');
+      }
+    } catch (err: any) {
+      setTestEmailResult({
+        success: false,
+        message: err.message || 'অপ্রত্যাশিত সমস্যা হয়েছে',
+        code: err.code,
+      });
+    } finally {
+      setIsTestingEmail(false);
+    }
+  };
   const [firebaseStatusInfo, setFirebaseStatusInfo] = useState<{
     firestore: boolean;
     rtdb: boolean;
@@ -111,10 +156,41 @@ export const AdminPanelView: React.FC = () => {
   const [stockItem, setStockItem] = useState<MarketplaceItem | null>(null);
   const [newStockMailsText, setNewStockMailsText] = useState('');
 
+  // Member Management Filters & States
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState<'all' | 'admin' | 'moderator' | 'user'>('all');
+  const [userStatusFilter, setUserStatusFilter] = useState<'all' | 'active' | 'banned'>('all');
+  const [userTierFilter, setUserTierFilter] = useState<string>('all');
+
   // User balance modal
-  const [selectedUserForBalance, setSelectedUserForBalance] = useState<{ id: string; name: string; current: number } | null>(null);
+  const [selectedUserForBalance, setSelectedUserForBalance] = useState<{
+    id: string;
+    name: string;
+    email: string;
+    currentBdt: number;
+    currentUsd: number;
+  } | null>(null);
+  const [balanceCurrency, setBalanceCurrency] = useState<'BDT' | 'USD'>('BDT');
   const [balanceDeltaInput, setBalanceDeltaInput] = useState<number>(100);
   const [balanceReasonInput, setBalanceReasonInput] = useState('সেলার বোনাস / ম্যানুয়াল অ্যাডজাস্টমেন্ট');
+
+  // Add Member Modal State
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberEmail, setNewMemberEmail] = useState('');
+  const [newMemberPhone, setNewMemberPhone] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState<UserRole>('user');
+  const [newMemberTier, setNewMemberTier] = useState<MemberTier>('Silver');
+  const [newMemberInitialBalance, setNewMemberInitialBalance] = useState<number>(0);
+
+  // Edit Member Modal State
+  const [editMemberModalUser, setEditMemberModalUser] = useState<User | null>(null);
+  const [editRole, setEditRole] = useState<UserRole>('user');
+  const [editTier, setEditTier] = useState<MemberTier>('Silver');
+  const [editPhone, setEditPhone] = useState('');
+
+  // Delete User Confirm Modal State
+  const [deleteConfirmUser, setDeleteConfirmUser] = useState<User | null>(null);
 
   // Batch filters
   const [batchStatusFilter, setBatchStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
@@ -179,9 +255,62 @@ export const AdminPanelView: React.FC = () => {
   const handleBalanceAdjustment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUserForBalance) return;
-    adjustUserBalance(selectedUserForBalance.id, balanceDeltaInput, balanceReasonInput);
+    adjustUserBalance(selectedUserForBalance.id, balanceDeltaInput, balanceReasonInput, balanceCurrency);
     setSelectedUserForBalance(null);
   };
+
+  const handleCreateMemberSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMemberName.trim() || !newMemberEmail.trim()) {
+      showToast('নাম এবং ইমেইল প্রদান করুন', 'error');
+      return;
+    }
+    addUserManually({
+      name: newMemberName.trim(),
+      email: newMemberEmail.trim().toLowerCase(),
+      phone: newMemberPhone.trim(),
+      role: newMemberRole,
+      tier: newMemberTier,
+      initialBalanceBdt: Number(newMemberInitialBalance) || 0,
+    });
+    setShowAddMemberModal(false);
+    setNewMemberName('');
+    setNewMemberEmail('');
+    setNewMemberPhone('');
+    setNewMemberRole('user');
+    setNewMemberTier('Silver');
+    setNewMemberInitialBalance(0);
+  };
+
+  const handleSaveEditMemberSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editMemberModalUser) return;
+    updateUserRole(editMemberModalUser.id, editRole);
+    updateUserTier(editMemberModalUser.id, editTier);
+    setEditMemberModalUser(null);
+    showToast('মেম্বার প্রোফাইল সফলভাবে আপডেট হয়েছে', 'success');
+  };
+
+  const handleConfirmDeleteUser = () => {
+    if (!deleteConfirmUser) return;
+    deleteUser(deleteConfirmUser.id);
+    setDeleteConfirmUser(null);
+  };
+
+  const filteredUsers = userList.filter(u => {
+    if (userSearchQuery.trim()) {
+      const q = userSearchQuery.toLowerCase();
+      const matchName = u.name?.toLowerCase().includes(q);
+      const matchEmail = u.email?.toLowerCase().includes(q);
+      const matchPhone = u.phone?.toLowerCase().includes(q);
+      if (!matchName && !matchEmail && !matchPhone) return false;
+    }
+    if (userRoleFilter !== 'all' && u.role !== userRoleFilter) return false;
+    if (userStatusFilter === 'active' && u.isBanned) return false;
+    if (userStatusFilter === 'banned' && !u.isBanned) return false;
+    if (userTierFilter !== 'all' && u.tier !== userTierFilter) return false;
+    return true;
+  });
 
   const downloadBatchTxt = (b: MailBatch) => {
     const text = b.mails.map(m => `${m.email}:${m.password}:${m.recoveryEmail}`).join('\n');
@@ -426,6 +555,60 @@ export const AdminPanelView: React.FC = () => {
                       অ্যাপে সেলারদের সাবমিট করা জিমেইলগুলো স্বয়ংক্রিয়ভাবে ক্লাউড ডেটাবেজে জমা হচ্ছে। "Firebase এ সিঙ্ক করুন" বাটনে ক্লিক করলে লোকাল সব ব্যাচও ক্লাউডে আপডেট হবে।
                     </p>
                   </div>
+                </div>
+
+                {/* Live Firebase Email Diagnostic Tester */}
+                <div className="mt-3 p-3.5 rounded-xl bg-slate-900/90 border border-indigo-500/30 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-indigo-300 flex items-center gap-1.5 text-xs">
+                      <Mail className="w-4 h-4 text-indigo-400" />
+                      <span>Firebase ইমেইল লাইভ টেস্ট ও ডায়াগনস্টিক টুল:</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400">যেকোনো ইমেইলে রিসেট লিংক পাঠিয়ে টেস্ট করুন</span>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="email"
+                      value={testEmailAddress}
+                      onChange={e => setTestEmailAddress(e.target.value)}
+                      placeholder="e.g. stb.shirin@gmail.com"
+                      className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs font-mono focus:outline-none focus:border-indigo-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSendTestEmail}
+                      disabled={isTestingEmail}
+                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer transition-all"
+                    >
+                      <Send className={`w-3.5 h-3.5 ${isTestingEmail ? 'animate-spin' : ''}`} />
+                      <span>{isTestingEmail ? 'পাঠানো হচ্ছে...' : 'টেস্ট ইমেইল পাঠান'}</span>
+                    </button>
+                  </div>
+
+                  {testEmailResult && (
+                    <div
+                      className={`p-2.5 rounded-xl border text-xs flex items-start gap-2 ${
+                        testEmailResult.success
+                          ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                          : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
+                      }`}
+                    >
+                      {testEmailResult.success ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                      )}
+                      <div>
+                        <div className="font-bold">{testEmailResult.message}</div>
+                        {testEmailResult.code && (
+                          <div className="text-[11px] font-mono opacity-80 mt-0.5">
+                            Firebase Error Code: {testEmailResult.code}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -896,71 +1079,394 @@ export const AdminPanelView: React.FC = () => {
         </div>
       )}
 
-      {/* SUBTAB 5: USERS & BALANCE MANAGEMENT */}
+      {/* SUBTAB 5: USERS & MEMBER MANAGEMENT */}
       {activeSubTab === 'users' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-black text-white">নিবন্ধিত ইউজার ও ব্যালেন্স মডিফিকেশন</h2>
-              <p className="text-xs text-slate-400">ইউজারদের ওয়ালেটে ম্যানুয়ালি ব্যালেন্স অ্যাড বা ডিক্রিজ করুন</p>
+        <div className="space-y-6">
+          {/* Top Member Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
+              <div className="flex items-center justify-between text-slate-400 mb-1">
+                <span className="text-xs font-semibold">মোট মেম্বার</span>
+                <Users className="w-4 h-4 text-amber-400" />
+              </div>
+              <div className="text-2xl font-black text-white">{userList.length}</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">নিবন্ধিত অ্যাকাউন্ট</div>
             </div>
-            <span className="text-xs font-bold text-amber-400">মোট ইউজার: {userList.length} জন</span>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
+              <div className="flex items-center justify-between text-slate-400 mb-1">
+                <span className="text-xs font-semibold">সাধারণ ইউজার</span>
+                <Users className="w-4 h-4 text-blue-400" />
+              </div>
+              <div className="text-2xl font-black text-white">
+                {userList.filter(u => u.role === 'user').length}
+              </div>
+              <div className="text-[11px] text-blue-400/80 mt-0.5">নিয়মিত গ্রাহক ও বিক্রেতা</div>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
+              <div className="flex items-center justify-between text-slate-400 mb-1">
+                <span className="text-xs font-semibold">এডমিন ও মডারেটর</span>
+                <Shield className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div className="text-2xl font-black text-emerald-400">
+                {userList.filter(u => u.role === 'admin' || u.role === 'moderator').length}
+              </div>
+              <div className="text-[11px] text-emerald-500/80 mt-0.5">ম্যানেজমেন্ট স্টাফ</div>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
+              <div className="flex items-center justify-between text-slate-400 mb-1">
+                <span className="text-xs font-semibold">ব্যানড / স্থগিত</span>
+                <Ban className="w-4 h-4 text-rose-400" />
+              </div>
+              <div className="text-2xl font-black text-rose-400">
+                {userList.filter(u => u.isBanned).length}
+              </div>
+              <div className="text-[11px] text-rose-500/80 mt-0.5">স্থগিত মেম্বার</div>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg col-span-2 sm:col-span-1">
+              <div className="flex items-center justify-between text-slate-400 mb-1">
+                <span className="text-xs font-semibold">মোট সঞ্চিত BDT</span>
+                <DollarSign className="w-4 h-4 text-amber-400" />
+              </div>
+              <div className="text-2xl font-black text-amber-400">
+                ৳{userList.reduce((acc, u) => acc + (u.balanceBdt || 0), 0).toFixed(2)}
+              </div>
+              <div className="text-[11px] text-slate-500 mt-0.5">ইউজার ওয়ালেট সঞ্চয়</div>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-800/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700">
-                <tr>
-                  <th className="py-3 px-4 font-semibold">ইউজার নাম</th>
-                  <th className="py-3 px-4 font-semibold">ইমেইল</th>
-                  <th className="py-3 px-4 font-semibold">রোল</th>
-                  <th className="py-3 px-4 font-semibold">BDT ব্যালেন্স</th>
-                  <th className="py-3 px-4 font-semibold">USD ব্যালেন্স</th>
-                  <th className="py-3 px-4 font-semibold">মোট মেইল বিক্রি</th>
-                  <th className="py-3 px-4 font-semibold text-right">ব্যালেন্স অ্যাডজাস্ট</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800">
-                {userList.map(u => (
-                  <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
-                      <span>{u.name}</span>
-                      {u.email === 'soheltajbhola@gmail.com' && (
-                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-500 text-slate-950">
-                          SUPER ADMIN
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-4 font-mono text-slate-400">{u.email}</td>
-                    <td className="py-3.5 px-4">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          u.role === 'admin'
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : 'bg-slate-800 text-slate-300'
-                        }`}
-                      >
-                        {u.role.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 font-black text-amber-400 text-sm">৳{u.balanceBdt.toFixed(2)}</td>
-                    <td className="py-3.5 px-4 font-bold text-slate-200">${u.balanceUsd.toFixed(2)}</td>
-                    <td className="py-3.5 px-4 font-semibold text-white">{u.totalMailsSold} টি</td>
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() =>
-                          setSelectedUserForBalance({ id: u.id, name: u.name, current: u.balanceBdt })
-                        }
-                        className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs border border-amber-500/40 inline-flex items-center gap-1"
-                      >
-                        <DollarSign className="w-3.5 h-3.5" />
-                        <span>ব্যালেন্স পরিবর্তন</span>
-                      </button>
-                    </td>
+          {/* Member Management Box */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl space-y-5">
+            {/* Action & Header Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div>
+                <h2 className="text-xl font-black text-white flex items-center gap-2">
+                  <UserCog className="w-5 h-5 text-amber-400" />
+                  <span>মেম্বার ও পারমিশন কন্ট্রোল প্যানেল</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  ইউজারদের রোল পরিবর্তন, টায়ার অ্যাসাইন, ওয়ালেট ব্যালেন্স অ্যাডজাস্ট ও একাউন্ট পরিচালনা করুন
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleManualFirebaseSync}
+                  disabled={isSyncingFirebase}
+                  className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold inline-flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                  title="ফায়ারবেস ক্লাউড ডেটা রিফ্রেশ করুন"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncingFirebase ? 'animate-spin text-amber-400' : ''}`} />
+                  <span>{isSyncingFirebase ? 'সিঙ্ক হচ্ছে...' : 'Firebase রিফ্রেশ'}</span>
+                </button>
+
+                <button
+                  onClick={() => setShowAddMemberModal(true)}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 inline-flex items-center gap-1.5 transition-all"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>নতুন মেম্বার যুক্ত করুন</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Search & Filters */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {/* Search */}
+              <div className="relative lg:col-span-2">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={userSearchQuery}
+                  onChange={e => setUserSearchQuery(e.target.value)}
+                  placeholder="নাম, ইমেইল বা ফোন নম্বর দিয়ে খুঁজুন..."
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                />
+                {userSearchQuery && (
+                  <button
+                    onClick={() => setUserSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Role filter */}
+              <div>
+                <select
+                  value={userRoleFilter}
+                  onChange={e => setUserRoleFilter(e.target.value as any)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                >
+                  <option value="all">সকল রোল (All Roles)</option>
+                  <option value="user">সাধারণ ইউজার (User)</option>
+                  <option value="moderator">মডারেটর (Moderator)</option>
+                  <option value="admin">অ্যাডমিন (Admin)</option>
+                </select>
+              </div>
+
+              {/* Status filter */}
+              <div>
+                <select
+                  value={userStatusFilter}
+                  onChange={e => setUserStatusFilter(e.target.value as any)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                >
+                  <option value="all">সকল স্ট্যাটাস (All Status)</option>
+                  <option value="active">সক্রিয় মেম্বার (Active)</option>
+                  <option value="banned">স্থগিত / ব্যানড (Banned)</option>
+                </select>
+              </div>
+
+              {/* Tier filter */}
+              <div>
+                <select
+                  value={userTierFilter}
+                  onChange={e => setUserTierFilter(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                >
+                  <option value="all">সকল টায়ার (All Tiers)</option>
+                  <option value="Bronze">ব্রোঞ্জ (Bronze)</option>
+                  <option value="Silver">সিলভার (Silver)</option>
+                  <option value="Gold">গোল্ড (Gold)</option>
+                  <option value="Diamond">ডায়মন্ড (Diamond)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* User count badge */}
+            <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+              <span>
+                ফিল্টার ফলাফল: <strong className="text-amber-400">{filteredUsers.length}</strong> জন মেম্বার
+              </span>
+              {(userSearchQuery || userRoleFilter !== 'all' || userStatusFilter !== 'all' || userTierFilter !== 'all') && (
+                <button
+                  onClick={() => {
+                    setUserSearchQuery('');
+                    setUserRoleFilter('all');
+                    setUserStatusFilter('all');
+                    setUserTierFilter('all');
+                  }}
+                  className="text-amber-400 hover:underline text-xs"
+                >
+                  ফিল্টার ক্লিয়ার করুন
+                </button>
+              )}
+            </div>
+
+            {/* Users Table */}
+            <div className="overflow-x-auto rounded-2xl border border-slate-800">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-800/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700">
+                  <tr>
+                    <th className="py-3.5 px-4 font-semibold">মেম্বার প্রোফাইল</th>
+                    <th className="py-3.5 px-4 font-semibold">রোল (Role)</th>
+                    <th className="py-3.5 px-4 font-semibold">টায়ার (Tier)</th>
+                    <th className="py-3.5 px-4 font-semibold">BDT ব্যালেন্স</th>
+                    <th className="py-3.5 px-4 font-semibold">USD ব্যালেন্স</th>
+                    <th className="py-3.5 px-4 font-semibold">মেইল বিক্রি</th>
+                    <th className="py-3.5 px-4 font-semibold">স্ট্যাটাস</th>
+                    <th className="py-3.5 px-4 font-semibold text-right">অ্যাকশন</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-800/70 bg-slate-900/50">
+                  {filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-12 text-center text-slate-500">
+                        <Users className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                        <p className="font-semibold">কোনো মেম্বার পাওয়া যায়নি</p>
+                        <p className="text-[11px] mt-1">অনুসন্ধান বা ফিল্টার পরিবর্তন করে পুনরায় চেষ্টা করুন</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map(u => {
+                      const isSuperAdmin = u.email === 'soheltajbhola@gmail.com' || u.email === 'stb.shirin@gmail.com';
+                      const isMe = currentUser.id === u.id;
+
+                      return (
+                        <tr key={u.id} className="hover:bg-slate-800/50 transition-colors">
+                          {/* Member info */}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 flex items-center justify-center font-black text-white text-xs shrink-0">
+                                {u.name ? u.name.charAt(0).toUpperCase() : 'U'}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-bold text-white flex items-center gap-1.5 flex-wrap">
+                                  <span>{u.name}</span>
+                                  {isSuperAdmin && (
+                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500 text-slate-950">
+                                      SUPER ADMIN
+                                    </span>
+                                  )}
+                                  {isMe && (
+                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/30 text-blue-300 border border-blue-500/40">
+                                      YOU
+                                    </span>
+                                  )}
+                                  {u.isBanned && (
+                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/30 text-rose-300 border border-rose-500/40">
+                                      স্থগিত
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-slate-400 font-mono truncate">{u.email}</div>
+                                {u.phone && (
+                                  <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                                    <Phone className="w-2.5 h-2.5" />
+                                    <span>{u.phone}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Role */}
+                          <td className="py-3.5 px-4">
+                            {isSuperAdmin ? (
+                              <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 inline-flex items-center gap-1">
+                                <ShieldCheck className="w-3 h-3" />
+                                <span>ADMIN</span>
+                              </span>
+                            ) : (
+                              <select
+                                value={u.role}
+                                onChange={e => updateUserRole(u.id, e.target.value as UserRole)}
+                                className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[11px] font-semibold text-white focus:outline-none focus:border-amber-500 cursor-pointer"
+                              >
+                                <option value="user">User (ইউজার)</option>
+                                <option value="moderator">Moderator (মডারেটর)</option>
+                                <option value="admin">Admin (অ্যাডমিন)</option>
+                              </select>
+                            )}
+                          </td>
+
+                          {/* Tier */}
+                          <td className="py-3.5 px-4">
+                            <select
+                              value={u.tier || 'Silver'}
+                              onChange={e => updateUserTier(u.id, e.target.value as MemberTier)}
+                              className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[11px] font-semibold text-amber-300 focus:outline-none focus:border-amber-500 cursor-pointer"
+                            >
+                              <option value="Bronze">Bronze (ব্রোঞ্জ)</option>
+                              <option value="Silver">Silver (সিলভার)</option>
+                              <option value="Gold">Gold (গোল্ড)</option>
+                              <option value="Diamond">Diamond (ডায়মন্ড)</option>
+                            </select>
+                          </td>
+
+                          {/* BDT Balance */}
+                          <td className="py-3.5 px-4">
+                            <span className="font-black text-amber-400 text-sm">
+                              ৳{(u.balanceBdt || 0).toFixed(2)}
+                            </span>
+                          </td>
+
+                          {/* USD Balance */}
+                          <td className="py-3.5 px-4">
+                            <span className="font-bold text-slate-200">
+                              ${(u.balanceUsd || 0).toFixed(2)}
+                            </span>
+                          </td>
+
+                          {/* Mails Sold */}
+                          <td className="py-3.5 px-4 font-semibold text-white">
+                            <span className="px-2 py-0.5 rounded bg-slate-800 text-[11px]">
+                              {u.totalMailsSold || 0} টি
+                            </span>
+                          </td>
+
+                          {/* Status */}
+                          <td className="py-3.5 px-4">
+                            {u.isBanned ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                                BANNED
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                ACTIVE
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Balance adjustment */}
+                              <button
+                                onClick={() => {
+                                  setSelectedUserForBalance({
+                                    id: u.id,
+                                    name: u.name,
+                                    email: u.email,
+                                    currentBdt: u.balanceBdt || 0,
+                                    currentUsd: u.balanceUsd || 0,
+                                  });
+                                  setBalanceDeltaInput(100);
+                                  setBalanceCurrency('BDT');
+                                }}
+                                className="p-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-colors"
+                                title="ব্যালেন্স অ্যাডজাস্ট করুন"
+                              >
+                                <DollarSign className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* Edit details */}
+                              <button
+                                onClick={() => {
+                                  setEditMemberModalUser(u);
+                                  setEditRole(u.role);
+                                  setEditTier(u.tier || 'Silver');
+                                  setEditPhone(u.phone || '');
+                                }}
+                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+                                title="মেম্বার এডিট করুন"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* Ban / Unban Toggle (disabled for super admins) */}
+                              {!isSuperAdmin && (
+                                <button
+                                  onClick={() => updateUserStatus(u.id, !u.isBanned)}
+                                  className={`p-1.5 rounded-lg border transition-colors ${
+                                    u.isBanned
+                                      ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/40'
+                                      : 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/40'
+                                  }`}
+                                  title={u.isBanned ? 'একাউন্ট সক্রিয় করুন' : 'একাউন্ট স্থগিত / ব্যান করুন'}
+                                >
+                                  {u.isBanned ? (
+                                    <UserCheck className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <Ban className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              )}
+
+                              {/* Delete (disabled for super admins) */}
+                              {!isSuperAdmin && (
+                                <button
+                                  onClick={() => setDeleteConfirmUser(u)}
+                                  className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition-colors"
+                                  title="মেম্বার মুছে ফেলুন"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -1152,8 +1658,13 @@ readymail2@gmail.com:Pass#2026:rec2@outlook.com`}
           <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div>
-                <h3 className="text-lg font-bold text-white">ব্যালেন্স অ্যাডজাস্টমেন্ট</h3>
-                <p className="text-xs text-slate-400">{selectedUserForBalance.name}</p>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-amber-400" />
+                  <span>ব্যালেন্স অ্যাডজাস্টমেন্ট</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {selectedUserForBalance.name} ({selectedUserForBalance.email})
+                </p>
               </div>
               <button
                 onClick={() => setSelectedUserForBalance(null)}
@@ -1164,18 +1675,59 @@ readymail2@gmail.com:Pass#2026:rec2@outlook.com`}
             </div>
 
             <form onSubmit={handleBalanceAdjustment} className="space-y-4">
-              <div>
-                <span className="text-xs text-slate-400">বর্তমান ব্যালেন্স:</span>
-                <div className="text-2xl font-black text-white">৳{selectedUserForBalance.current.toFixed(2)}</div>
+              {/* Current Balances */}
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-2xl bg-slate-950 border border-slate-800">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400">বর্তমান BDT</span>
+                  <div className="text-lg font-black text-amber-400">
+                    ৳{selectedUserForBalance.currentBdt.toFixed(2)}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400">বর্তমান USD</span>
+                  <div className="text-lg font-black text-slate-200">
+                    ${selectedUserForBalance.currentUsd.toFixed(2)}
+                  </div>
+                </div>
               </div>
 
+              {/* Currency Selector */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">মুদ্রা নির্বাচন করুন:</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setBalanceCurrency('BDT')}
+                    className={`py-2 px-3 rounded-xl font-bold text-xs border transition-all ${
+                      balanceCurrency === 'BDT'
+                        ? 'bg-amber-500/20 border-amber-500/60 text-amber-300 shadow-md shadow-amber-500/10'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    BDT (৳ টাকা)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBalanceCurrency('USD')}
+                    className={`py-2 px-3 rounded-xl font-bold text-xs border transition-all ${
+                      balanceCurrency === 'USD'
+                        ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300 shadow-md shadow-emerald-500/10'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    USD ($ ডলার)
+                  </button>
+                </div>
+              </div>
+
+              {/* Amount input */}
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1">
-                  পরিবর্তনের পরিমাণ (+ বৃদ্ধি / - হ্রাস BDT):
+                  পরিবর্তনের পরিমাণ (+ বৃদ্ধি / - হ্রাস {balanceCurrency}):
                 </label>
                 <input
                   type="number"
-                  step="1"
+                  step="any"
                   value={balanceDeltaInput}
                   onChange={e => setBalanceDeltaInput(Number(e.target.value))}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-black text-lg focus:outline-none focus:border-amber-500"
@@ -1183,6 +1735,28 @@ readymail2@gmail.com:Pass#2026:rec2@outlook.com`}
                 />
               </div>
 
+              {/* Quick Amount Chips */}
+              <div>
+                <label className="block text-[11px] text-slate-400 mb-1">কুইক অ্যামাউন্ট:</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[50, 100, 200, 500, 1000, -100, -500].map(val => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setBalanceDeltaInput(val)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-colors ${
+                        val > 0
+                          ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                          : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border-rose-500/30'
+                      }`}
+                    >
+                      {val > 0 ? `+${val}` : val}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Reason */}
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1">কারণ বা রেফারেন্স নোট:</label>
                 <input
@@ -1190,25 +1764,285 @@ readymail2@gmail.com:Pass#2026:rec2@outlook.com`}
                   value={balanceReasonInput}
                   onChange={e => setBalanceReasonInput(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
+                  placeholder="e.g. সেলার বোনাস / অ্যাডমিন রিফান্ড"
                 />
               </div>
 
-              <div className="flex gap-3">
+              {/* Calculation Preview */}
+              <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                <span>নতুন প্রত্যাশিত ব্যালেন্স:</span>
+                <span className="font-bold text-white">
+                  {balanceCurrency === 'BDT'
+                    ? `৳${Math.max(0, selectedUserForBalance.currentBdt + balanceDeltaInput).toFixed(2)}`
+                    : `$${Math.max(0, selectedUserForBalance.currentUsd + balanceDeltaInput).toFixed(2)}`}
+                </span>
+              </div>
+
+              <div className="flex gap-3 pt-1">
                 <button
                   type="button"
                   onClick={() => setSelectedUserForBalance(null)}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs"
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs hover:bg-slate-700"
                 >
                   বাতিল
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs"
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shadow-lg shadow-emerald-600/20"
                 >
                   ব্যালেন্স পরিবর্তন কনফার্ম
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Member Modal */}
+      {showAddMemberModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">নতুন মেম্বার যুক্ত করুন</h3>
+                  <p className="text-xs text-slate-400">প্ল্যাটফর্মে ম্যানুয়ালি মেম্বার তৈরি করুন</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddMemberModal(false)}
+                className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateMemberSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">মেম্বারের নাম *:</label>
+                <input
+                  type="text"
+                  value={newMemberName}
+                  onChange={e => setNewMemberName(e.target.value)}
+                  placeholder="e.g. মোঃ সাকিব আহমেদ"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">ইমেইল অ্যাড্রেস *:</label>
+                  <input
+                    type="email"
+                    value={newMemberEmail}
+                    onChange={e => setNewMemberEmail(e.target.value)}
+                    placeholder="user@example.com"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">ফোন নম্বর:</label>
+                  <input
+                    type="text"
+                    value={newMemberPhone}
+                    onChange={e => setNewMemberPhone(e.target.value)}
+                    placeholder="01XXXXXXXXX"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">রোল (Role):</label>
+                  <select
+                    value={newMemberRole}
+                    onChange={e => setNewMemberRole(e.target.value as UserRole)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="user">User (সাধারণ মেম্বার)</option>
+                    <option value="moderator">Moderator (মডারেটর)</option>
+                    <option value="admin">Admin (অ্যাডমিন)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">টায়ার (Tier):</label>
+                  <select
+                    value={newMemberTier}
+                    onChange={e => setNewMemberTier(e.target.value as MemberTier)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="Bronze">Bronze (ব্রোঞ্জ)</option>
+                    <option value="Silver">Silver (সিলভার)</option>
+                    <option value="Gold">Gold (গোল্ড)</option>
+                    <option value="Diamond">Diamond (ডায়মন্ড)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  প্রাথমিক ওয়ালেট ব্যালেন্স (BDT):
+                </label>
+                <input
+                  type="number"
+                  value={newMemberInitialBalance}
+                  onChange={e => setNewMemberInitialBalance(Number(e.target.value))}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
+                  min="0"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddMemberModal(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs hover:bg-slate-700"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20"
+                >
+                  মেম্বার যুক্ত করুন
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Member Modal */}
+      {editMemberModalUser && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-blue-500/20 text-blue-400">
+                  <Edit2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">মেম্বার তথ্য পরিবর্তন</h3>
+                  <p className="text-xs text-slate-400">{editMemberModalUser.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditMemberModalUser(null)}
+                className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditMemberSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">ইমেইল (অপরিবর্তনীয়):</label>
+                <input
+                  type="text"
+                  value={editMemberModalUser.email}
+                  disabled
+                  className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2 text-slate-400 text-xs cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">রোল (Role):</label>
+                <select
+                  value={editRole}
+                  onChange={e => setEditRole(e.target.value as UserRole)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
+                >
+                  <option value="user">User (সাধারণ মেম্বার)</option>
+                  <option value="moderator">Moderator (মডারেটর)</option>
+                  <option value="admin">Admin (অ্যাডমিন)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">টায়ার (Tier):</label>
+                <select
+                  value={editTier}
+                  onChange={e => setEditTier(e.target.value as MemberTier)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
+                >
+                  <option value="Bronze">Bronze (ব্রোঞ্জ)</option>
+                  <option value="Silver">Silver (সিলভার)</option>
+                  <option value="Gold">Gold (গোল্ড)</option>
+                  <option value="Diamond">Diamond (ডায়মন্ড)</option>
+                </select>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditMemberModalUser(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs hover:bg-slate-700"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-colors shadow-lg shadow-blue-600/20"
+                >
+                  আপডেট সংরক্ষণ করুন
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete User Confirmation Modal */}
+      {deleteConfirmUser && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-rose-500/50 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-400">
+              <div className="p-3 rounded-2xl bg-rose-500/20 border border-rose-500/30">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white">মেম্বার ডিলিট নিশ্চিতকরণ</h3>
+                <p className="text-xs text-slate-400">এই অ্যাকশনটি বাতিল করা যাবে না</p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
+              <div className="text-white font-bold">{deleteConfirmUser.name}</div>
+              <div className="text-slate-400 font-mono">{deleteConfirmUser.email}</div>
+              <div className="text-amber-400 font-semibold pt-1">
+                ব্যালেন্স: ৳{(deleteConfirmUser.balanceBdt || 0).toFixed(2)} | ${(deleteConfirmUser.balanceUsd || 0).toFixed(2)}
+              </div>
+            </div>
+
+            <p className="text-xs text-rose-300/80 leading-relaxed">
+              সতর্কতা: এই মেম্বারকে ডিলিট করলে ক্লাউড ফায়ারবেস (Firestore এবং Realtime Database) ও লোকাল স্টোর থেকে তার সমস্ত তথ্য সম্পূর্ণ মুছে যাবে।
+            </p>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmUser(null)}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteUser}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-lg shadow-rose-600/30 transition-all inline-flex items-center justify-center gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>হ্যাঁ, ডিলিট করুন</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
