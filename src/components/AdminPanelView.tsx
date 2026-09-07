@@ -41,6 +41,7 @@ import {
   Bell,
   Star,
   MessageSquare,
+  Copy,
 } from 'lucide-react';
 
 export const AdminPanelView: React.FC = () => {
@@ -78,6 +79,7 @@ export const AdminPanelView: React.FC = () => {
     deleteReview,
     notifications,
     sendAdminNotification,
+    deleteNotification,
     t,
   } = useApp();
 
@@ -1616,6 +1618,19 @@ export const AdminPanelView: React.FC = () => {
                                 <DollarSign className="w-3.5 h-3.5" />
                               </button>
 
+                              {/* Send direct notification */}
+                              <button
+                                onClick={() => {
+                                  setNotifTarget(u.id);
+                                  setActiveSubTab('notifications');
+                                  showToast(`${u.name}-কে নোটিফিকেশন পাঠানোর প্যানেল ওপেন হয়েছে`, 'info');
+                                }}
+                                className="p-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 transition-colors"
+                                title="এই মেম্বারকে সরাসরি নোটিফিকেশন পাঠান"
+                              >
+                                <Bell className="w-3.5 h-3.5" />
+                              </button>
+
                               {/* Edit details */}
                               <button
                                 onClick={() => {
@@ -1837,13 +1852,25 @@ export const AdminPanelView: React.FC = () => {
                         <p className="text-xs text-slate-300">{n.message}</p>
                       </div>
 
-                      <div className="text-right text-[11px] text-slate-400 flex-shrink-0 font-mono">
-                        {new Date(n.timestamp).toLocaleString('bn-BD', {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                      <div className="flex items-center gap-3 self-end sm:self-center flex-shrink-0">
+                        <div className="text-right text-[11px] text-slate-400 font-mono">
+                          {new Date(n.timestamp).toLocaleString('bn-BD', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                        <button
+                          onClick={() => {
+                            deleteNotification(n.id);
+                            showToast('নোটিফিকেশনটি মুছে ফেলা হয়েছে', 'info');
+                          }}
+                          className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors"
+                          title="এই নোটিফিকেশন হিস্ট্রি থেকে মুছে ফেলুন"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -2069,23 +2096,90 @@ export const AdminPanelView: React.FC = () => {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-slate-300">মেইল তালিকা ({selectedBatch.mails?.length || 0}টি):</span>
-                <button
-                  onClick={() => downloadBatchTxt(selectedBatch)}
-                  className="text-xs text-amber-400 hover:underline flex items-center gap-1"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>.txt ডাউনলোড</span>
-                </button>
+              <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+                <span className="text-xs font-bold text-slate-300">
+                  মেইল তালিকা ({selectedBatch.mails?.length || 0}টি):
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const allText = (selectedBatch.mails || [])
+                        .map(m => `${m.email}:${m.password}:${m.recoveryEmail || ''}`)
+                        .join('\n');
+                      navigator.clipboard.writeText(allText);
+                      showToast('সবগুলো ক্রেডেনশিয়াল ক্লিপবোর্ডে কপি করা হয়েছে', 'success');
+                    }}
+                    className="text-xs px-2.5 py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 flex items-center gap-1 transition-all"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>সব কপি করুন</span>
+                  </button>
+                  <button
+                    onClick={() => downloadBatchTxt(selectedBatch)}
+                    className="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 flex items-center gap-1 transition-all"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>.txt ডাউনলোড</span>
+                  </button>
+                </div>
               </div>
-              <div className="max-h-60 overflow-y-auto bg-slate-950 border border-slate-800 rounded-2xl p-4 font-mono text-xs text-slate-200 space-y-1 select-all">
+
+              <div className="max-h-64 overflow-y-auto bg-slate-950 border border-slate-800 rounded-2xl p-3 font-mono text-xs text-slate-200 space-y-2 select-all">
                 {selectedBatch.mails.map((m, i) => (
-                  <div key={i} className="flex items-center justify-between border-b border-slate-900/60 pb-1">
-                    <span>
-                      {m.email}:{m.password}:{m.recoveryEmail}
-                    </span>
-                    <span className="text-[10px] text-emerald-400">✓ Ready</span>
+                  <div
+                    key={i}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 rounded-xl bg-slate-900/80 border border-slate-800/80 hover:border-slate-700 transition-all"
+                  >
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <span className="text-slate-500 font-sans font-bold text-[10px] w-4">{i + 1}.</span>
+                      <span className="text-white font-medium select-all">{m.email}</span>
+                      <span className="text-slate-500">:</span>
+                      <span className="text-amber-300 font-semibold select-all">{m.password}</span>
+                      {m.recoveryEmail && (
+                        <>
+                          <span className="text-slate-500">:</span>
+                          <span className="text-slate-400 text-[11px] select-all">{m.recoveryEmail}</span>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 self-end sm:self-center flex-shrink-0">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(m.email);
+                          showToast(`ইমেইল কপি করা হয়েছে: ${m.email}`, 'info');
+                        }}
+                        className="px-2 py-1 rounded-md bg-slate-800 hover:bg-indigo-600/30 text-indigo-300 border border-slate-700 hover:border-indigo-500/50 text-[10px] font-sans font-semibold flex items-center gap-1 transition-colors"
+                        title="শুধু ইমেইল কপি করুন"
+                      >
+                        <Copy className="w-2.5 h-2.5" />
+                        <span>ইমেইল</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(m.password);
+                          showToast('পাসওয়ার্ড ক্লিপবোর্ডে কপি করা হয়েছে', 'info');
+                        }}
+                        className="px-2 py-1 rounded-md bg-slate-800 hover:bg-amber-600/30 text-amber-300 border border-slate-700 hover:border-amber-500/50 text-[10px] font-sans font-semibold flex items-center gap-1 transition-colors"
+                        title="শুধু পাসওয়ার্ড কপি করুন"
+                      >
+                        <Copy className="w-2.5 h-2.5" />
+                        <span>পাসওয়ার্ড</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const line = `${m.email}:${m.password}:${m.recoveryEmail || ''}`;
+                          navigator.clipboard.writeText(line);
+                          showToast('সম্পূর্ণ লাইন কপি হয়েছে', 'info');
+                        }}
+                        className="p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[10px]"
+                        title="সম্পূর্ণ লাইন কপি করুন"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -186,12 +186,19 @@ export interface NotificationItem {
   userId: string;
   title: string;
   message: string;
-  type: 'payment' | 'order' | 'system' | 'review' | 'mail_sale' | 'deposit' | 'exchange';
-  category?: 'mail_sold' | 'deposit_confirmed' | 'exchange_offer' | 'general';
+  type: 'payment' | 'order' | 'system' | 'review' | 'mail_sale' | 'deposit' | 'exchange' | 'warning' | 'alert' | 'announcement';
+  category?: 'mail_sold' | 'deposit_confirmed' | 'exchange_offer' | 'general' | 'security' | 'order' | 'payment';
   amount?: number;
   read: boolean;
   timestamp: string;
   link?: string;
+}
+
+export interface TrustCard {
+  id: string;
+  title: string;
+  description: string;
+  iconType?: 'zap' | 'shield' | 'gift' | 'support' | string;
 }
 
 export interface LiveChatMessage {

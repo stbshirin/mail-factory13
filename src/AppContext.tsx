@@ -12,6 +12,7 @@ import {
   NotificationItem,
   PaymentMethod,
   MailType,
+  TrustCard,
 } from './types';
 import {
   initialGuestUser,
@@ -109,6 +110,10 @@ interface AppContextType {
   addMarketplacePackage: (item: Omit<MarketplaceItem, 'id'>) => void;
   addMarketplaceStock: (itemId: string, newMails: string[]) => void;
   deleteMarketplaceItem: (id: string) => void;
+  trustCards: TrustCard[];
+  updateTrustCard: (card: TrustCard) => void;
+  deleteTrustCard: (id: string) => void;
+  addTrustCard: (card: Omit<TrustCard, 'id'>) => void;
   buyerOrders: BuyerOrder[];
   buyMarketplaceItem: (itemId: string, quantity: number) => { success: boolean; message: string; order?: BuyerOrder };
   transactions: Transaction[];
@@ -297,6 +302,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return Array.isArray(loaded) ? loaded : initialMarketplaceItems;
   });
 
+  const defaultTrustCards: TrustCard[] = [
+    {
+      id: 'trust-1',
+      title: 'ইনস্ট্যান্ট ৩ মিনিটে উইথড্র',
+      description: 'বিকাশ ও নগদ পার্সোনালে সর্বনিম্ন মাত্র ৳৫০ উইথড্র করুন কোনো ফি ছাড়া।',
+      iconType: 'zap',
+    },
+    {
+      id: 'trust-2',
+      title: '১০০% রিপ্লেসমেন্ট ওয়ারেন্টি',
+      description: 'কোনো মেইলে সমস্যা হলে ২৪-৪৮ ঘণ্টার মধ্যে সাথে সাথে রিপ্লেসমেন্ট বা রিফান্ড।',
+      iconType: 'shield',
+    },
+    {
+      id: 'trust-3',
+      title: '৫% আজীবন রেফারেল কমিশন',
+      description: 'বন্ধুদের ইনভাইট করুন এবং তাদের প্রতিটি মেইল বিক্রির উপর ৫% বোনাস উপভোগ করুন।',
+      iconType: 'gift',
+    },
+    {
+      id: 'trust-4',
+      title: '২৪/৭ লাইভ অ্যাডমিন সাপোর্ট',
+      description: 'যেকোনো প্রয়োজনে টেলিগ্রাম বা লাইভ চ্যাটে আমাদের অফিশিয়াল অ্যাডমিন সক্রিয়।',
+      iconType: 'support',
+    },
+  ];
+
+  const [trustCards, setTrustCards] = useState<TrustCard[]>(() => {
+    const loaded = loadFromStorage('trust_cards', defaultTrustCards);
+    return Array.isArray(loaded) && loaded.length > 0 ? loaded : defaultTrustCards;
+  });
+
   const [buyerOrders, setBuyerOrders] = useState<BuyerOrder[]>(() => {
     const loaded = loadFromStorage('orders', []);
     return Array.isArray(loaded) ? loaded : [];
@@ -394,6 +431,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     saveToStorage('market_items', marketplaceItems);
   }, [marketplaceItems]);
+
+  useEffect(() => {
+    saveToStorage('trust_cards', trustCards);
+  }, [trustCards]);
 
   useEffect(() => {
     saveToStorage('orders', buyerOrders);
@@ -1349,6 +1390,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('আইটেম ডিলিট করা হয়েছে', 'info');
   };
 
+  const updateTrustCard = (updated: TrustCard) => {
+    setTrustCards(prev => prev.map(c => (c.id === updated.id ? updated : c)));
+    showToast('সুবিধা কার্ড সফলভাবে আপডেট করা হয়েছে', 'success');
+  };
+
+  const deleteTrustCard = (id: string) => {
+    setTrustCards(prev => prev.filter(c => c.id !== id));
+    showToast('সুবিধা কার্ড মুছে ফেলা হয়েছে', 'info');
+  };
+
+  const addTrustCard = (card: Omit<TrustCard, 'id'>) => {
+    const newCard: TrustCard = {
+      ...card,
+      id: `trust-${Date.now()}`,
+    };
+    setTrustCards(prev => [...prev, newCard]);
+    showToast('নতুন সুবিধা কার্ড যোগ করা হয়েছে', 'success');
+  };
+
   // Deposit Management
   const submitDeposit = (data: {
     amount: number;
@@ -1660,8 +1720,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       type = targetOrOptions.type || 'system';
       category = targetOrOptions.category || 'general';
       link = targetOrOptions.actionTab || targetOrOptions.link || 'home';
-    } else {
+    } else if (typeof targetOrOptions === 'string') {
       target = targetOrOptions || 'all';
+      title = argTitle || '';
+      message = argMessage || '';
+      type = argType || 'system';
+      category = argCategory || 'general';
+    } else {
+      target = 'all';
       title = argTitle || '';
       message = argMessage || '';
       type = argType || 'system';
@@ -2074,6 +2140,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addMarketplacePackage,
         addMarketplaceStock,
         deleteMarketplaceItem,
+        trustCards,
+        updateTrustCard,
+        deleteTrustCard,
+        addTrustCard,
         buyerOrders,
         buyMarketplaceItem,
         transactions,

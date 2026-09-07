@@ -21,7 +21,11 @@ import {
   Star,
   X,
   Check,
+  Edit3,
+  Trash2,
+  Plus,
 } from 'lucide-react';
+import { TrustCard } from '../types';
 import { LiveChatModal } from './LiveChatModal';
 
 export const HomeView: React.FC = () => {
@@ -36,6 +40,11 @@ export const HomeView: React.FC = () => {
     isLoggedIn,
     setIsAuthModalOpen,
     showToast,
+    trustCards,
+    updateTrustCard,
+    deleteTrustCard,
+    addTrustCard,
+    isAdmin,
     t,
   } = useApp();
 
@@ -45,6 +54,51 @@ export const HomeView: React.FC = () => {
   const [reviewComment, setReviewComment] = useState('');
   const [reviewShift, setReviewShift] = useState(platformSettings.activeShift || 'Night Shift');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  // Trust Card Admin Management states
+  const [editingCard, setEditingCard] = useState<TrustCard | null>(null);
+  const [isCreatingCard, setIsCreatingCard] = useState(false);
+  const [cardTitle, setCardTitle] = useState('');
+  const [cardDesc, setCardDesc] = useState('');
+  const [cardIcon, setCardIcon] = useState<'zap' | 'shield' | 'gift' | 'support' | 'star' | 'sparkles'>('zap');
+
+  const handleOpenEditCard = (card: TrustCard) => {
+    setEditingCard(card);
+    setCardTitle(card.title);
+    setCardDesc(card.description);
+    setCardIcon((card.iconType as any) || 'zap');
+  };
+
+  const handleOpenCreateCard = () => {
+    setIsCreatingCard(true);
+    setCardTitle('');
+    setCardDesc('');
+    setCardIcon('zap');
+  };
+
+  const handleSaveCard = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cardTitle.trim()) {
+      showToast('কার্ডের শিরোনাম দিন', 'error');
+      return;
+    }
+    if (editingCard) {
+      updateTrustCard({
+        ...editingCard,
+        title: cardTitle.trim(),
+        description: cardDesc.trim(),
+        iconType: cardIcon,
+      });
+      setEditingCard(null);
+    } else if (isCreatingCard) {
+      addTrustCard({
+        title: cardTitle.trim(),
+        description: cardDesc.trim(),
+        iconType: cardIcon,
+      });
+      setIsCreatingCard(false);
+    }
+  };
 
   const safeMarketplaceItems = marketplaceItems || [];
   const approvedReviews = (reviews || []).filter(r => r.status === 'approved');
@@ -437,58 +491,134 @@ export const HomeView: React.FC = () => {
         </div>
       </div>
 
-      {/* 5. TRUST & FEATURE GUARANTEES (Screenshots 6 & 7) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-        {/* Card 1: ৩ মিনিটে উইথড্র */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-5 flex items-start gap-3.5 shadow-lg">
-          <div className="w-11 h-11 rounded-2xl bg-teal-500/20 text-teal-400 flex items-center justify-center flex-shrink-0">
-            <Zap className="w-5 h-5 stroke-[2.5]" />
+      {/* 5. TRUST & FEATURE GUARANTEES (Screenshots 6 & 7) - WITH ADMIN MANAGEMENT */}
+      <div className="space-y-3">
+        {isAdmin && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-900/90 border border-amber-500/40 shadow-lg">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>অ্যাডমিন ম্যানেজমেন্ট পারমিশন</span>
+              </span>
+              <span className="text-xs text-slate-300 hidden sm:inline">
+                যেকোনো সুবিধা কার্ড এডিট বা ডিলিট করতে পারবেন
+              </span>
+            </div>
+            <button
+              onClick={handleOpenCreateCard}
+              className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-500/20 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>নতুন সুবিধা কার্ড যোগ করুন</span>
+            </button>
           </div>
-          <div>
-            <h3 className="text-sm sm:text-base font-bold text-white">ইনস্ট্যান্ট ৩ মিনিটে উইথড্র</h3>
-            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              বিকাশ ও নগদ পার্সোনালে সর্বনিম্ন মাত্র ৳৫০ উইথড্র করুন কোনো ফি ছাড়া।
-            </p>
-          </div>
-        </div>
+        )}
 
-        {/* Card 2: ১০০% রিপ্লেসমেন্ট ওয়ারেন্টি */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-5 flex items-start gap-3.5 shadow-lg">
-          <div className="w-11 h-11 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0">
-            <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
-          </div>
-          <div>
-            <h3 className="text-sm sm:text-base font-bold text-white">১০০% রিপ্লেসমেন্ট ওয়ারেন্টি</h3>
-            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              কোনো মেইলে সমস্যা হলে ২৪-৪৮ ঘণ্টার মধ্যে সাথে সাথে রিপ্লেসমেন্ট বা রিফান্ড।
-            </p>
-          </div>
-        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {(trustCards && trustCards.length > 0
+            ? trustCards
+            : [
+                {
+                  id: 'trust-1',
+                  title: 'ইনস্ট্যান্ট ৩ মিনিটে উইথড্র',
+                  description: 'বিকাশ ও নগদ পার্সোনালে সর্বনিম্ন মাত্র ৳৫০ উইথড্র করুন কোনো ফি ছাড়া।',
+                  iconType: 'zap',
+                },
+                {
+                  id: 'trust-2',
+                  title: '১০০% রিপ্লেসমেন্ট ওয়ারেন্টি',
+                  description: 'কোনো মেইলে সমস্যা হলে ২৪-৪৮ ঘণ্টার মধ্যে সাথে সাথে রিপ্লেসমেন্ট বা রিফান্ড।',
+                  iconType: 'shield',
+                },
+                {
+                  id: 'trust-3',
+                  title: '৫% আজীবন রেফারেল কমিশন',
+                  description: 'বন্ধুদের ইনভাইট করুন এবং তাদের প্রতিটি মেইল বিক্রির উপর ৫% বোনাস উপভোগ করুন।',
+                  iconType: 'gift',
+                },
+                {
+                  id: 'trust-4',
+                  title: '২৪/৭ লাইভ বাংলা সাপোর্ট',
+                  description: 'টেলিগ্রাম ও অন-সাইট লাইভ চ্যাটে যেকোনো সহায়তার জন্য আমরা সদা প্রস্তুত।',
+                  iconType: 'support',
+                },
+              ]
+          ).map(card => {
+            const iconType = card.iconType || 'zap';
+            return (
+              <div
+                key={card.id}
+                className="relative group bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-4 sm:p-5 flex items-start gap-3.5 shadow-lg transition-all"
+              >
+                {/* Admin direct edit & delete buttons */}
+                {isAdmin && (
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleOpenEditCard(card);
+                      }}
+                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 hover:border-amber-400 shadow-md transition-all"
+                      title="এই সুবিধা কার্ডটি এডিট করুন"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (window.confirm(`আপনি কি "${card.title}" কার্ডটি মুছে ফেলতে চান?`)) {
+                          deleteTrustCard(card.id);
+                        }
+                      }}
+                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-rose-400 border border-slate-700 hover:border-rose-500/40 shadow-md transition-all"
+                      title="এই সুবিধা কার্ডটি ডিলিট করুন"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
 
-        {/* Card 3: ৫% আজীবন রেফারেল কমিশন */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-5 flex items-start gap-3.5 shadow-lg">
-          <div className="w-11 h-11 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0">
-            <Gift className="w-5 h-5 stroke-[2.5]" />
-          </div>
-          <div>
-            <h3 className="text-sm sm:text-base font-bold text-white">৫% আজীবন রেফারেল কমিশন</h3>
-            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              বন্ধুদের ইনভাইট করুন এবং তাদের প্রতিটি মেইল বিক্রির উপর ৫% বোনাস উপভোগ করুন।
-            </p>
-          </div>
-        </div>
+                {/* Card Icon */}
+                {iconType === 'shield' && (
+                  <div className="w-11 h-11 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0">
+                    <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                )}
+                {iconType === 'gift' && (
+                  <div className="w-11 h-11 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0">
+                    <Gift className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                )}
+                {(iconType === 'support' || iconType === 'phone') && (
+                  <div className="w-11 h-11 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center flex-shrink-0">
+                    <PhoneCall className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                )}
+                {iconType === 'star' && (
+                  <div className="w-11 h-11 rounded-2xl bg-yellow-500/20 text-yellow-400 flex items-center justify-center flex-shrink-0">
+                    <Star className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                )}
+                {iconType === 'sparkles' && (
+                  <div className="w-11 h-11 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                )}
+                {iconType === 'zap' && (
+                  <div className="w-11 h-11 rounded-2xl bg-teal-500/20 text-teal-400 flex items-center justify-center flex-shrink-0">
+                    <Zap className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                )}
 
-        {/* Card 4: ২৪/৭ লাইভ বাংলা সাপোর্ট */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-5 flex items-start gap-3.5 shadow-lg">
-          <div className="w-11 h-11 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center flex-shrink-0">
-            <PhoneCall className="w-5 h-5 stroke-[2.5]" />
-          </div>
-          <div>
-            <h3 className="text-sm sm:text-base font-bold text-white">২৪/৭ লাইভ বাংলা সাপোর্ট</h3>
-            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              টেলিগ্রাম ও অন-সাইট লাইভ চ্যাটে যেকোনো সহায়তার জন্য আমরা সদা প্রস্তুত।
-            </p>
-          </div>
+                <div className="pr-12 sm:pr-14">
+                  <h3 className="text-sm sm:text-base font-bold text-white">{card.title}</h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    {card.description}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -730,6 +860,119 @@ export const HomeView: React.FC = () => {
                 >
                   <Check className="w-4 h-4" />
                   <span>{isSubmittingReview ? 'জমা হচ্ছে...' : 'রিভিউ আবেদন জমা দিন'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Trust Card Management Modal */}
+      {(editingCard || isCreatingCard) && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-amber-400" />
+                <span>{editingCard ? 'সুবিধা কার্ড এডিট করুন' : 'নতুন সুবিধা কার্ড তৈরি করুন'}</span>
+              </h3>
+              <button
+                onClick={() => {
+                  setEditingCard(null);
+                  setIsCreatingCard(false);
+                }}
+                className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCard} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">কার্ড টাইটেল (শিরোনাম) *:</label>
+                <input
+                  type="text"
+                  value={cardTitle}
+                  onChange={e => setCardTitle(e.target.value)}
+                  placeholder="e.g. ইনস্ট্যান্ট ৩ মিনিটে উইথড্র"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">বিবরণ (Description):</label>
+                <textarea
+                  value={cardDesc}
+                  onChange={e => setCardDesc(e.target.value)}
+                  rows={3}
+                  placeholder="e.g. বিকাশ ও নগদ পার্সোনালে সর্বনিম্ন মাত্র ৳৫০ উইথড্র করুন কোনো ফি ছাড়া।"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">আইকন ও থিম বেছে নিন:</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'zap', label: 'বিদ্যুৎ (Zap)', icon: Zap, color: 'text-teal-400' },
+                    { id: 'shield', label: 'নিরাপত্তা (Shield)', icon: ShieldCheck, color: 'text-amber-400' },
+                    { id: 'gift', label: 'কমিশন (Gift)', icon: Gift, color: 'text-blue-400' },
+                    { id: 'support', label: 'সাপোর্ট (Phone)', icon: PhoneCall, color: 'text-purple-400' },
+                    { id: 'star', label: 'স্টার (Star)', icon: Star, color: 'text-yellow-400' },
+                    { id: 'sparkles', label: 'স্পার্কল (Sparkles)', icon: Sparkles, color: 'text-emerald-400' },
+                  ].map(opt => {
+                    const IconComp = opt.icon;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setCardIcon(opt.id as any)}
+                        className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-[11px] cursor-pointer ${
+                          cardIcon === opt.id
+                            ? 'bg-amber-500/20 border-amber-500 text-white font-bold'
+                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <IconComp className={`w-4 h-4 ${opt.color}`} />
+                        <span>{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex gap-2.5 pt-2">
+                {editingCard && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`আপনি কি "${editingCard.title}" কার্ডটি মুছে ফেলতে চান?`)) {
+                        deleteTrustCard(editingCard.id);
+                        setEditingCard(null);
+                      }
+                    }}
+                    className="py-2.5 px-3.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold cursor-pointer"
+                    title="মুছে ফেলুন"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingCard(null);
+                    setIsCreatingCard(false);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors shadow-lg shadow-amber-500/20 cursor-pointer"
+                >
+                  {editingCard ? 'আপডেট সংরক্ষণ করুন' : 'কার্ড যোগ করুন'}
                 </button>
               </div>
             </form>
