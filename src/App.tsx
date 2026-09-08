@@ -18,7 +18,6 @@ import { ProfileSettingsView } from './components/ProfileSettingsView';
 import { AdminPanelView } from './components/AdminPanelView';
 import { AuthModal } from './components/AuthModal';
 import { PWAInstallButton } from './components/PWAInstallButton';
-import { PRIMARY_ADMIN_EMAIL } from './firebase';
 import {
   Headphones,
   CheckCircle2,
@@ -154,11 +153,12 @@ const AppContent: React.FC = () => {
             )}
           </div>
 
-          {/* PWA Install Button & Admin info */}
+          {/* PWA Install Button & Security badge */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <PWAInstallButton />
-            <div className="text-slate-500 text-[11px]">
-              Admin: <strong className="text-slate-400 font-mono">{PRIMARY_ADMIN_EMAIL}</strong>
+            <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>100% Secured & Encrypted</span>
             </div>
           </div>
         </div>

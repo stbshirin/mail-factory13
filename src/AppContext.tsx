@@ -1023,6 +1023,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(prev => {
       const updated = { ...prev, ...profile };
       setUsers(uList => uList.map(u => (u.id === prev.id ? updated : u)));
+      saveUserToFirebase(updated).catch(err => console.warn('Could not sync user profile to Firebase:', err));
       return updated;
     });
     showToast('প্রোফাইল সফলভাবে আপডেট করা হয়েছে', 'success');

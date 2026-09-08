@@ -253,9 +253,17 @@ export const Navbar: React.FC = () => {
               >
                 {isLoggedIn ? (
                   <>
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center font-bold text-xs">
-                      {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
-                    </div>
+                    {currentUser.avatarUrl ? (
+                      <img
+                        src={currentUser.avatarUrl}
+                        alt={currentUser.name}
+                        className="w-7 h-7 rounded-lg object-cover border border-amber-500/40 shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center font-bold text-xs">
+                        {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                    )}
                     <div className="hidden md:block text-left">
                       <div className="text-xs font-semibold text-white leading-none truncate max-w-[100px]">
                         {currentUser.name}
@@ -330,18 +338,31 @@ export const Navbar: React.FC = () => {
                   ) : (
                     /* Authenticated: All features visible only AFTER login */
                     <div>
-                      <div className="px-2 py-1.5 border-b border-slate-800">
-                        <p className="font-semibold text-white truncate">{currentUser.name || 'User'}</p>
-                        <p className="text-xs text-slate-400 truncate">{currentUser.email}</p>
-                        <div className="mt-1 flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                            {currentUser.memberTier || 'Silver'} Member
-                          </span>
-                          {isAdmin && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                              Cloud Admin
+                      <div className="px-2 py-2 border-b border-slate-800 flex items-center gap-3">
+                        {currentUser.avatarUrl ? (
+                          <img
+                            src={currentUser.avatarUrl}
+                            alt=""
+                            className="w-10 h-10 rounded-xl object-cover border border-amber-500/40 shadow-sm flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 font-bold text-base flex items-center justify-center flex-shrink-0">
+                            {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-white truncate text-xs">{currentUser.name || 'User'}</p>
+                          <p className="text-[11px] text-slate-400 truncate font-mono">{currentUser.email}</p>
+                          <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                              {currentUser.memberTier || 'Silver'}
                             </span>
-                          )}
+                            {isAdmin && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                Admin
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 

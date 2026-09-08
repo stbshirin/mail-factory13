@@ -3,7 +3,16 @@ import { useApp } from '../AppContext';
 import { Home, ShoppingBag, Wallet, ShieldCheck, Sparkles, LogIn, User } from 'lucide-react';
 
 export const BottomNav: React.FC = () => {
-  const { activeTab, setActiveTab, isAdmin, isLoggedIn, setIsAuthModalOpen, setAuthModalMode, language } = useApp();
+  const {
+    activeTab,
+    setActiveTab,
+    isAdmin,
+    isLoggedIn,
+    currentUser,
+    setIsAuthModalOpen,
+    setAuthModalMode,
+    language,
+  } = useApp();
 
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-3 py-1.5 shadow-2xl">
@@ -82,7 +91,15 @@ export const BottomNav: React.FC = () => {
               activeTab === 'profile' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <User className="w-5 h-5" />
+            {currentUser?.avatarUrl ? (
+              <img
+                src={currentUser.avatarUrl}
+                alt=""
+                className="w-5 h-5 rounded-full object-cover border border-amber-500/50 shadow-sm"
+              />
+            ) : (
+              <User className="w-5 h-5" />
+            )}
             <span className="text-[11px] mt-0.5">{language === 'bn' ? 'প্রোফাইল' : 'Profile'}</span>
             {activeTab === 'profile' && (
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-0.5"></span>

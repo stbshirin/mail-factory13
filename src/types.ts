@@ -32,6 +32,8 @@ export interface User {
   bKashNumber?: string;
   nagadNumber?: string;
   rocketNumber?: string;
+  bio?: string;
+  telegram?: string;
 }
 
 export interface MailItem {
