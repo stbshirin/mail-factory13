@@ -24,25 +24,30 @@ interface LiveChatModalProps {
 }
 
 export const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose }) => {
-  const { platformSettings, currentUser } = useApp();
+  const { platformSettings, currentUser, language } = useApp();
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      sender: 'bot',
-      text: 'আসসালামু আলাইকুম! MailFactory PRO লাইভ সাপোর্টে আপনাকে স্বাগতম। আমি আপনার ভার্চুয়াল অ্যাসিস্ট্যান্ট। আপনাকে কীভাবে সহায়তা করতে পারি?',
-      time: 'এখনই',
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const quickQuestions = [
-    'আজকের লাইভ রেট কত?',
-    'উইথড্র কতক্ষণে পাই?',
-    'শিফট বোনাস কিভাবে পাব?',
-    'টেলিগ্রাম গ্রুপ লিংক দিন',
-  ];
+  useEffect(() => {
+    setMessages([
+      {
+        id: '1',
+        sender: 'bot',
+        text:
+          language === 'bn'
+            ? 'আসসালামু আলাইকুম! MailFactory PRO লাইভ সাপোর্টে আপনাকে স্বাগতম। আমি আপনার ভার্চুয়াল অ্যাসিস্ট্যান্ট। আপনাকে কীভাবে সহায়তা করতে পারি?'
+            : 'Welcome to MailFactory PRO Live Support! I am your virtual assistant. How can I help you today?',
+        time: language === 'bn' ? 'এখনই' : 'Now',
+      },
+    ]);
+  }, [language]);
+
+  const quickQuestions =
+    language === 'bn'
+      ? ['আজকের লাইভ রেট কত?', 'উইথড্র কতক্ষণে পাই?', 'শিফট বোনাস কিভাবে পাব?', 'টেলিগ্রাম গ্রুপ লিংক দিন']
+      : ['What is the live rate today?', 'How fast is withdrawal?', 'How to get shift bonus?', 'Official Telegram link'];
 
   useEffect(() => {
     if (isOpen) {
@@ -60,7 +65,7 @@ export const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose })
       id: Date.now().toString(),
       sender: 'user',
       text: query,
-      time: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+      time: new Date().toLocaleTimeString(language === 'bn' ? 'bn-BD' : 'en-US', { hour: '2-digit', minute: '2-digit' }),
     };
 
     setMessages(prev => [...prev, userMsg]);
@@ -68,26 +73,44 @@ export const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose })
     setIsTyping(true);
 
     setTimeout(() => {
-      let reply = 'ধন্যবাদ আপনার বার্তার জন্য। যেকোনো জটিল সহায়তার জন্য আমাদের টেলিগ্রাম সাপোর্টে (@mailfactory_support) যোগাযোগ করুন।';
+      let reply =
+        language === 'bn'
+          ? 'ধন্যবাদ আপনার বার্তার জন্য। যেকোনো জটিল সহায়তার জন্য আমাদের টেলিগ্রাম সাপোর্টে (@mailfactory_support) যোগাযোগ করুন।'
+          : 'Thank you for your message. For direct human assistance, please reach out via our Telegram support (@mailfactory_support).';
 
       const lower = query.toLowerCase();
-      if (lower.includes('রেট') || lower.includes('দাম') || lower.includes('rate')) {
-        reply = `বর্তমান ফ্রেশ মেইল রেট ৳${platformSettings.mailBuyingRateFresh.toFixed(2)} এবং রিকভারি রেট ৳${platformSettings.mailBuyingRateRecovery.toFixed(2)}। সন্ধ্যা শিফটে রেট ৳১০.৫০ পর্যন্ত!`;
-      } else if (lower.includes('উইথড্র') || lower.includes('পেমেন্ট') || lower.includes('বিকাশ') || lower.includes('নগদ')) {
-        reply = `বিকাশ, নগদ ও রকেট পার্সোনালে সর্বনিম্ন মাত্র ৳${platformSettings.minWithdrawBdt} উইথড্র করা যায়। উইথড্র রিকোয়েস্টের পর সর্বোচ্চ ৩-১০ মিনিটের মধ্যে পেমেন্ট সম্পন্ন হয়!`;
-      } else if (lower.includes('শিফট') || lower.includes('বোনাস')) {
-        reply = `আমাদের প্রতিদিন ৩টি শিফট চালু থাকে: সকাল (০৮:০০ AM - ০২:০০ PM), সন্ধ্যা (০২:০০ PM - ০৯:০০ PM) এবং নাইট শিফট (০৯:০০ PM - ০৪:০০ AM)। শিফটে মেইল দিলে অতিরিক্ত ৳০.৫০ থেকে ৳১.৫০ পর্যন্ত বোনাস যোগ হয়।`;
+      if (lower.includes('রেট') || lower.includes('দাম') || lower.includes('rate') || lower.includes('price')) {
+        reply =
+          language === 'bn'
+            ? `বর্তমান ফ্রেশ মেইল রেট ৳${platformSettings.mailBuyingRateFresh.toFixed(2)} এবং রিকভারি রেট ৳${platformSettings.mailBuyingRateRecovery.toFixed(2)}। সন্ধ্যা শিফটে রেট ৳১০.৫০ পর্যন্ত!`
+            : `Current Fresh Mail rate is ৳${platformSettings.mailBuyingRateFresh.toFixed(2)} and Recovery Mail rate is ৳${platformSettings.mailBuyingRateRecovery.toFixed(2)}. Evening shift pays up to ৳10.50!`;
+      } else if (lower.includes('উইথড্র') || lower.includes('পেমেন্ট') || lower.includes('বিকাশ') || lower.includes('নগদ') || lower.includes('withdraw') || lower.includes('payment')) {
+        reply =
+          language === 'bn'
+            ? `বিকাশ, নগদ ও রকেট পার্সোনালে সর্বনিম্ন মাত্র ৳${platformSettings.minWithdrawBdt} উইথড্র করা যায়। উইথড্র রিকোয়েস্টের পর সর্বোচ্চ ৩-১০ মিনিটের মধ্যে পেমেন্ট সম্পন্ন হয়!`
+            : `You can withdraw to bKash, Nagad, or Rocket starting from just ৳${platformSettings.minWithdrawBdt}. Payouts are processed within 3-10 minutes!`;
+      } else if (lower.includes('শিফট') || lower.includes('বোনাস') || lower.includes('shift') || lower.includes('bonus')) {
+        reply =
+          language === 'bn'
+            ? `আমাদের প্রতিদিন ৩টি শিফট চালু থাকে: সকাল (০৮:০০ AM - ০২:০০ PM), সন্ধ্যা (০২:০০ PM - ০৯:০০ PM) এবং নাইট শিফট (০৯:০০ PM - ০৪:০০ AM)। শিফটে মেইল দিলে অতিরিক্ত ৳০.৫০ থেকে ৳১.৫০ পর্যন্ত বোনাস যোগ হয়।`
+            : `We operate 3 daily shifts: Morning (08:00 AM - 02:00 PM), Evening (02:00 PM - 09:00 PM), and Night (09:00 PM - 04:00 AM). Active shifts earn ৳0.50 - ৳1.50 extra bonus per verified mail!`;
       } else if (lower.includes('টেলিগ্রাম') || lower.includes('গ্রুপ') || lower.includes('telegram')) {
-        reply = `আমাদের অফিসিয়াল টেলিগ্রাম চ্যানেলে জয়েন করুন শিফট আপডেট ও পেমেন্ট প্রুফের জন্য: ${platformSettings.supportTelegram}`;
-      } else if (lower.includes('নিয়ম') || lower.includes('রুলস') || lower.includes('পাসওয়ার্ড')) {
-        reply = `জিমেইল বানানোর নিয়ম: পাসওয়ার্ড ৮ ডিজিট+ হতে হবে, Outlook বা Yahoo রিকভারি মেইল যুক্ত থাকতে হবে এবং টু-ফ্যাক্টর অথেন্টিকেশন অফ থাকতে হবে।`;
+        reply =
+          language === 'bn'
+            ? `আমাদের অফিসিয়াল টেলিগ্রাম চ্যানেলে জয়েন করুন শিফট আপডেট ও পেমেন্ট প্রুফের জন্য: ${platformSettings.supportTelegram}`
+            : `Join our official Telegram community for live shift announcements and payment proofs: ${platformSettings.supportTelegram}`;
+      } else if (lower.includes('নিয়ম') || lower.includes('রুলস') || lower.includes('পাসওয়ার্ড') || lower.includes('rule') || lower.includes('password')) {
+        reply =
+          language === 'bn'
+            ? `জিমেইল বানানোর নিয়ম: পাসওয়ার্ড ৮ ডিজিট+ হতে হবে, Outlook বা Yahoo রিকভারি মেইল যুক্ত থাকতে হবে এবং টু-ফ্যাক্টর অথেন্টিকেশন অফ থাকতে হবে।`
+            : `Rules for Gmail creation: 8+ characters strong password, active Outlook/Yahoo recovery email, and 2FA must be turned off.`;
       }
 
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
         sender: 'bot',
         text: reply,
-        time: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+        time: new Date().toLocaleTimeString(language === 'bn' ? 'bn-BD' : 'en-US', { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages(prev => [...prev, botMsg]);
       setIsTyping(false);
@@ -108,12 +131,16 @@ export const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose })
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-black text-sm text-white">লাইভ বাংলা সাপোর্ট</span>
+                <span className="font-black text-sm text-white">
+                  {language === 'bn' ? 'লাইভ হেল্প ও সাপোর্ট' : 'Live Help & Support'}
+                </span>
                 <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold">
-                  অনলাইন
+                  {language === 'bn' ? 'অনলাইন' : 'Online'}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300">গড়ে ৩ মিনিটে রেসপন্স</p>
+              <p className="text-[11px] text-slate-300">
+                {language === 'bn' ? 'গড়ে ৩ মিনিটে রেসপন্স' : 'Average response: ~3 mins'}
+              </p>
             </div>
           </div>
 
@@ -122,7 +149,7 @@ export const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose })
               href={platformSettings.supportTelegram}
               target="_blank"
               rel="noreferrer"
-              title="টেলিগ্রাম সাপোর্ট"
+              title={language === 'bn' ? 'টেলিগ্রাম সাপোর্ট' : 'Telegram Support'}
               className="p-2 rounded-xl text-blue-400 hover:bg-slate-800/80 transition-colors"
             >
               <ExternalLink className="w-4 h-4" />
@@ -139,7 +166,9 @@ export const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose })
         {/* Telegram Promo Banner */}
         <div className="bg-blue-950/40 border-b border-blue-900/40 px-4 py-2 flex items-center justify-between text-xs">
           <span className="text-blue-300 truncate">
-            ✈️ টেলিগ্রাম চ্যানেলে সকল পেমেন্ট প্রুফ ও শিফট নোটিশ
+            {language === 'bn'
+              ? '✈️ টেলিগ্রাম চ্যানেলে সকল পেমেন্ট প্রুফ ও শিফট নোটিশ'
+              : '✈️ Join Telegram channel for live proofs and updates'}
           </span>
           <a
             href={platformSettings.supportTelegram}
@@ -147,7 +176,7 @@ export const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose })
             rel="noreferrer"
             className="text-amber-400 font-bold hover:underline flex-shrink-0 ml-2"
           >
-            যোগ দিন &gt;
+            {language === 'bn' ? 'যোগ দিন >' : 'Join >'}
           </a>
         </div>
 
@@ -188,7 +217,7 @@ export const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose })
                 <Bot className="w-4 h-4" />
               </div>
               <div className="bg-slate-800/80 px-3 py-2 rounded-2xl rounded-tl-none border border-slate-700">
-                <span className="animate-pulse">টাইপ করছে...</span>
+                <span className="animate-pulse">{language === 'bn' ? 'টাইপ করছে...' : 'Typing...'}</span>
               </div>
             </div>
           )}
@@ -220,7 +249,7 @@ export const LiveChatModal: React.FC<LiveChatModalProps> = ({ isOpen, onClose })
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="আপনার প্রশ্ন বাংলায় লিখুন..."
+            placeholder={language === 'bn' ? 'আপনার প্রশ্ন বাংলায় লিখুন...' : 'Type your question here...'}
             className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
           />
           <button

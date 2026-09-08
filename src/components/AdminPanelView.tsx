@@ -81,6 +81,7 @@ export const AdminPanelView: React.FC = () => {
     sendAdminNotification,
     deleteNotification,
     t,
+    language,
   } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState<
@@ -381,30 +382,36 @@ export const AdminPanelView: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold mb-3">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>ক্লাউড ফায়ারবেস সিকিউরড অ্যাডমিন প্যানেল (Super Admin)</span>
+              <span>
+                {language === 'bn'
+                  ? 'ক্লাউড ফায়ারবেস সিকিউরড অ্যাডমিন প্যানেল (Super Admin)'
+                  : 'Cloud Firebase Secured Admin Panel (Super Admin)'}
+              </span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black text-white">
-              মেইল ফ্যাক্টরি মাস্টার কন্ট্রোল প্যানেল
+              {language === 'bn' ? 'মেইল ফ্যাক্টরি মাস্টার কন্ট্রোল প্যানেল' : 'Mail Factory Master Control Panel'}
             </h1>
 
             <div className="mt-2 flex flex-wrap items-center gap-3 text-xs sm:text-sm">
               <span className="text-slate-300">
-                স্বীকৃত সুপার অ্যাডমিন:{' '}
+                {language === 'bn' ? 'স্বীকৃত সুপার অ্যাডমিন: ' : 'Verified Super Admin: '}
                 <strong className="text-emerald-400 font-mono font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
                   soheltajbhola@gmail.com
                 </strong>
               </span>
               <span className="text-slate-400">|</span>
               <span className="text-amber-400 font-semibold">
-                বর্তমান অ্যাক্সেস: {currentUser.email}
+                {language === 'bn' ? `বর্তমান অ্যাক্সেস: ${currentUser.email}` : `Current Access: ${currentUser.email}`}
               </span>
             </div>
           </div>
 
           {/* Quick Admin Role Switcher for instant testing */}
           <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col gap-2">
-            <span className="text-[11px] text-slate-400 font-medium">অ্যাডমিন অ্যাক্টিভেশন কন্ট্রোল:</span>
+            <span className="text-[11px] text-slate-400 font-medium">
+              {language === 'bn' ? 'অ্যাডমিন অ্যাক্টিভেশন কন্ট্রোল:' : 'Admin Role Switcher:'}
+            </span>
             <div className="flex gap-2">
               <button
                 onClick={() => switchUser('soheltajbhola@gmail.com')}
@@ -433,19 +440,33 @@ export const AdminPanelView: React.FC = () => {
         {/* Real-time counters banner */}
         <div className="mt-6 pt-5 border-t border-slate-700/60 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
           <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
-            <div className="text-slate-400">অপেক্ষমাণ মেইল ব্যাচ:</div>
-            <div className="text-xl font-black text-amber-400 mt-0.5">{pendingBatchesCount} টি</div>
+            <div className="text-slate-400">
+              {language === 'bn' ? 'অপেক্ষমাণ মেইল ব্যাচ:' : 'Pending Mail Batches:'}
+            </div>
+            <div className="text-xl font-black text-amber-400 mt-0.5">
+              {pendingBatchesCount} {language === 'bn' ? 'টি' : 'batches'}
+            </div>
           </div>
           <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
-            <div className="text-slate-400">পেন্ডিং ডিপোজিট/উইথড্র:</div>
-            <div className="text-xl font-black text-sky-400 mt-0.5">{pendingTransactionsCount} টি</div>
+            <div className="text-slate-400">
+              {language === 'bn' ? 'পেন্ডিং ডিপোজিট/উইথড্র:' : 'Pending Transactions:'}
+            </div>
+            <div className="text-xl font-black text-sky-400 mt-0.5">
+              {pendingTransactionsCount} {language === 'bn' ? 'টি' : 'txns'}
+            </div>
           </div>
           <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
-            <div className="text-slate-400">মোট নিবন্ধিত ইউজার:</div>
-            <div className="text-xl font-black text-white mt-0.5">{userList.length} জন</div>
+            <div className="text-slate-400">
+              {language === 'bn' ? 'মোট নিবন্ধিত ইউজার:' : 'Total Registered Users:'}
+            </div>
+            <div className="text-xl font-black text-white mt-0.5">
+              {userList.length} {language === 'bn' ? 'জন' : 'users'}
+            </div>
           </div>
           <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
-            <div className="text-slate-400">বর্তমান লাইভ শিফট:</div>
+            <div className="text-slate-400">
+              {language === 'bn' ? 'বর্তমান লাইভ শিফট:' : 'Active Shift:'}
+            </div>
             <div className="text-xl font-black text-emerald-400 mt-0.5">{platformSettings.activeShift}</div>
           </div>
         </div>
@@ -462,7 +483,11 @@ export const AdminPanelView: React.FC = () => {
           }`}
         >
           <FileText className="w-4 h-4" />
-          <span>মেইল ব্যাচ অনুমোদন ({pendingBatchesCount})</span>
+          <span>
+            {language === 'bn'
+              ? `মেইল ব্যাচ অনুমোদন (${pendingBatchesCount})`
+              : `Mail Batches (${pendingBatchesCount})`}
+          </span>
         </button>
 
         <button
@@ -474,7 +499,11 @@ export const AdminPanelView: React.FC = () => {
           }`}
         >
           <DollarSign className="w-4 h-4" />
-          <span>লেনদেন ভেরিফিকেশন ({pendingTransactionsCount})</span>
+          <span>
+            {language === 'bn'
+              ? `লেনদেন ভেরিফিকেশন (${pendingTransactionsCount})`
+              : `Transactions (${pendingTransactionsCount})`}
+          </span>
         </button>
 
         <button
@@ -486,7 +515,7 @@ export const AdminPanelView: React.FC = () => {
           }`}
         >
           <Settings className="w-4 h-4" />
-          <span>রেট ও শিফট কনফিগারেশন</span>
+          <span>{language === 'bn' ? 'রেট ও শিফট কনফিগারেশন' : 'Rates & Settings'}</span>
         </button>
 
         <button
@@ -498,7 +527,11 @@ export const AdminPanelView: React.FC = () => {
           }`}
         >
           <Package className="w-4 h-4" />
-          <span>মার্কেটপ্লেস ইনভেন্টরি ({marketList.length})</span>
+          <span>
+            {language === 'bn'
+              ? `মার্কেটপ্লেস ইনভেন্টরি (${marketList.length})`
+              : `Inventory (${marketList.length})`}
+          </span>
         </button>
 
         <button
@@ -510,7 +543,11 @@ export const AdminPanelView: React.FC = () => {
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>ইউজার ও ব্যালেন্স ম্যানেজমেন্ট ({userList.length})</span>
+          <span>
+            {language === 'bn'
+              ? `ইউজার ও ব্যালেন্স ম্যানেজমেন্ট (${userList.length})`
+              : `Members & Balance (${userList.length})`}
+          </span>
         </button>
 
         <button
@@ -522,7 +559,7 @@ export const AdminPanelView: React.FC = () => {
           }`}
         >
           <Bell className="w-4 h-4" />
-          <span>নোটিফিকেশন পাঠান</span>
+          <span>{language === 'bn' ? 'নোটিফিকেশন পাঠান' : 'Send Notification'}</span>
         </button>
 
         <button
@@ -534,7 +571,11 @@ export const AdminPanelView: React.FC = () => {
           }`}
         >
           <Star className="w-4 h-4" />
-          <span>রিভিউ অনুমোদন ({pendingReviewsCount})</span>
+          <span>
+            {language === 'bn'
+              ? `রিভিউ অনুমোদন (${pendingReviewsCount})`
+              : `Reviews Approval (${pendingReviewsCount})`}
+          </span>
         </button>
       </div>
 

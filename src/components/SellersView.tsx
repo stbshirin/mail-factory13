@@ -40,15 +40,21 @@ export const SellersView: React.FC = () => {
     setIsAuthModalOpen,
     setAuthModalMode,
     setActiveTab,
+    language,
   } = useApp();
 
   const isGuest = !isLoggedIn || !currentUser.email || currentUser.id === 'guest';
 
-  const requireAuth = (actionName = 'জিমেইল বিক্রয়') => {
+  const requireAuth = (actionName = language === 'bn' ? 'জিমেইল বিক্রয়' : 'Gmail Selling') => {
     if (isGuest) {
       setAuthModalMode('login');
       setIsAuthModalOpen(true);
-      showToast(`${actionName} করার পূর্বে একাউন্টে লগ-ইন বা রেজিস্ট্রেশন করে নিতে হবে।`, 'error');
+      showToast(
+        language === 'bn'
+          ? `${actionName} করার পূর্বে একাউন্টে লগ-ইন বা রেজিস্ট্রেশন করে নিতে হবে।`
+          : `Please sign in or register before performing ${actionName}.`,
+        'error'
+      );
       return true;
     }
     return false;
@@ -129,7 +135,7 @@ export const SellersView: React.FC = () => {
       .filter(l => l.length > 0);
 
     if (rawLines.length === 0) {
-      showToast('কোনো বৈধ ডাটা পাওয়া যায়নি', 'error');
+      showToast(language === 'bn' ? 'কোনো বৈধ ডাটা পাওয়া যায়নি' : 'No valid data found', 'error');
       return;
     }
 
@@ -147,7 +153,12 @@ export const SellersView: React.FC = () => {
     setMailRows(newRows);
     setShowPasteModal(false);
     setPasteModalText('');
-    showToast(`${newRows.length}টি অ্যাকাউন্ট সফলভাবে বক্সে পেস্ট করা হয়েছে!`, 'success');
+    showToast(
+      language === 'bn'
+        ? `${newRows.length}টি অ্যাকাউন্ট সফলভাবে বক্সে পেস্ট করা হয়েছে!`
+        : `${newRows.length} accounts pasted into boxes successfully!`,
+      'success'
+    );
   };
 
   // Valid calculations
@@ -168,12 +179,17 @@ export const SellersView: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (requireAuth('জিমেইল বিক্রয়')) return;
+    if (requireAuth(language === 'bn' ? 'জিমেইল বিক্রয়' : 'Sell Gmail')) return;
 
     let submissionText = '';
     if (inputMode === 'boxes') {
       if (validRows.length === 0) {
-        showToast('অনুগ্রহ করে অন্তত একটি বৈধ ইমেইল ও পাসওয়ার্ড লিখুন', 'error');
+        showToast(
+          language === 'bn'
+            ? 'অনুগ্রহ করে অন্তত একটি বৈধ ইমেইল ও পাসওয়ার্ড লিখুন'
+            : 'Please enter at least one valid email and password',
+          'error'
+        );
         return;
       }
       submissionText = validRows
@@ -181,14 +197,24 @@ export const SellersView: React.FC = () => {
         .join('\n');
     } else {
       if (bulkValid.length === 0) {
-        showToast('অনুগ্রহ করে অন্তত একটি বৈধ ইমেইল ও পাসওয়ার্ড লিখুন', 'error');
+        showToast(
+          language === 'bn'
+            ? 'অনুগ্রহ করে অন্তত একটি বৈধ ইমেইল ও পাসওয়ার্ড লিখুন'
+            : 'Please enter at least one valid email and password',
+          'error'
+        );
         return;
       }
       submissionText = rawText;
     }
 
     if (!payoutAccount.trim()) {
-      showToast('পেমেন্ট গ্রহণ করার একাউন্ট নাম্বার লিখুন', 'error');
+      showToast(
+        language === 'bn'
+          ? 'পেমেন্ট গ্রহণ করার একাউন্ট নাম্বার লিখুন'
+          : 'Please enter your payout account number',
+        'error'
+      );
       return;
     }
 
@@ -220,14 +246,14 @@ export const SellersView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Top Bar: Return button and VIP Badge (Screenshot 1) */}
+      {/* Top Bar: Return button and VIP Badge */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => setActiveTab('home')}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs sm:text-sm font-semibold transition-all shadow-sm group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-          <span>ফিরে যান</span>
+          <span>{language === 'bn' ? 'ফিরে যান' : 'Back'}</span>
         </button>
 
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold shadow-sm">
@@ -245,11 +271,15 @@ export const SellersView: React.FC = () => {
             </div>
             <div>
               <div className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                <span>জিমেইল বিক্রয়ের পূর্বে লগ-ইন আবশ্যক</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">লক করা</span>
+                <span>{language === 'bn' ? 'জিমেইল বিক্রয়ের পূর্বে লগ-ইন আবশ্যক' : 'Sign in required before selling Gmail'}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                  {language === 'bn' ? 'লক করা' : 'Locked'}
+                </span>
               </div>
               <div className="text-xs text-slate-300 mt-1">
-                জিমেইল সাবমিট এবং ভেরিফিকেশন শেষে সরাসরি বিকাশ বা নগদে টাকা পাওয়ার জন্য পূর্বে আপনার অ্যাকাউন্টে লগ-ইন বা রেজিস্ট্রেশন করুন।
+                {language === 'bn'
+                  ? 'জিমেইল সাবমিট এবং ভেরিফিকেশন শেষে সরাসরি বিকাশ বা নগদে টাকা পাওয়ার জন্য পূর্বে আপনার অ্যাকাউন্টে লগ-ইন বা রেজিস্ট্রেশন করুন।'
+                  : 'Please sign in or create an account first to submit Gmail batches and receive payouts via bKash/Nagad.'}
               </div>
             </div>
           </div>
@@ -261,7 +291,7 @@ export const SellersView: React.FC = () => {
             }}
             className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs shadow-md transition-all whitespace-nowrap cursor-pointer flex items-center justify-center gap-2"
           >
-            <span>লগ-ইন / রেজিস্ট্রেশন করুন ↗</span>
+            <span>{language === 'bn' ? 'লগ-ইন / রেজিস্ট্রেশন করুন ↗' : 'Sign In / Register ↗'}</span>
           </button>
         </div>
       )}
@@ -271,19 +301,19 @@ export const SellersView: React.FC = () => {
         {/* Left 2 Cols: Form with Rate Card and Gmail Row Inputs */}
         <div className="lg:col-span-2 space-y-5">
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* HERO RATE CARD (Screenshot 1) */}
+            {/* HERO RATE CARD */}
             <div className="bg-[#0c1527] border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                    আপনার লেভেল রেট:
+                    {language === 'bn' ? 'আপনার লেভেল রেট:' : 'Your Level Rate:'}
                   </span>
                   <div className="text-3xl sm:text-4xl font-black text-[#00D06C] tracking-tight mt-1">
                     ৳{currentRate.toFixed(2)} <span className="text-sm sm:text-base font-bold text-slate-400">/ Gmail</span>
                   </div>
                 </div>
 
-                {/* Mail Type Switcher: নতুন জিমেইল vs পুরাতন জিমেইল (Screenshot 1) */}
+                {/* Mail Type Switcher */}
                 <div className="flex items-center gap-1.5 p-1 bg-slate-900/90 border border-slate-800 rounded-2xl">
                   <button
                     type="button"
@@ -294,7 +324,7 @@ export const SellersView: React.FC = () => {
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
                     }`}
                   >
-                    নতুন জিমেইল
+                    {language === 'bn' ? 'নতুন জিমেইল' : 'Fresh Gmail'}
                   </button>
                   <button
                     type="button"
@@ -305,7 +335,7 @@ export const SellersView: React.FC = () => {
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
                     }`}
                   >
-                    পুরাতন জিমেইল
+                    {language === 'bn' ? 'পুরাতন জিমেইল' : 'Aged Gmail'}
                   </button>
                   <button
                     type="button"
@@ -315,9 +345,9 @@ export const SellersView: React.FC = () => {
                         ? 'bg-indigo-600 text-white shadow-md'
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
                     }`}
-                    title="রিকভারি যুক্ত জিমেইল"
+                    title={language === 'bn' ? 'রিকভারি যুক্ত জিমেইল' : 'With Recovery Mail'}
                   >
-                    রিকভারি
+                    {language === 'bn' ? 'রিকভারি' : 'Recovery'}
                   </button>
                 </div>
               </div>
@@ -334,7 +364,7 @@ export const SellersView: React.FC = () => {
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    ইনপুট বক্স মোড (Box Input)
+                    {language === 'bn' ? 'ইনপুট বক্স মোড' : 'Box Input Mode'}
                   </button>
                   <button
                     type="button"
@@ -345,7 +375,7 @@ export const SellersView: React.FC = () => {
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    বাল্ক টেক্সট এরিয়া (Bulk Text)
+                    {language === 'bn' ? 'বাল্ক টেক্সট এরিয়া' : 'Bulk Text Mode'}
                   </button>
                 </div>
 
@@ -356,25 +386,28 @@ export const SellersView: React.FC = () => {
                     className="px-3 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95"
                   >
                     <ClipboardPaste className="w-3.5 h-3.5" />
-                    <span>ক্লিপবোর্ড থেকে কুইক পেস্ট</span>
+                    <span>{language === 'bn' ? 'ক্লিপবোর্ড থেকে কুইক পেস্ট' : 'Quick Paste from Clipboard'}</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* GMAIL INPUT BOXES AREA (Screenshot 1) */}
+            {/* GMAIL INPUT BOXES AREA */}
             {inputMode === 'boxes' ? (
               <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-bold text-slate-300">
-                    ইমেইল ও পাসওয়ার্ড লিখুন বা পেস্ট করুন ({mailRows.length}টি রো):
+                    {language === 'bn'
+                      ? `ইমেইল ও পাসওয়ার্ড লিখুন বা পেস্ট করুন (${mailRows.length}টি রো):`
+                      : `Enter or paste Email & Password (${mailRows.length} rows):`}
                   </span>
                   <span className="text-[11px] text-slate-400 font-mono">
-                    ভ্যালিড একাউন্ট: <strong className="text-[#00D06C]">{validCount}</strong>
+                    {language === 'bn' ? 'ভ্যালিড একাউন্ট:' : 'Valid Accounts:'}{' '}
+                    <strong className="text-[#00D06C]">{validCount}</strong>
                   </span>
                 </div>
 
-                {/* Email & Password Input Rows (Exact Screenshot 1) */}
+                {/* Email & Password Input Rows */}
                 <div className="space-y-3">
                   {mailRows.map((row, idx) => (
                     <div key={row.id} className="flex items-center gap-2 sm:gap-3">
@@ -399,14 +432,14 @@ export const SellersView: React.FC = () => {
                           type={row.showPassword ? 'text' : 'password'}
                           value={row.password}
                           onChange={e => handleRowChange(row.id, 'password', e.target.value)}
-                          placeholder="Password"
+                          placeholder={language === 'bn' ? 'পাসওয়ার্ড' : 'Password'}
                           className="w-full bg-[#0a1120] border border-slate-700/80 hover:border-slate-600 focus:border-indigo-500 rounded-2xl pl-4 pr-10 py-3 text-sm text-white placeholder-slate-500 font-mono outline-none transition-colors"
                         />
                         <button
                           type="button"
                           onClick={() => togglePasswordVisibility(row.id)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1 rounded-lg"
-                          title={row.showPassword ? 'লুকান' : 'দেখুন'}
+                          title={row.showPassword ? (language === 'bn' ? 'লুকান' : 'Hide') : (language === 'bn' ? 'দেখুন' : 'Show')}
                         >
                           {row.showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -418,7 +451,7 @@ export const SellersView: React.FC = () => {
                           type="button"
                           onClick={() => handleRemoveRow(row.id)}
                           className="p-2.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors flex-shrink-0"
-                          title="এই রো মুছুন"
+                          title={language === 'bn' ? 'এই রো মুছুন' : 'Delete Row'}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -427,7 +460,7 @@ export const SellersView: React.FC = () => {
                   ))}
                 </div>
 
-                {/* + Add More Button (Screenshot 1) */}
+                {/* + Add More Button */}
                 <div className="pt-2 flex justify-center">
                   <button
                     type="button"
@@ -435,7 +468,7 @@ export const SellersView: React.FC = () => {
                     className="w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-slate-700 shadow-md transition-all active:scale-[0.99]"
                   >
                     <Plus className="w-4 h-4 stroke-[3]" />
-                    <span>+ Add More</span>
+                    <span>{language === 'bn' ? '+ আরও রো যোগ করুন' : '+ Add More Rows'}</span>
                   </button>
                 </div>
               </div>
@@ -444,10 +477,13 @@ export const SellersView: React.FC = () => {
               <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                    জিমেইল লিস্ট পেস্ট করুন (প্রতি লাইনে email:password):
+                    {language === 'bn'
+                      ? 'জিমেইল লিস্ট পেস্ট করুন (প্রতি লাইনে email:password):'
+                      : 'Paste Gmail List (email:password per line):'}
                   </label>
                   <span className="text-[11px] text-slate-400 font-mono">
-                    ফরম্যাট: <span className="text-amber-400 font-bold">email:password:recovery</span>
+                    {language === 'bn' ? 'ফরম্যাট:' : 'Format:'}{' '}
+                    <span className="text-amber-400 font-bold">email:password:recovery</span>
                   </span>
                 </div>
 
@@ -468,7 +504,7 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    পেমেন্ট মেথড ও নাম্বার:
+                    {language === 'bn' ? 'পেমেন্ট মেথড ও নাম্বার:' : 'Payout Method & Number:'}
                   </label>
                   <div className="flex gap-2 mb-2">
                     {(['bKash', 'Nagad', 'Rocket'] as PaymentMethod[]).map(method => (
@@ -498,7 +534,7 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
 
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    বর্তমান রিভিউ শিফট:
+                    {language === 'bn' ? 'বর্তমান রিভিউ শিফট:' : 'Active Review Shift:'}
                   </label>
                   <input
                     type="text"
@@ -507,7 +543,9 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
                     className="w-full bg-[#0a1120] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-amber-400 font-semibold focus:outline-none focus:border-indigo-500"
                   />
                   <p className="text-[11px] text-slate-400 mt-1.5">
-                    শিফট চলাকালীন সময়ে দ্রুত ভেরিফাই করে ওয়ালেটে টাকা যুক্ত করা হয়।
+                    {language === 'bn'
+                      ? 'শিফট চলাকালীন সময়ে দ্রুত ভেরিফাই করে ওয়ালেটে টাকা যুক্ত করা হয়।'
+                      : 'Accounts are promptly checked and funds added to wallet during active shifts.'}
                   </p>
                 </div>
               </div>
@@ -516,28 +554,34 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
               <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-3">
                   <span className="text-slate-400">
-                    মোট অ্যাকাউন্ট: <strong className="text-white">{displayAccountCount}</strong>
+                    {language === 'bn' ? 'মোট অ্যাকাউন্ট:' : 'Total Accounts:'}{' '}
+                    <strong className="text-white">{displayAccountCount}</strong>
                   </span>
                   <span className="text-slate-400">
-                    ভ্যালিড রেডি: <strong className="text-[#00D06C]">{validCount}</strong>
+                    {language === 'bn' ? 'ভ্যালিড রেডি:' : 'Valid Ready:'}{' '}
+                    <strong className="text-[#00D06C]">{validCount}</strong>
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400">সম্ভাব্য মোট উপার্জন: </span>
+                  <span className="text-slate-400">
+                    {language === 'bn' ? 'সম্ভাব্য মোট উপার্জন: ' : 'Estimated Total Earning: '}
+                  </span>
                   <span className="text-base font-black text-[#00D06C]">৳{estimatedTotal}</span>
                 </div>
               </div>
             </div>
 
-            {/* VIBRANT GREEN SUBMIT BUTTON (Exact Screenshot 1) */}
+            {/* SUBMIT BUTTON */}
             {isGuest ? (
               <button
                 type="button"
-                onClick={() => requireAuth('জিমেইল বিক্রয়')}
+                onClick={() => requireAuth(language === 'bn' ? 'জিমেইল বিক্রয়' : 'Sell Gmail')}
                 className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-base shadow-xl shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Sparkles className="w-5 h-5 stroke-[2.5]" />
-                <span>🔒 লগ-ইন করে মেইল সাবমিট করুন</span>
+                <span>
+                  {language === 'bn' ? '🔒 লগ-ইন করে মেইল সাবমিট করুন' : '🔒 Sign In & Submit Gmail Batch'}
+                </span>
               </button>
             ) : (
               <button
@@ -546,7 +590,11 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
                 className="w-full py-4 rounded-2xl bg-[#00D06C] hover:bg-[#00B95F] text-white font-black text-base shadow-xl shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
               >
                 <Send className="w-5 h-5 stroke-[2.5]" />
-                <span>Submit {displayAccountCount} Account(s)</span>
+                <span>
+                  {language === 'bn'
+                    ? `${displayAccountCount}টি অ্যাকাউন্ট সাবমিট করুন`
+                    : `Submit ${displayAccountCount} Account(s)`}
+                </span>
               </button>
             )}
           </form>
@@ -557,37 +605,57 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
             <h3 className="text-base font-bold text-white flex items-center gap-2 mb-4">
               <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-              <span>মেইল তৈরির নিয়মাবলী ও গাইডলাইন</span>
+              <span>{language === 'bn' ? 'মেইল তৈরির নিয়মাবলী ও গাইডলাইন' : 'Gmail Creation Guidelines'}</span>
             </h3>
 
             <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
               <div className="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60">
-                <strong className="text-amber-400 block mb-0.5">১. রিকভারি মেইল:</strong>
-                প্রতিটি জিমেইলে অবশ্যই আউটলুক (Outlook) অথবা ইয়াহু (Yahoo) রিকভারি মেইল যুক্ত থাকতে হবে।
+                <strong className="text-amber-400 block mb-0.5">
+                  {language === 'bn' ? '১. রিকভারি মেইল:' : '1. Recovery Mail:'}
+                </strong>
+                {language === 'bn'
+                  ? 'প্রতিটি জিমেইলে অবশ্যই আউটলুক (Outlook) অথবা ইয়াহু (Yahoo) রিকভারি মেইল যুক্ত থাকতে হবে।'
+                  : 'Every Gmail must include a valid Outlook or Yahoo recovery email.'}
               </div>
 
               <div className="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60">
-                <strong className="text-amber-400 block mb-0.5">২. টু-ফ্যাক্টর অথেনটিকেশন (2FA):</strong>
-                মেইলে কোনো ফোন নাম্বার বা ২-ফ্যাক্টর কোড অন রাখা যাবে না।
+                <strong className="text-amber-400 block mb-0.5">
+                  {language === 'bn' ? '২. টু-ফ্যাক্টর অথেনটিকেশন (2FA):' : '2. Two-Factor Authentication (2FA):'}
+                </strong>
+                {language === 'bn'
+                  ? 'মেইলে কোনো ফোন নাম্বার বা ২-ফ্যাক্টর কোড অন রাখা যাবে না।'
+                  : 'No phone number or 2FA prompt should be active on the accounts.'}
               </div>
 
               <div className="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60">
-                <strong className="text-amber-400 block mb-0.5">৩. ইউনিক পাসওয়ার্ড:</strong>
-                কমপক্ষে ৮ অক্ষরের স্ট্রং পাসওয়ার্ড ব্যবহার করুন (e.g. Pass#2026Secure)।
+                <strong className="text-amber-400 block mb-0.5">
+                  {language === 'bn' ? '৩. ইউনিক পাসওয়ার্ড:' : '3. Strong Password:'}
+                </strong>
+                {language === 'bn'
+                  ? 'কমপক্ষে ৮ অক্ষরের স্ট্রং পাসওয়ার্ড ব্যবহার করুন (যেমন: Pass#2026Secure)।'
+                  : 'Use at least 8 characters strong password (e.g. Pass#2026Secure).'}
               </div>
 
               <div className="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60">
-                <strong className="text-amber-400 block mb-0.5">৪. নাম ও ইউজারনেম:</strong>
-                ইংলিশ রিয়েল নাম ব্যবহার করবেন, কোনো এলোমেলো বর্ণ নয়।
+                <strong className="text-amber-400 block mb-0.5">
+                  {language === 'bn' ? '৪. নাম ও ইউজারনেম:' : '4. Name & Username:'}
+                </strong>
+                {language === 'bn'
+                  ? 'ইংলিশ রিয়েল নাম ব্যবহার করবেন, কোনো এলোমেলো বর্ণ নয়।'
+                  : 'Use realistic English human names, not random meaningless characters.'}
               </div>
             </div>
           </div>
 
           <div className="bg-gradient-to-br from-slate-900 to-amber-950/40 border border-slate-800 rounded-3xl p-6 shadow-xl text-center">
             <DollarSign className="w-8 h-8 text-amber-400 mx-auto mb-2" />
-            <h4 className="font-bold text-white text-sm">তাৎক্ষণিক পেমেন্ট পলিসি</h4>
+            <h4 className="font-bold text-white text-sm">
+              {language === 'bn' ? 'তাৎক্ষণিক পেমেন্ট পলিসি' : 'Instant Payout Policy'}
+            </h4>
             <p className="text-xs text-slate-400 mt-1">
-              ব্যাচ অ্যাডমিন রিভিউ শেষে অনুমোদিত হওয়ামাত্র টাকা ওয়ালেটে যুক্ত হবে। এরপর বিকাশ/নগদে যেকোনো সময় উইথড্র দিতে পারবেন।
+              {language === 'bn'
+                ? 'ব্যাচ অ্যাডমিন রিভিউ শেষে অনুমোদিত হওয়ামাত্র টাকা ওয়ালেটে যুক্ত হবে। এরপর বিকাশ/নগদে যেকোনো সময় উইথড্র দিতে পারবেন।'
+                : 'Funds are credited to your wallet immediately after admin verification. Withdraw anytime to bKash or Nagad.'}
             </p>
           </div>
         </div>
@@ -600,7 +668,7 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <ClipboardPaste className="w-5 h-5 text-indigo-400" />
-                <span>ক্লিপবোর্ড থেকে জিমেইল পেস্ট করুন</span>
+                <span>{language === 'bn' ? 'ক্লিপবোর্ড থেকে জিমেইল পেস্ট করুন' : 'Paste Gmail from Clipboard'}</span>
               </h3>
               <button
                 onClick={() => setShowPasteModal(false)}
@@ -611,7 +679,11 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
             </div>
 
             <p className="text-xs text-slate-400">
-              নিচের বক্সে প্রতি লাইনে <span className="text-amber-400 font-mono">email:password</span> অথবা <span className="text-amber-400 font-mono">email password</span> আকারে লেখা পেস্ট করুন:
+              {language === 'bn' ? (
+                <>নিচের বক্সে প্রতি লাইনে <span className="text-amber-400 font-mono">email:password</span> অথবা <span className="text-amber-400 font-mono">email password</span> আকারে লেখা পেস্ট করুন:</>
+              ) : (
+                <>Paste accounts line by line in <span className="text-amber-400 font-mono">email:password</span> format:</>
+              )}
             </p>
 
             <textarea
@@ -627,13 +699,13 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
                 onClick={() => applyPastedLinesToRows(pasteModalText)}
                 className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs"
               >
-                বক্সে পেস্ট করুন
+                {language === 'bn' ? 'বক্সে পেস্ট করুন' : 'Paste to Rows'}
               </button>
               <button
                 onClick={() => setShowPasteModal(false)}
                 className="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
               >
-                বাতিল
+                {language === 'bn' ? 'বাতিল' : 'Cancel'}
               </button>
             </div>
           </div>
@@ -643,28 +715,32 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
       {/* Seller Batch History */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
         <h2 className="text-xl font-black text-white mb-4 flex items-center justify-between">
-          <span>আমার সাবমিটকৃত ব্যাচ হিস্ট্রি</span>
-          <span className="text-xs font-normal text-slate-400">মোট ব্যাচ: {myBatches.length}টি</span>
+          <span>{language === 'bn' ? 'আমার সাবমিটকৃত ব্যাচ হিস্ট্রি' : 'My Submitted Batch History'}</span>
+          <span className="text-xs font-normal text-slate-400">
+            {language === 'bn' ? `মোট ব্যাচ: ${myBatches.length}টি` : `Total Batches: ${myBatches.length}`}
+          </span>
         </h2>
 
         {myBatches.length === 0 ? (
           <div className="py-12 text-center text-slate-500 text-sm">
-            এখনো কোনো মেইল ব্যাচ সাবমিট করেননি। উপরে ফরম পূরণ করে প্রথম ব্যাচ সাবমিট করুন।
+            {language === 'bn'
+              ? 'এখনো কোনো মেইল ব্যাচ সাবমিট করেননি। উপরে ফরম পূরণ করে প্রথম ব্যাচ সাবমিট করুন।'
+              : 'No Gmail batches submitted yet. Fill out the form above to submit your first batch.'}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-300">
               <thead className="bg-slate-800/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700">
                 <tr>
-                  <th className="py-3 px-4 font-semibold">ব্যাচ আইডি</th>
-                  <th className="py-3 px-4 font-semibold">ক্যাটাগরি</th>
-                  <th className="py-3 px-4 font-semibold">পরিমাণ</th>
-                  <th className="py-3 px-4 font-semibold">রেট</th>
-                  <th className="py-3 px-4 font-semibold">মোট মূল্য</th>
-                  <th className="py-3 px-4 font-semibold">পেমেন্ট মেথড</th>
-                  <th className="py-3 px-4 font-semibold">স্ট্যাটাস</th>
-                  <th className="py-3 px-4 font-semibold">সময়</th>
-                  <th className="py-3 px-4 font-semibold text-right">ডিটেইলস</th>
+                  <th className="py-3 px-4 font-semibold">{language === 'bn' ? 'ব্যাচ আইডি' : 'Batch ID'}</th>
+                  <th className="py-3 px-4 font-semibold">{language === 'bn' ? 'ক্যাটাগরি' : 'Type'}</th>
+                  <th className="py-3 px-4 font-semibold">{language === 'bn' ? 'পরিমাণ' : 'Quantity'}</th>
+                  <th className="py-3 px-4 font-semibold">{language === 'bn' ? 'রেট' : 'Rate'}</th>
+                  <th className="py-3 px-4 font-semibold">{language === 'bn' ? 'মোট মূল্য' : 'Total'}</th>
+                  <th className="py-3 px-4 font-semibold">{language === 'bn' ? 'পেমেন্ট মেথড' : 'Payment'}</th>
+                  <th className="py-3 px-4 font-semibold">{language === 'bn' ? 'স্ট্যাটাস' : 'Status'}</th>
+                  <th className="py-3 px-4 font-semibold">{language === 'bn' ? 'সময়' : 'Date'}</th>
+                  <th className="py-3 px-4 font-semibold text-right">{language === 'bn' ? 'ডিটেইলস' : 'Action'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
@@ -672,7 +748,9 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
                   <tr key={b.id} className="hover:bg-slate-800/40 transition-colors">
                     <td className="py-3.5 px-4 font-mono font-medium text-white">{b.id}</td>
                     <td className="py-3.5 px-4 capitalize font-semibold text-amber-400">{b.mailType}</td>
-                    <td className="py-3.5 px-4 font-bold text-white">{b.validMailsCount} টি</td>
+                    <td className="py-3.5 px-4 font-bold text-white">
+                      {b.validMailsCount} {language === 'bn' ? 'টি' : 'qty'}
+                    </td>
                     <td className="py-3.5 px-4 text-slate-400">৳{b.pricePerMail.toFixed(2)}</td>
                     <td className="py-3.5 px-4 font-bold text-emerald-400">৳{b.totalAmount.toFixed(2)}</td>
                     <td className="py-3.5 px-4 text-slate-300">
@@ -681,22 +759,22 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
                     <td className="py-3.5 px-4">
                       {b.status === 'approved' && (
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                          ✓ Approved
+                          {language === 'bn' ? '✓ অনুমোদিত' : '✓ Approved'}
                         </span>
                       )}
                       {b.status === 'rejected' && (
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                          ✕ Rejected
+                          {language === 'bn' ? '✕ বাতিল' : '✕ Rejected'}
                         </span>
                       )}
                       {b.status === 'pending' && (
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                          ⏳ Reviewing
+                          {language === 'bn' ? '⏳ যাচাই চলছে' : '⏳ Reviewing'}
                         </span>
                       )}
                     </td>
                     <td className="py-3.5 px-4 text-slate-400">
-                      {new Date(b.submittedAt).toLocaleDateString('bn-BD', {
+                      {new Date(b.submittedAt).toLocaleDateString(language === 'bn' ? 'bn-BD' : 'en-US', {
                         month: 'short',
                         day: 'numeric',
                         hour: '2-digit',
@@ -708,7 +786,7 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
                         onClick={() => setSelectedBatchDetails(b)}
                         className="text-amber-400 hover:underline font-semibold"
                       >
-                        মেইল দেখুন
+                        {language === 'bn' ? 'মেইল দেখুন' : 'View Mails'}
                       </button>
                     </td>
                   </tr>
@@ -726,7 +804,9 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <FileText className="w-5 h-5 text-amber-400" />
-                <span>ব্যাচ বিবরণ: {selectedBatchDetails.batchName}</span>
+                <span>
+                  {language === 'bn' ? 'ব্যাচ বিবরণ:' : 'Batch Details:'} {selectedBatchDetails.batchName}
+                </span>
               </h3>
               <button
                 onClick={() => setSelectedBatchDetails(null)}
@@ -738,23 +818,29 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
 
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <div className="text-slate-400">মোট মেইল সংখ্যা:</div>
-                <div className="text-white font-bold text-sm mt-0.5">{selectedBatchDetails.validMailsCount} টি</div>
+                <div className="text-slate-400">{language === 'bn' ? 'মোট মেইল সংখ্যা:' : 'Total Mails:'}</div>
+                <div className="text-white font-bold text-sm mt-0.5">
+                  {selectedBatchDetails.validMailsCount} {language === 'bn' ? 'টি' : 'qty'}
+                </div>
               </div>
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <div className="text-slate-400">মোট প্রদেয় মূল্য:</div>
+                <div className="text-slate-400">{language === 'bn' ? 'মোট প্রদেয় মূল্য:' : 'Total Payout:'}</div>
                 <div className="text-emerald-400 font-bold text-sm mt-0.5">৳{selectedBatchDetails.totalAmount.toFixed(2)}</div>
               </div>
             </div>
 
             {selectedBatchDetails.rejectReason && (
               <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs">
-                <strong>রিজেক্ট কারণ:</strong> {selectedBatchDetails.rejectReason}
+                <strong>{language === 'bn' ? 'রিজেক্ট কারণ:' : 'Rejection Reason:'}</strong> {selectedBatchDetails.rejectReason}
               </div>
             )}
 
             <div>
-              <div className="text-xs font-bold text-slate-300 mb-1.5">জিমেইল তালিকা ({selectedBatchDetails.mails?.length || 0}টি):</div>
+              <div className="text-xs font-bold text-slate-300 mb-1.5">
+                {language === 'bn'
+                  ? `জিমেইল তালিকা (${selectedBatchDetails.mails?.length || 0}টি):`
+                  : `Gmail List (${selectedBatchDetails.mails?.length || 0} accounts):`}
+              </div>
               <div className="max-h-60 overflow-y-auto bg-slate-950 border border-slate-800 rounded-2xl p-4 font-mono text-xs text-slate-300 space-y-1 select-all">
                 {selectedBatchDetails.mails.map((m, i) => (
                   <div key={i} className="flex items-center justify-between border-b border-slate-900 pb-1">
@@ -769,7 +855,7 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
               onClick={() => setSelectedBatchDetails(null)}
               className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs"
             >
-              বন্ধ করুন
+              {language === 'bn' ? 'বন্ধ করুন' : 'Close'}
             </button>
           </div>
         </div>

@@ -38,6 +38,7 @@ const AppContent: React.FC = () => {
     isAuthModalOpen,
     setIsAuthModalOpen,
     authModalMode,
+    language,
   } = useApp();
 
   const renderActiveView = () => {
@@ -112,20 +113,20 @@ const AppContent: React.FC = () => {
         {renderActiveView()}
       </main>
 
-      {/* Floating Telegram Support Quick Action */}
-      <aside className="fixed bottom-16 lg:bottom-6 right-4 sm:right-6 z-40">
+      {/* Floating Telegram Support Quick Action - Positioned neatly */}
+      <aside className="fixed bottom-16 lg:bottom-6 right-4 sm:right-6 z-30 pointer-events-auto">
         <a
           href={platformSettings.supportTelegram}
           target="_blank"
           rel="noreferrer"
           className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs shadow-2xl shadow-sky-500/30 transition-all hover:scale-105 active:scale-95 group"
-          title="টেলিগ্রাম হেল্পলাইন ও সাপোর্ট"
+          title={language === 'bn' ? 'টেলিগ্রাম হেল্পলাইন ও সাপোর্ট' : 'Telegram Support Helpline'}
         >
           <div className="relative">
             <Headphones className="w-4 h-4" />
             <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
           </div>
-          <span className="hidden sm:inline">সাপোর্ট ও সাহায্য</span>
+          <span className="hidden sm:inline">{language === 'bn' ? 'সাপোর্ট ও সাহায্য' : 'Support & Help'}</span>
         </a>
       </aside>
 
@@ -135,20 +136,38 @@ const AppContent: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left">
             <span className="font-black text-white text-sm tracking-wider">MAIL FACTORY</span>
             <span className="hidden sm:inline text-slate-600">•</span>
-            <span className="text-slate-400">ট্রাস্টেড জিমেইল ক্রয়-বিক্রয় ও এক্সচেঞ্জ প্ল্যাটফর্ম</span>
+            <span className="text-slate-400">
+              {language === 'bn'
+                ? 'ট্রাস্টেড জিমেইল ক্রয়-বিক্রয় ও এক্সচেঞ্জ প্ল্যাটফর্ম'
+                : 'Trusted Gmail Trading & Exchange Platform'}
+            </span>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-4 text-[11px]">
-            <button onClick={() => setActiveTab('home')} className="hover:text-amber-400 transition-colors">হোম</button>
-            <button onClick={() => setActiveTab('sell')} className="hover:text-amber-400 transition-colors">মেইল সেল</button>
-            <button onClick={() => setActiveTab('buy')} className="hover:text-amber-400 transition-colors">মার্কেটপ্লেস</button>
-            <button onClick={() => setActiveTab('wallet')} className="hover:text-amber-400 transition-colors">ওয়ালেট</button>
-            <button onClick={() => setActiveTab('exchange')} className="hover:text-amber-400 transition-colors">এক্সচেঞ্জ</button>
-            <button onClick={() => setActiveTab('referral')} className="hover:text-amber-400 transition-colors">লিডারবোর্ড</button>
-            <button onClick={() => setActiveTab('reviews')} className="hover:text-amber-400 transition-colors">রিভিউ</button>
+            <button onClick={() => setActiveTab('home')} className="hover:text-amber-400 transition-colors">
+              {language === 'bn' ? 'হোম' : 'Home'}
+            </button>
+            <button onClick={() => setActiveTab('sell')} className="hover:text-amber-400 transition-colors">
+              {language === 'bn' ? 'মেইল সেল' : 'Sell Mail'}
+            </button>
+            <button onClick={() => setActiveTab('buy')} className="hover:text-amber-400 transition-colors">
+              {language === 'bn' ? 'মার্কেটপ্লেস' : 'Marketplace'}
+            </button>
+            <button onClick={() => setActiveTab('wallet')} className="hover:text-amber-400 transition-colors">
+              {language === 'bn' ? 'ওয়ালেট' : 'Wallet'}
+            </button>
+            <button onClick={() => setActiveTab('exchange')} className="hover:text-amber-400 transition-colors">
+              {language === 'bn' ? 'এক্সচেঞ্জ' : 'Exchange'}
+            </button>
+            <button onClick={() => setActiveTab('referral')} className="hover:text-amber-400 transition-colors">
+              {language === 'bn' ? 'লিডারবোর্ড' : 'Leaderboard'}
+            </button>
+            <button onClick={() => setActiveTab('reviews')} className="hover:text-amber-400 transition-colors">
+              {language === 'bn' ? 'রিভিউ' : 'Reviews'}
+            </button>
             {isAdmin && (
               <button onClick={() => setActiveTab('admin')} className="text-emerald-400 font-bold hover:underline">
-                অ্যাডমিন প্যানেল
+                {language === 'bn' ? 'অ্যাডমিন প্যানেল' : 'Admin Panel'}
               </button>
             )}
           </div>
@@ -158,7 +177,7 @@ const AppContent: React.FC = () => {
             <PWAInstallButton />
             <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>100% Secured & Encrypted</span>
+              <span>{language === 'bn' ? '১০০% সিকিউরড ও এনক্রিপ্টেড' : '100% Secured & Encrypted'}</span>
             </div>
           </div>
         </div>

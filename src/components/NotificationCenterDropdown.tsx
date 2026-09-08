@@ -37,6 +37,7 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
     clearAllNotifications,
     setActiveTab,
     currentUser,
+    language,
   } = useApp();
 
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('all');
@@ -157,7 +158,7 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
           <Sparkles className="w-2.5 h-2.5" />
-          <span>মেইল সেলড</span>
+          <span>{language === 'bn' ? 'মেইল সেলড' : 'Mail Sold'}</span>
         </span>
       );
     }
@@ -165,7 +166,7 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/40">
           <CheckCircle2 className="w-2.5 h-2.5" />
-          <span>ডিপোজিট কনফার্মড</span>
+          <span>{language === 'bn' ? 'ডিপোজিট কনফার্মড' : 'Deposit Confirmed'}</span>
         </span>
       );
     }
@@ -173,7 +174,7 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-500/20 text-purple-400 border border-purple-500/40">
           <TrendingUp className="w-2.5 h-2.5" />
-          <span>এক্সচেঞ্জ অফার</span>
+          <span>{language === 'bn' ? 'এক্সচেঞ্জ অফার' : 'Exchange Offer'}</span>
         </span>
       );
     }
@@ -181,14 +182,14 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/40">
           <Sparkles className="w-2.5 h-2.5" />
-          <span>জরুরি অ্যালার্ট</span>
+          <span>{language === 'bn' ? 'জরুরি অ্যালার্ট' : 'Urgent Alert'}</span>
         </span>
       );
     }
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-500/20 text-blue-400 border border-blue-500/40">
         <Sparkles className="w-2.5 h-2.5" />
-        <span>অফিসিয়াল নোটিশ</span>
+        <span>{language === 'bn' ? 'অফিসিয়াল নোটিশ' : 'Official Notice'}</span>
       </span>
     );
   };
@@ -219,20 +220,22 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-sm font-black text-white tracking-wide">
-                  নোটিফিকেশন সেন্টার
+                  {language === 'bn' ? 'নোটিফিকেশন সেন্টার' : 'Notifications'}
                 </h3>
                 {unreadCount > 0 ? (
                   <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black text-[10px]">
-                    {unreadCount} নতুন
+                    {unreadCount} {language === 'bn' ? 'নতুন' : 'New'}
                   </span>
                 ) : (
                   <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-bold text-[10px]">
-                    সব পঠিত
+                    {language === 'bn' ? 'সব পঠিত' : 'All read'}
                   </span>
                 )}
               </div>
               <p className="text-[10px] text-slate-400 truncate">
-                মেইল সেলস, ডিপোজিট কনফার্মেশন ও সিস্টেম অ্যালার্ট
+                {language === 'bn'
+                  ? 'মেইল সেলস, ডিপোজিট কনফার্মেশন ও সিস্টেম অ্যালার্ট'
+                  : 'Mail sales, deposit approvals & system alerts'}
               </p>
             </div>
           </div>
@@ -242,26 +245,26 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
               <button
                 onClick={markAllNotificationsRead}
                 className="text-[11px] font-bold text-amber-400 hover:text-amber-300 px-2 py-1 rounded-lg hover:bg-amber-500/10 transition-colors flex items-center gap-1"
-                title="সবগুলো পঠিত হিসেবে চিহ্নিত করুন"
+                title={language === 'bn' ? 'সবগুলো পঠিত হিসেবে চিহ্নিত করুন' : 'Mark all as read'}
               >
                 <Check className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">সব পঠিত</span>
+                <span className="hidden sm:inline">{language === 'bn' ? 'সব পঠিত' : 'Mark all read'}</span>
               </button>
             )}
             {userNotifications.length > 0 && (
               <button
                 onClick={clearAllNotifications}
                 className="text-[11px] font-bold text-rose-400 hover:text-rose-300 px-2 py-1 rounded-lg hover:bg-rose-500/10 transition-colors flex items-center gap-1"
-                title="সবগুলো মুছে ফেলুন"
+                title={language === 'bn' ? 'সবগুলো মুছে ফেলুন' : 'Clear all'}
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">মুছুন</span>
+                <span className="hidden sm:inline">{language === 'bn' ? 'মুছুন' : 'Clear'}</span>
               </button>
             )}
             <button
               onClick={onClose}
               className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              title="বন্ধ করুন"
+              title={language === 'bn' ? 'বন্ধ করুন' : 'Close'}
             >
               <X className="w-4 h-4" />
             </button>
@@ -278,7 +281,7 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
             }`}
           >
-            <span>সকল</span>
+            <span>{language === 'bn' ? 'সকল' : 'All'}</span>
             <span className="text-[9px] px-1 rounded-full bg-black/20">
               {userNotifications.length}
             </span>
@@ -293,7 +296,7 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
             }`}
           >
             <MailCheck className="w-3.5 h-3.5" />
-            <span>মেইল সেল</span>
+            <span>{language === 'bn' ? 'মেইল সেল' : 'Mail Sold'}</span>
             {mailSoldCount > 0 && (
               <span className="text-[9px] px-1 rounded-full bg-black/20">
                 {mailSoldCount}
@@ -310,7 +313,7 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
             }`}
           >
             <Wallet className="w-3.5 h-3.5" />
-            <span>ডিপোজিট</span>
+            <span>{language === 'bn' ? 'ডিপোজিট' : 'Deposits'}</span>
             {depositCount > 0 && (
               <span className="text-[9px] px-1 rounded-full bg-black/20">
                 {depositCount}
@@ -327,7 +330,7 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
             }`}
           >
             <ArrowRightLeft className="w-3.5 h-3.5" />
-            <span>এক্সচেঞ্জ</span>
+            <span>{language === 'bn' ? 'এক্সচেঞ্জ' : 'Exchange'}</span>
             {exchangeCount > 0 && (
               <span className="text-[9px] px-1 rounded-full bg-black/20">
                 {exchangeCount}
@@ -344,12 +347,26 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
                 <Bell className="w-6 h-6 opacity-40" />
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-bold text-slate-300">কোনো নোটিফিকেশন নেই</p>
+                <p className="text-sm font-bold text-slate-300">
+                  {language === 'bn' ? 'কোনো নোটিফিকেশন নেই' : 'No notifications'}
+                </p>
                 <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                  {activeFilter === 'mail_sold' && 'মেইল লিস্টিং বিক্রয় হলে এখানে তাৎক্ষণিক অ্যালার্ট আসবে।'}
-                  {activeFilter === 'deposit_confirmed' && 'ওয়ালেট ডিপোজিট অ্যাপ্রুভ হলে কনফার্মেশন মেসেজ পাবেন।'}
-                  {activeFilter === 'exchange_offer' && 'কারেন্সি এক্সচেঞ্জ অফার ও লাইভ রেট আপডেট এখানে দেখাবে।'}
-                  {activeFilter === 'all' && 'আপনার জন্য নতুন কোনো বার্তা বা লেনদেনের অ্যালার্ট নেই।'}
+                  {activeFilter === 'mail_sold' &&
+                    (language === 'bn'
+                      ? 'মেইল লিস্টিং বিক্রয় হলে এখানে তাৎক্ষণিক অ্যালার্ট আসবে।'
+                      : 'You will receive instant alerts here when mail orders are processed.')}
+                  {activeFilter === 'deposit_confirmed' &&
+                    (language === 'bn'
+                      ? 'ওয়ালেট ডিপোজিট অ্যাপ্রুভ হলে কনফার্মেশন মেসেজ পাবেন।'
+                      : 'Confirmation messages will appear here once deposits are approved.')}
+                  {activeFilter === 'exchange_offer' &&
+                    (language === 'bn'
+                      ? 'কারেন্সি এক্সচেঞ্জ অফার ও লাইভ রেট আপডেট এখানে দেখাবে।'
+                      : 'Currency exchange offers and rate alerts will appear here.')}
+                  {activeFilter === 'all' &&
+                    (language === 'bn'
+                      ? 'আপনার জন্য নতুন কোনো বার্তা বা লেনদেনের অ্যালার্ট নেই।'
+                      : 'No new updates or alerts for your account.')}
                 </p>
               </div>
             </div>
@@ -391,7 +408,7 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
                           deleteNotification(notif.id);
                         }}
                         className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 opacity-70 group-hover:opacity-100 transition-all"
-                        title="মুছে ফেলুন"
+                        title={language === 'bn' ? 'মুছে ফেলুন' : 'Delete'}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -413,15 +430,15 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
                     {notif.link && (
                       <div className="pt-1 flex items-center gap-1 text-[11px] font-bold text-amber-400 group-hover:text-amber-300">
                         <span>
-                          {notif.link === 'sell' && 'মেইল সেলার হিস্ট্রি দেখুন'}
-                          {notif.link === 'wallet' && 'ওয়ালেটে ব্যালেন্স চেক করুন'}
-                          {notif.link === 'exchange' && 'এক্সচেঞ্জ পেইজে যান'}
-                          {notif.link === 'buy' && 'মার্কেটপ্লেস অর্ডার দেখুন'}
+                          {notif.link === 'sell' && (language === 'bn' ? 'মেইল সেলার হিস্ট্রি দেখুন' : 'View Seller History')}
+                          {notif.link === 'wallet' && (language === 'bn' ? 'ওয়ালেটে ব্যালেন্স চেক করুন' : 'Check Wallet Balance')}
+                          {notif.link === 'exchange' && (language === 'bn' ? 'এক্সচেঞ্জ পেইজে যান' : 'Go to Exchange')}
+                          {notif.link === 'buy' && (language === 'bn' ? 'মার্কেটপ্লেস অর্ডার দেখুন' : 'View Marketplace Orders')}
                           {notif.link !== 'sell' &&
                             notif.link !== 'wallet' &&
                             notif.link !== 'exchange' &&
                             notif.link !== 'buy' &&
-                            'বিস্তারিত দেখুন'}
+                            (language === 'bn' ? 'বিস্তারিত দেখুন' : 'View Details')}
                         </span>
                         <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
                       </div>
@@ -437,7 +454,7 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
         <div className="p-3 bg-slate-950/90 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 px-4 shrink-0">
           <span className="flex items-center gap-1 text-slate-400">
             <Sparkles className="w-3 h-3 text-amber-400" />
-            <span>রিয়েল-টাইম লাইভ নোটিফিকেশন</span>
+            <span>{language === 'bn' ? 'রিয়েল-টাইম লাইভ নোটিফিকেশন' : 'Real-time Live Notifications'}</span>
           </span>
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
@@ -445,7 +462,7 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
                 onClick={markAllNotificationsRead}
                 className="text-amber-400 hover:text-amber-300 font-bold transition-colors"
               >
-                সব পঠিত
+                {language === 'bn' ? 'সব পঠিত' : 'Mark all read'}
               </button>
             )}
           </div>

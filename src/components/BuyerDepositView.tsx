@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export const BuyerDepositView: React.FC = () => {
-  const { platformSettings, submitDeposit, setActiveTab, showToast, isLoggedIn, currentUser, setIsAuthModalOpen } = useApp();
+  const { platformSettings, submitDeposit, setActiveTab, showToast, isLoggedIn, currentUser, setIsAuthModalOpen, language } = useApp();
 
   const [method, setMethod] = useState<PaymentMethod>('bKash');
   const [amount, setAmount] = useState<number>(500);
@@ -42,7 +42,7 @@ export const BuyerDepositView: React.FC = () => {
   const handleCopy = () => {
     navigator.clipboard.writeText(getRawNumberOnly());
     setCopiedNumber(true);
-    showToast('নাম্বার কপি করা হয়েছে!', 'success');
+    showToast(language === 'bn' ? 'নাম্বার কপি করা হয়েছে!' : 'Number copied!', 'success');
     setTimeout(() => setCopiedNumber(false), 2000);
   };
 
@@ -50,15 +50,28 @@ export const BuyerDepositView: React.FC = () => {
     e.preventDefault();
     if (!isLoggedIn || !currentUser.email || currentUser.id === 'guest') {
       setIsAuthModalOpen(true);
-      showToast('ডিপোজিট করার পূর্বে অনুগ্রহ করে লগ-ইন অথবা রেজিস্ট্রেশন করুন', 'error');
+      showToast(
+        language === 'bn'
+          ? 'ডিপোজিট করার পূর্বে অনুগ্রহ করে লগ-ইন অথবা রেজিস্ট্রেশন করুন'
+          : 'Please sign in or register before depositing',
+        'error'
+      );
       return;
     }
     if (amount < platformSettings.minDepositBdt) {
-      showToast(`সর্বনিম্ন ডিপোজিট ৳${platformSettings.minDepositBdt}`, 'error');
+      showToast(
+        language === 'bn'
+          ? `সর্বনিম্ন ডিপোজিট ৳${platformSettings.minDepositBdt}`
+          : `Minimum deposit is ৳${platformSettings.minDepositBdt}`,
+        'error'
+      );
       return;
     }
     if (!trxId.trim()) {
-      showToast('অনুগ্রহ করে TrxID বা ট্রানজেকশন আইডি দিন', 'error');
+      showToast(
+        language === 'bn' ? 'অনুগ্রহ করে TrxID বা ট্রানজেকশন আইডি দিন' : 'Please provide Transaction ID (TrxID)',
+        'error'
+      );
       return;
     }
 
@@ -86,8 +99,14 @@ export const BuyerDepositView: React.FC = () => {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-2xl font-black text-white">ওয়ালেট ডিপোজিট (Add Money)</h1>
-          <p className="text-xs text-slate-400">বিকাশ, নগদ, রকেট অথবা বাইন্যান্স থেকে টাকা যোগ করুন</p>
+          <h1 className="text-2xl font-black text-white">
+            {language === 'bn' ? 'ওয়ালেট ডিপোজিট (Add Money)' : 'Wallet Deposit (Add Money)'}
+          </h1>
+          <p className="text-xs text-slate-400">
+            {language === 'bn'
+              ? 'বিকাশ, নগদ, রকেট অথবা বাইন্যান্স থেকে টাকা যোগ করুন'
+              : 'Add money from bKash, Nagad, Rocket, or Binance'}
+          </p>
         </div>
       </div>
 
@@ -95,7 +114,7 @@ export const BuyerDepositView: React.FC = () => {
         {/* Step 1: Select Method */}
         <div>
           <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-            ১. পেমেন্ট মেথড নির্বাচন করুন:
+            {language === 'bn' ? '১. পেমেন্ট মেথড নির্বাচন করুন:' : '1. Select Payment Method:'}
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {(['bKash', 'Nagad', 'Rocket', 'Binance'] as PaymentMethod[]).map(m => (
@@ -118,7 +137,9 @@ export const BuyerDepositView: React.FC = () => {
         {/* Step 2: Payment Recipient Info */}
         <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
           <div className="text-xs text-slate-400 font-medium">
-            নিচের নাম্বারে টাকা সেন্ড মানি (Send Money) বা ক্যাশ ইন করুন:
+            {language === 'bn'
+              ? 'নিচের নাম্বারে টাকা সেন্ড মানি (Send Money) বা ক্যাশ ইন করুন:'
+              : 'Send Money or Cash In to the following number/address:'}
           </div>
           <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-700/80">
             <span className="font-mono font-bold text-sm sm:text-base text-amber-400 select-all">
@@ -129,11 +150,19 @@ export const BuyerDepositView: React.FC = () => {
               className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors"
             >
               {copiedNumber ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedNumber ? 'কপি হয়েছে' : 'কপি'}</span>
+              <span>
+                {copiedNumber
+                  ? (language === 'bn' ? 'কপি হয়েছে' : 'Copied')
+                  : (language === 'bn' ? 'কপি' : 'Copy')}
+              </span>
             </button>
           </div>
           <p className="text-[11px] text-slate-400">
-            * টাকা পাঠানোর পর প্রাপ্ত এসএমএস থেকে <strong>TrxID</strong> কপি করে নিচের বক্সে দিন।
+            {language === 'bn' ? (
+              <>* টাকা পাঠানোর পর প্রাপ্ত এসএমএস থেকে <strong>TrxID</strong> কপি করে নিচের বক্সে দিন।</>
+            ) : (
+              <>* After sending money, copy the <strong>TrxID</strong> from your confirmation SMS and enter it below.</>
+            )}
           </p>
         </div>
 
@@ -141,7 +170,7 @@ export const BuyerDepositView: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-              ২. প্রেরিত টাকার পরিমাণ (BDT):
+              {language === 'bn' ? '২. প্রেরিত টাকার পরিমাণ (BDT):' : '2. Sent Amount (BDT):'}
             </label>
             <input
               type="number"
@@ -168,7 +197,7 @@ export const BuyerDepositView: React.FC = () => {
 
           <div>
             <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-              ৩. ট্রানজেকশন আইডি (TrxID):
+              {language === 'bn' ? '৩. ট্রানজেকশন আইডি (TrxID):' : '3. Transaction ID (TrxID):'}
             </label>
             <input
               type="text"
@@ -182,7 +211,9 @@ export const BuyerDepositView: React.FC = () => {
 
           <div>
             <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-              ৪. প্রেরক নাম্বার (যে নাম্বার থেকে পাঠিয়েছেন):
+              {language === 'bn'
+                ? '৪. প্রেরক নাম্বার (যে নাম্বার থেকে পাঠিয়েছেন):'
+                : '4. Sender Account Number (from which you sent):'}
             </label>
             <input
               type="text"
@@ -194,7 +225,11 @@ export const BuyerDepositView: React.FC = () => {
             />
             <div className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs">
               <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>কে কত টাকা ডিপোজিট করেছেন তাদের ফোন নাম্বার সুরক্ষিত থাকে এবং কেউ দেখতে পারবে না।</span>
+              <span>
+                {language === 'bn'
+                  ? 'কে কত টাকা ডিপোজিট করেছেন তাদের ফোন নাম্বার সুরক্ষিত থাকে এবং কেউ দেখতে পারবে না।'
+                  : 'Depositor phone numbers are encrypted & protected. No public access.'}
+              </span>
             </div>
           </div>
 
@@ -202,7 +237,9 @@ export const BuyerDepositView: React.FC = () => {
             type="submit"
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 text-slate-950 font-black text-base shadow-xl shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
           >
-            <span>ডিপোজিট রিকোয়েস্ট সাবমিট করুন</span>
+            <span>
+              {language === 'bn' ? 'ডিপোজিট রিকোয়েস্ট সাবমিট করুন' : 'Submit Deposit Request'}
+            </span>
           </button>
         </form>
       </div>

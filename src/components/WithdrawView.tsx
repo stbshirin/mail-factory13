@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 export const WithdrawView: React.FC = () => {
-  const { currentUser, platformSettings, submitWithdrawal, setActiveTab, showToast } = useApp();
+  const { currentUser, platformSettings, submitWithdrawal, setActiveTab, showToast, language } = useApp();
 
   const [method, setMethod] = useState<PaymentMethod>('bKash');
   const [amount, setAmount] = useState<number>(300);
@@ -42,8 +42,14 @@ export const WithdrawView: React.FC = () => {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-2xl font-black text-white">টাকা উত্তোলন (Withdraw)</h1>
-          <p className="text-xs text-slate-400">বিকাশ, নগদ বা রকেটে ওয়ালেট থেকে ক্যাশআউট করুন</p>
+          <h1 className="text-2xl font-black text-white">
+            {language === 'bn' ? 'টাকা উত্তোলন (Withdraw)' : 'Withdraw Funds (Cashout)'}
+          </h1>
+          <p className="text-xs text-slate-400">
+            {language === 'bn'
+              ? 'বিকাশ, নগদ বা রকেটে ওয়ালেট থেকে ক্যাশআউট করুন'
+              : 'Cashout wallet balance to bKash, Nagad, or Rocket'}
+          </p>
         </div>
       </div>
 
@@ -51,14 +57,21 @@ export const WithdrawView: React.FC = () => {
         {/* Available Balance Box */}
         <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-xs text-slate-400">উত্তোলনযোগ্য ব্যালেন্স:</span>
+            <span className="text-xs text-slate-400">
+              {language === 'bn' ? 'উত্তোলনযোগ্য ব্যালেন্স:' : 'Available Balance:'}
+            </span>
             <div className="text-2xl font-black text-amber-400 mt-0.5">
               ৳{currentUser.balanceBdt.toFixed(2)}
             </div>
           </div>
           <div className="text-right text-[11px] text-slate-400">
-            <div>সর্বনিম্ন উইথড্র: <strong>৳{platformSettings.minWithdrawalBdt}</strong></div>
-            <div className="text-emerald-400 font-medium">ক্যাশআউট চার্জ: ৳০ (ফ্রি)</div>
+            <div>
+              {language === 'bn' ? 'সর্বনিম্ন উইথড্র: ' : 'Min Withdraw: '}
+              <strong>৳{platformSettings.minWithdrawalBdt}</strong>
+            </div>
+            <div className="text-emerald-400 font-medium">
+              {language === 'bn' ? 'ক্যাশআউট চার্জ: ৳০ (ফ্রি)' : 'Cashout Fee: ৳0 (Free)'}
+            </div>
           </div>
         </div>
 
@@ -66,7 +79,7 @@ export const WithdrawView: React.FC = () => {
           {/* Method Selector */}
           <div>
             <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-              ১. উইথড্র মেথড সিলেক্ট করুন:
+              {language === 'bn' ? '১. উইথড্র মেথড সিলেক্ট করুন:' : '1. Select Withdrawal Method:'}
             </label>
             <div className="grid grid-cols-3 gap-3">
               {(['bKash', 'Nagad', 'Rocket'] as PaymentMethod[]).map(m => (
@@ -90,14 +103,14 @@ export const WithdrawView: React.FC = () => {
           <div>
             <div className="flex justify-between items-center mb-1.5">
               <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                ২. উত্তোলনের পরিমাণ (BDT):
+                {language === 'bn' ? '২. উত্তোলনের পরিমাণ (BDT):' : '2. Withdrawal Amount (BDT):'}
               </label>
               <button
                 type="button"
                 onClick={() => setAmount(Math.floor(currentUser.balanceBdt))}
                 className="text-[11px] text-amber-400 font-semibold hover:underline"
               >
-                সব ব্যালেন্স তুলুন
+                {language === 'bn' ? 'সব ব্যালেন্স তুলুন' : 'Withdraw All'}
               </button>
             </div>
             <input
@@ -114,7 +127,9 @@ export const WithdrawView: React.FC = () => {
           {/* Account Number */}
           <div>
             <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-              ৩. আপনার {method} একাউন্ট নাম্বার:
+              {language === 'bn'
+                ? `৩. আপনার ${method} একাউন্ট নাম্বার:`
+                : `3. Your ${method} Account Number:`}
             </label>
             <input
               type="text"
@@ -125,7 +140,9 @@ export const WithdrawView: React.FC = () => {
               required
             />
             <p className="text-[11px] text-slate-400 mt-1">
-              * সঠিক পার্সোনাল বিকাশ/নগদ নাম্বার দিন যাতে সহজে টাকা পাঠানো যায়।
+              {language === 'bn'
+                ? '* সঠিক পার্সোনাল বিকাশ/নগদ নাম্বার দিন যাতে সহজে টাকা পাঠানো যায়।'
+                : '* Enter accurate Personal bKash/Nagad/Rocket account number for fast transfer.'}
             </p>
           </div>
 
@@ -133,7 +150,9 @@ export const WithdrawView: React.FC = () => {
           <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center gap-3 text-xs text-slate-300">
             <Clock className="w-5 h-5 text-amber-400 flex-shrink-0" />
             <span>
-              উইথড্র রিকোয়েস্ট সাবমিটের সাধারণত ৫ থেকে ৩০ মিনিটের মধ্যে অ্যাডমিন ভেরিফাই করে টাকা পাঠিয়ে দেয়।
+              {language === 'bn'
+                ? 'উইথড্র রিকোয়েস্ট সাবমিটের সাধারণত ৫ থেকে ৩০ মিনিটের মধ্যে অ্যাডমিন ভেরিফাই করে টাকা পাঠিয়ে দেয়।'
+                : 'Withdrawal requests are typically verified and disbursed within 5 to 30 minutes.'}
             </span>
           </div>
 
@@ -143,7 +162,9 @@ export const WithdrawView: React.FC = () => {
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 text-slate-950 font-black text-base shadow-xl shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
             <ArrowUpRight className="w-5 h-5 stroke-[2.5]" />
-            <span>উইথড্র রিকোয়েস্ট সাবমিট করুন</span>
+            <span>
+              {language === 'bn' ? 'উইথড্র রিকোয়েস্ট সাবমিট করুন' : 'Submit Withdrawal Request'}
+            </span>
           </button>
         </form>
       </div>

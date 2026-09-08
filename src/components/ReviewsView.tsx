@@ -3,7 +3,7 @@ import { useApp } from '../AppContext';
 import { Star, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
 
 export const ReviewsView: React.FC = () => {
-  const { reviews, addReview, currentUser, isLoggedIn, setIsAuthModalOpen, showToast } = useApp();
+  const { reviews, addReview, currentUser, isLoggedIn, setIsAuthModalOpen, showToast, language } = useApp();
 
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
@@ -13,18 +13,29 @@ export const ReviewsView: React.FC = () => {
     e.preventDefault();
     if (!isLoggedIn || !currentUser.email || currentUser.id === 'guest') {
       setIsAuthModalOpen(true);
-      showToast('রিভিউ আবেদন করার পূর্বে অনুগ্রহ করে লগ-ইন অথবা রেজিস্ট্রেশন করুন', 'error');
+      showToast(
+        language === 'bn'
+          ? 'রিভিউ আবেদন করার পূর্বে অনুগ্রহ করে লগ-ইন অথবা রেজিস্ট্রেশন করুন'
+          : 'Please log in or register before submitting a review',
+        'error'
+      );
       return;
     }
 
     if (!comment.trim()) {
-      showToast('অনুগ্রহ করে আপনার মতামত লিখুন', 'error');
+      showToast(language === 'bn' ? 'অনুগ্রহ করে আপনার মতামত লিখুন' : 'Please write your comment', 'error');
       return;
     }
 
     const success = addReview(rating, comment, shift);
     if (success) {
       setComment('');
+      showToast(
+        language === 'bn'
+          ? 'রিভিউ সফলভাবে জমা দেওয়া হয়েছে! অ্যাডমিন অনুমোদনের পর প্রদর্শিত হবে।'
+          : 'Review submitted successfully! It will appear after admin approval.',
+        'success'
+      );
     }
   };
 
@@ -36,8 +47,14 @@ export const ReviewsView: React.FC = () => {
   return (
     <div className="space-y-8 pb-12">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-black text-white">ব্যবহারকারীদের রিভিউ ও অভিজ্ঞতা</h1>
-        <p className="text-xs text-slate-400 mt-1">মেইল ফ্যাক্টরি পরিবারের সদস্যদের সততা ও ফিডব্যাক</p>
+        <h1 className="text-2xl sm:text-3xl font-black text-white">
+          {language === 'bn' ? 'ব্যবহারকারীদের রিভিউ ও অভিজ্ঞতা' : 'User Reviews & Feedback'}
+        </h1>
+        <p className="text-xs text-slate-400 mt-1">
+          {language === 'bn'
+            ? 'মেইল ফ্যাক্টরি পরিবারের সদস্যদের সততা ও ফিডব্যাক'
+            : 'Honest reviews and experiences from Mail Factory members'}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -45,26 +62,30 @@ export const ReviewsView: React.FC = () => {
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-amber-400" />
-            <span>আপনার রিভিউ আবেদন করুন</span>
+            <span>{language === 'bn' ? 'আপনার রিভিউ আবেদন করুন' : 'Submit Your Review'}</span>
           </h2>
 
           {!isLoggedIn || !currentUser.email || currentUser.id === 'guest' ? (
             <div className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-center space-y-3">
               <p className="text-xs text-slate-300 leading-relaxed">
-                রিভিউ আবেদন করার পূর্বে আপনাকে অবশ্যই সিস্টেমে লগ-ইন অথবা রেজিস্ট্রেশন করতে হবে।
+                {language === 'bn'
+                  ? 'রিভিউ আবেদন করার পূর্বে আপনাকে অবশ্যই সিস্টেমে লগ-ইন অথবা রেজিস্ট্রেশন করতে হবে।'
+                  : 'You must log in or register before submitting a review.'}
               </p>
               <button
                 type="button"
                 onClick={() => setIsAuthModalOpen(true)}
                 className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition-all shadow-md"
               >
-                লগ-ইন / রেজিস্ট্রেশন করুন
+                {language === 'bn' ? 'লগ-ইন / রেজিস্ট্রেশন করুন' : 'Login / Register'}
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-2">রেটিং সিলেক্ট করুন:</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-2">
+                  {language === 'bn' ? 'রেটিং সিলেক্ট করুন:' : 'Select Rating:'}
+                </label>
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map(star => (
                     <button
@@ -84,25 +105,41 @@ export const ReviewsView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">কোন শিফটে কাজ করেছেন:</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  {language === 'bn' ? 'কোন শিফটে কাজ করেছেন:' : 'Shift / Category:'}
+                </label>
                 <select
                   value={shift}
                   onChange={e => setShift(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
                 >
-                  <option value="Morning Shift">সকালের শিফট (Morning Shift)</option>
-                  <option value="Day Shift">দিনের শিফট (Day Shift)</option>
-                  <option value="Night Shift">রাতের শিফট (Night Shift)</option>
-                  <option value="Marketplace Buyer">মার্কেটপ্লেস বায়ার (Buyer)</option>
+                  <option value="Morning Shift">
+                    {language === 'bn' ? 'সকালের শিফট (Morning Shift)' : 'Morning Shift'}
+                  </option>
+                  <option value="Day Shift">
+                    {language === 'bn' ? 'দিনের শিফট (Day Shift)' : 'Day Shift'}
+                  </option>
+                  <option value="Night Shift">
+                    {language === 'bn' ? 'রাতের শিফট (Night Shift)' : 'Night Shift'}
+                  </option>
+                  <option value="Marketplace Buyer">
+                    {language === 'bn' ? 'মার্কেটপ্লেস বায়ার (Buyer)' : 'Marketplace Buyer'}
+                  </option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">আপনার মতামত ও অভিজ্ঞতা:</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  {language === 'bn' ? 'আপনার মতামত ও অভিজ্ঞতা:' : 'Your Feedback & Experience:'}
+                </label>
                 <textarea
                   value={comment}
                   onChange={e => setComment(e.target.value)}
-                  placeholder="মেইল সাবমিটের কতক্ষণের মধ্যে পেমেন্ট পেয়েছেন বা সার্ভিসের অভিজ্ঞতা কেমন..."
+                  placeholder={
+                    language === 'bn'
+                      ? 'মেইল সাবমিটের কতক্ষণের মধ্যে পেমেন্ট পেয়েছেন বা সার্ভিসের অভিজ্ঞতা কেমন...'
+                      : 'Share your feedback, payment speed, and overall experience...'
+                  }
                   rows={4}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500"
                   required
@@ -110,7 +147,9 @@ export const ReviewsView: React.FC = () => {
               </div>
 
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400">
-                ℹ️ রিভিউ আবেদন করার পর অ্যাডমিন কনফার্ম করলে এটি সবার জন্য পাবলিক হবে।
+                {language === 'bn'
+                  ? 'ℹ️ রিভিউ আবেদন করার পর অ্যাডমিন কনফার্ম করলে এটি সবার জন্য পাবলিক হবে।'
+                  : 'ℹ️ Your review will become publicly visible once approved by an admin.'}
               </div>
 
               <button
@@ -118,7 +157,7 @@ export const ReviewsView: React.FC = () => {
                 className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition-all"
               >
                 <Send className="w-4 h-4" />
-                <span>রিভিউ আবেদন জমা দিন</span>
+                <span>{language === 'bn' ? 'রিভিউ আবেদন জমা দিন' : 'Submit Review'}</span>
               </button>
             </form>
           )}
@@ -130,7 +169,9 @@ export const ReviewsView: React.FC = () => {
           {myPendingReviews.length > 0 && (
             <div className="space-y-3">
               <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-                আপনার অপেক্ষারত রিভিউ (এডমিন কনফার্ম করার পর পাবলিক হবে):
+                {language === 'bn'
+                  ? 'আপনার অপেক্ষারত রিভিউ (এডমিন কনফার্ম করার পর পাবলিক হবে):'
+                  : 'Your Pending Reviews (Will show after Admin approval):'}
               </h3>
               {myPendingReviews.map(rev => (
                 <div
@@ -141,7 +182,7 @@ export const ReviewsView: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-white">{rev.userName}</span>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                        ⏳ অপেক্ষারত (Pending Admin Approval)
+                        {language === 'bn' ? '⏳ অপেক্ষারত (Pending Admin Approval)' : '⏳ Pending Approval'}
                       </span>
                     </div>
                     <div className="flex items-center gap-0.5 text-amber-400">
@@ -187,7 +228,7 @@ export const ReviewsView: React.FC = () => {
                 <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
                   <span className="text-emerald-400 font-semibold flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
-                    ভেরিফাইড ইউজার
+                    {language === 'bn' ? 'ভেরিফাইড ইউজার' : 'Verified Member'}
                   </span>
                   <span>{rev.date}</span>
                 </div>

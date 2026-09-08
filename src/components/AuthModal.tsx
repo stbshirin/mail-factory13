@@ -33,6 +33,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     firebaseLoginWithGoogle,
     firebaseResetPassword,
     showToast,
+    language,
   } = useApp();
 
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>(initialMode);
@@ -74,61 +75,96 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     try {
       if (mode === 'login') {
         if (!email.trim() || !password) {
-          setErrorMessage('অনুগ্রহ করে জিমেইল এবং পাসওয়ার্ড প্রদান করুন।');
+          setErrorMessage(
+            language === 'bn'
+              ? 'অনুগ্রহ করে জিমেইল এবং পাসওয়ার্ড প্রদান করুন।'
+              : 'Please enter both your email and password.'
+          );
           setIsLoading(false);
           return;
         }
         const res = await firebaseLoginWithEmail(email.trim(), password);
         if (res.success) {
-          showToast('সফলভাবে লগইন হয়েছে!', 'success');
+          showToast(language === 'bn' ? 'সফলভাবে লগইন হয়েছে!' : 'Logged in successfully!', 'success');
           onClose();
         } else {
-          setErrorMessage(res.message || 'লগইন ব্যর্থ হয়েছে। তথ্য যাচাই করুন।');
+          setErrorMessage(
+            res.message || (language === 'bn' ? 'লগইন ব্যর্থ হয়েছে। তথ্য যাচাই করুন।' : 'Login failed. Please verify credentials.')
+          );
         }
       } else if (mode === 'register') {
         if (!name.trim() || !email.trim() || !password) {
-          setErrorMessage('অনুগ্রহ করে নাম, জিমেইল এবং পাসওয়ার্ড পূরণ করুন।');
+          setErrorMessage(
+            language === 'bn'
+              ? 'অনুগ্রহ করে নাম, জিমেইল এবং পাসওয়ার্ড পূরণ করুন।'
+              : 'Please fill in name, email, and password.'
+          );
           setIsLoading(false);
           return;
         }
         if (password.length < 6) {
-          setErrorMessage('পাসওয়ার্ড কমপক্ষে ৬ ডিজিটের হতে হবে।');
+          setErrorMessage(
+            language === 'bn' ? 'পাসওয়ার্ড কমপক্ষে ৬ ডিজিটের হতে হবে।' : 'Password must be at least 6 characters.'
+          );
           setIsLoading(false);
           return;
         }
         if (confirmPassword && password !== confirmPassword) {
-          setErrorMessage('পাসওয়ার্ড দুটি মিলছে না!');
+          setErrorMessage(
+            language === 'bn' ? 'পাসওয়ার্ড দুটি মিলছে না!' : 'Passwords do not match!'
+          );
           setIsLoading(false);
           return;
         }
         if (!agreeTerms) {
-          setErrorMessage('অনুগ্রহ করে শর্তাবলীতে সম্মতি দিন।');
+          setErrorMessage(
+            language === 'bn' ? 'অনুগ্রহ করে শর্তাবলীতে সম্মতি দিন।' : 'Please agree to the Terms & Conditions.'
+          );
           setIsLoading(false);
           return;
         }
         const res = await firebaseRegisterWithEmail(email.trim(), password, name.trim(), phone.trim());
         if (res.success) {
-          showToast(res.message || 'রেজিস্ট্রেশন সফলভাবে সম্পন্ন হয়েছে! ৳২৫ বোনাস যুক্ত হয়েছে।', 'success');
+          showToast(
+            res.message ||
+              (language === 'bn'
+                ? 'রেজিস্ট্রেশন সফলভাবে সম্পন্ন হয়েছে! ৳২৫ বোনাস যুক্ত হয়েছে।'
+                : 'Registration successful! ৳25 bonus added.'),
+            'success'
+          );
           onClose();
         } else {
-          setErrorMessage(res.message || 'রেজিস্ট্রেশন ব্যর্থ হয়েছে।');
+          setErrorMessage(
+            res.message || (language === 'bn' ? 'রেজিস্ট্রেশন ব্যর্থ হয়েছে।' : 'Registration failed.')
+          );
         }
       } else if (mode === 'forgot') {
         if (!email.trim()) {
-          setErrorMessage('পাসওয়ার্ড রিসেট করতে জিমেইল ঠিকানা দিন।');
+          setErrorMessage(
+            language === 'bn' ? 'পাসওয়ার্ড রিসেট করতে জিমেইল ঠিকানা দিন।' : 'Please enter your email to reset password.'
+          );
           setIsLoading(false);
           return;
         }
         const res = await firebaseResetPassword(email.trim());
         if (res.success) {
           setResetSent(true);
-          showToast('পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে পাঠানো হয়েছে!', 'success');
+          showToast(
+            language === 'bn'
+              ? 'পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে পাঠানো হয়েছে!'
+              : 'Password reset link sent to your email!',
+            'success'
+          );
         } else {
-          setErrorMessage(res.message || 'পাসওয়ার্ড রিসেট করতে ব্যর্থ হয়েছে।');
+          setErrorMessage(
+            res.message || (language === 'bn' ? 'পাসওয়ার্ড রিসেট করতে ব্যর্থ হয়েছে।' : 'Failed to send password reset.')
+          );
         }
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'একটি ত্রুটি ঘটেছে। আবার চেষ্টা করুন।');
+      setErrorMessage(
+        err.message || (language === 'bn' ? 'একটি ত্রুটি ঘটেছে। আবার চেষ্টা করুন।' : 'An error occurred. Please try again.')
+      );
     } finally {
       setIsLoading(false);
     }
@@ -140,13 +176,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     try {
       const res = await firebaseLoginWithGoogle();
       if (res.success) {
-        showToast('গুগল দিয়ে সফলভাবে লগইন হয়েছে!', 'success');
+        showToast(
+          language === 'bn' ? 'গুগল দিয়ে সফলভাবে লগইন হয়েছে!' : 'Logged in with Google successfully!',
+          'success'
+        );
         onClose();
       } else {
-        setErrorMessage(res.message || 'গুগল সাইন-ইন ব্যর্থ হয়েছে।');
+        setErrorMessage(
+          res.message || (language === 'bn' ? 'গুগল সাইন-ইন ব্যর্থ হয়েছে।' : 'Google sign-in failed.')
+        );
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'গুগল সাইন-ইন করতে সমস্যা হয়েছে।');
+      setErrorMessage(
+        err.message || (language === 'bn' ? 'গুগল সাইন-ইন করতে সমস্যা হয়েছে।' : 'Problem signing in with Google.')
+      );
     } finally {
       setIsLoading(false);
     }
@@ -170,15 +213,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
 
           <h3 className="text-lg font-black tracking-tight">
-            {mode === 'login' && 'স্বাগতম Mail Factory তে'}
-            {mode === 'register' && 'Create Your Account'}
-            {mode === 'forgot' && 'পাসওয়ার্ড রিসেট করুন'}
+            {mode === 'login' && (language === 'bn' ? 'স্বাগতম Mail Factory তে' : 'Welcome to Mail Factory')}
+            {mode === 'register' && (language === 'bn' ? 'নতুন একাউন্ট খুলুন' : 'Create Your Account')}
+            {mode === 'forgot' && (language === 'bn' ? 'পাসওয়ার্ড রিসেট করুন' : 'Reset Your Password')}
           </h3>
 
           <p className="text-xs text-indigo-200 mt-0.5 font-medium">
-            {mode === 'login' && 'নিরাপদে জিমেইল বিক্রি করুন ও ক্যাশ পেমেন্ট নিন'}
-            {mode === 'register' && 'Bangladesh #1 Trusted Gmail Exchange Platform'}
-            {mode === 'forgot' && 'আপনার অ্যাকাউন্টের জিমেইল ঠিকানা দিন'}
+            {mode === 'login' && (language === 'bn' ? 'নিরাপদে জিমেইল বিক্রি করুন ও ক্যাশ পেমেন্ট নিন' : 'Sell Gmail securely & get instant cash')}
+            {mode === 'register' && (language === 'bn' ? 'বাংলাদেশের #১ বিশ্বস্ত জিমেইল এক্সচেঞ্জ প্ল্যাটফর্ম' : "Bangladesh's #1 Trusted Gmail Exchange Platform")}
+            {mode === 'forgot' && (language === 'bn' ? 'আপনার অ্যাকাউন্টের জিমেইল ঠিকানা দিন' : 'Enter your registered Gmail address')}
           </p>
 
           <div className="flex justify-center gap-4 mt-3 text-[10px] text-white/90 font-bold">
@@ -225,7 +268,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span>{mode === 'login' ? 'Continue with Google' : 'Sign up with Google'}</span>
+              <span>
+                {mode === 'login'
+                  ? (language === 'bn' ? 'গুগল দিয়ে লগইন করুন' : 'Continue with Google')
+                  : (language === 'bn' ? 'গুগল দিয়ে সাইন আপ করুন' : 'Sign up with Google')}
+              </span>
             </button>
           )}
 
@@ -233,7 +280,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {mode !== 'forgot' && (
             <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 text-[11px] font-bold">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700"></div>
-              <span>অথবা ইমেইল দিয়ে</span>
+              <span>{language === 'bn' ? 'অথবা ইমেইল দিয়ে' : 'Or with Email'}</span>
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700"></div>
             </div>
           )}
@@ -243,16 +290,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300 text-xs space-y-2">
               <div className="flex items-center gap-2 font-bold text-sm">
                 <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে!</span>
+                <span>
+                  {language === 'bn' ? 'পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে!' : 'Password reset email sent!'}
+                </span>
               </div>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                আমরা <span className="font-bold text-emerald-700 dark:text-emerald-300">{email}</span> ঠিকানায় লিঙ্ক পাঠিয়েছি।
+                {language === 'bn' ? (
+                  <>আমরা <span className="font-bold text-emerald-700 dark:text-emerald-300">{email}</span> ঠিকানায় লিঙ্ক পাঠিয়েছি।</>
+                ) : (
+                  <>We sent a password reset link to <span className="font-bold text-emerald-700 dark:text-emerald-300">{email}</span>.</>
+                )}
               </p>
               <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-emerald-300 dark:border-emerald-800 text-[11px] text-slate-700 dark:text-slate-300 space-y-1">
-                <div className="font-bold text-amber-600 dark:text-amber-400">💡 গুরুত্বপূর্ণ নির্দেশিকা:</div>
-                <div>• আপনার Gmail এর <strong>Primary Inbox</strong> চেক করুন।</div>
-                <div>• ইনবক্সে না পেলে অবশ্যই <strong>Spam / Junk (স্প্যাম)</strong> অথবা <strong>All Mail</strong> ফোল্ডারটি চেক করুন।</div>
-                <div>• ইমেইলের ভেতর দেওয়া লিঙ্কে ক্লিক করে নতুন পাসওয়ার্ড সেট করুন।</div>
+                <div className="font-bold text-amber-600 dark:text-amber-400">
+                  {language === 'bn' ? '💡 গুরুত্বপূর্ণ নির্দেশিকা:' : '💡 Important Notice:'}
+                </div>
+                <div>
+                  {language === 'bn'
+                    ? '• আপনার Gmail এর Primary Inbox চেক করুন।'
+                    : '• Check your primary Gmail inbox.'}
+                </div>
+                <div>
+                  {language === 'bn'
+                    ? '• ইনবক্সে না পেলে অবশ্যই Spam / Junk (স্প্যাম) অথবা All Mail ফোল্ডারটি চেক করুন।'
+                    : '• If not in inbox, please check your Spam / Junk or All Mail folders.'}
+                </div>
+                <div>
+                  {language === 'bn'
+                    ? '• ইমেইলের ভেতর দেওয়া লিঙ্কে ক্লিক করে নতুন পাসওয়ার্ড সেট করুন।'
+                    : '• Click the link inside the email to set a new password.'}
+                </div>
               </div>
             </div>
           )}
@@ -270,7 +337,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <>
                 <div>
                   <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-300 mb-1 uppercase tracking-wider">
-                    পুরো নাম
+                    {language === 'bn' ? 'পুরো নাম' : 'Full Name'}
                   </label>
                   <div className="relative">
                     <input
@@ -278,7 +345,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       required
                       value={name}
                       onChange={e => setName(e.target.value)}
-                      placeholder="Enter your full name"
+                      placeholder={language === 'bn' ? 'আপনার নাম লিখুন' : 'Enter your full name'}
                       className="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2.5 text-xs font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 pl-9"
                     />
                     <UserIcon className="absolute left-3 top-3 w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -287,7 +354,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                 <div>
                   <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-300 mb-1 uppercase tracking-wider">
-                    মোবাইল নম্বর
+                    {language === 'bn' ? 'মোবাইল নম্বর' : 'Phone Number'}
                   </label>
                   <div className="relative">
                     <input
@@ -305,7 +372,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
             <div>
               <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-300 mb-1 uppercase tracking-wider">
-                জিমেইল এড্রেস
+                {language === 'bn' ? 'জিমেইল এড্রেস' : 'Email Address'}
               </label>
               <div className="relative">
                 <input
@@ -323,7 +390,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {mode !== 'forgot' && (
               <div>
                 <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-300 mb-1 uppercase tracking-wider">
-                  পাসওয়ার্ড
+                  {language === 'bn' ? 'পাসওয়ার্ড' : 'Password'}
                 </label>
                 <div className="relative">
                   <input
@@ -331,7 +398,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     required
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    placeholder="Minimum 6 characters"
+                    placeholder={language === 'bn' ? 'কমপক্ষে ৬ ডিজিটের পাসওয়ার্ড' : 'Minimum 6 characters'}
                     className="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2.5 text-xs font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 pl-9 pr-9"
                   />
                   <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -360,7 +427,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {mode === 'register' && (
               <div>
                 <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-300 mb-1 uppercase tracking-wider">
-                  কনফার্ম পাসওয়ার্ড
+                  {language === 'bn' ? 'কনফার্ম পাসওয়ার্ড' : 'Confirm Password'}
                 </label>
                 <div className="relative">
                   <input
@@ -368,7 +435,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     required
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter password"
+                    placeholder={language === 'bn' ? 'পাসওয়ার্ডটি পুনরায় লিখুন' : 'Re-enter password'}
                     className="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2.5 text-xs font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 pl-9"
                   />
                   <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -386,7 +453,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   }}
                   className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                 >
-                  পাসওয়ার্ড ভুলে গেছেন?
+                  {language === 'bn' ? 'পাসওয়ার্ড ভুলে গেছেন?' : 'Forgot password?'}
                 </button>
               </div>
             )}
@@ -402,11 +469,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 cursor-pointer"
                   />
                   <label htmlFor="agree" className="text-[11px] text-slate-600 dark:text-slate-300 cursor-pointer font-medium">
-                    I agree to the Terms & Conditions (শর্তাবলী মেনে নিচ্ছি)
+                    {language === 'bn'
+                      ? 'শর্তাবলী ও নীতিমালা মেনে নিচ্ছি (Terms & Conditions)'
+                      : 'I agree to the Terms & Conditions'}
                   </label>
                 </div>
                 <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-700 dark:text-amber-300">
-                  ✉️ রেজিস্ট্রেশন শেষে আপনার ইনবক্স অথবা স্প্যাম (Spam) ফোল্ডারে ভেরিফিকেশন লিঙ্ক পাঠানো হবে।
+                  {language === 'bn'
+                    ? '✉️ রেজিস্ট্রেশন শেষে আপনার ইনবক্স অথবা স্প্যাম (Spam) ফোল্ডারে ভেরিফিকেশন লিঙ্ক পাঠানো হবে।'
+                    : '✉️ A verification link will be sent to your primary inbox or spam folder.'}
                 </div>
               </>
             )}
@@ -417,12 +488,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-800 text-white text-xs font-black shadow-md hover:opacity-95 active:scale-98 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {isLoading
-                ? 'Connecting...'
+                ? (language === 'bn' ? 'লোড হচ্ছে...' : 'Connecting...')
                 : mode === 'login'
-                ? 'লগইন'
+                ? (language === 'bn' ? 'লগইন করুন' : 'Sign In')
                 : mode === 'register'
-                ? 'Create Account (Get ৳25 Bonus)'
-                : 'পাসওয়ার্ড রিসেট লিংক পাঠান'}
+                ? (language === 'bn' ? 'একাউন্ট তৈরি করুন (৳২৫ বোনাস)' : 'Create Account (Get ৳25 Bonus)')
+                : (language === 'bn' ? 'পাসওয়ার্ড রিসেট লিংক পাঠান' : 'Send Reset Link')}
             </button>
           </form>
 
@@ -430,7 +501,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <div className="text-center pt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
             {mode === 'login' ? (
               <p>
-                একাউন্ট নেই?{' '}
+                {language === 'bn' ? 'একাউন্ট নেই? ' : "Don't have an account? "}
                 <button
                   type="button"
                   onClick={() => {
@@ -439,12 +510,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   }}
                   className="font-extrabold text-indigo-600 dark:text-indigo-400 hover:underline ml-1"
                 >
-                  রেজিস্ট্রেশন
+                  {language === 'bn' ? 'রেজিস্ট্রেশন' : 'Register'}
                 </button>
               </p>
             ) : mode === 'register' ? (
               <p>
-                আগে থেকেই একাউন্ট আছে?{' '}
+                {language === 'bn' ? 'আগে থেকেই একাউন্ট আছে? ' : 'Already have an account? '}
                 <button
                   type="button"
                   onClick={() => {
@@ -453,7 +524,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   }}
                   className="font-extrabold text-indigo-600 dark:text-indigo-400 hover:underline ml-1"
                 >
-                  লগইন
+                  {language === 'bn' ? 'লগইন' : 'Sign In'}
                 </button>
               </p>
             ) : (
@@ -466,7 +537,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   }}
                   className="font-extrabold text-indigo-600 dark:text-indigo-400 hover:underline"
                 >
-                  ← লগইন স্ক্রিনে ফিরে যান
+                  {language === 'bn' ? '← লগইন স্ক্রিনে ফিরে যান' : '← Back to Login'}
                 </button>
               </p>
             )}

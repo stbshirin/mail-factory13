@@ -469,26 +469,30 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Drawer Navigation */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-800 bg-slate-900 px-4 pt-3 pb-5 space-y-2">
-          {/* Mobile Language Switcher Card */}
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/80 mb-2">
+        <div className="lg:hidden border-t border-slate-800 bg-slate-900/95 backdrop-blur-xl px-4 pt-3.5 pb-6 space-y-2.5 z-50">
+          {/* Mobile Language Switcher Card - Clean Uniform Box */}
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 shadow-xs">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
               <Globe className="w-4 h-4 text-amber-400" />
               <span>{language === 'bn' ? 'ভাষা নির্বাচন' : 'Language'}</span>
             </div>
-            <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-700">
+            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-700/80">
               <button
                 onClick={() => setLanguage('bn')}
-                className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${
-                  language === 'bn' ? 'bg-amber-500 text-slate-950 shadow-xs' : 'text-slate-400 hover:text-white'
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  language === 'bn'
+                    ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 বাংলা
               </button>
               <button
                 onClick={() => setLanguage('en')}
-                className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${
-                  language === 'en' ? 'bg-amber-500 text-slate-950 shadow-xs' : 'text-slate-400 hover:text-white'
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  language === 'en'
+                    ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 English
@@ -496,9 +500,9 @@ export const Navbar: React.FC = () => {
             </div>
           </div>
 
-          {/* User Info or Quick Auth in Mobile Drawer */}
+          {/* User Info or Quick Auth in Mobile Drawer - Clean Uniform Box */}
           {!isLoggedIn ? (
-            <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="grid grid-cols-2 gap-2.5 my-1">
               <button
                 onClick={() => {
                   setAuthModalMode('login');
@@ -523,13 +527,21 @@ export const Navbar: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="mb-3 p-3 rounded-2xl bg-gradient-to-r from-slate-800/90 via-slate-800/60 to-slate-900 border border-slate-700/70">
+            <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-800/90 via-slate-800/60 to-slate-900/90 border border-slate-700/80 shadow-md">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center font-black text-sm shadow-md flex-shrink-0">
-                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
-                </div>
+                {currentUser.avatarUrl ? (
+                  <img
+                    src={currentUser.avatarUrl}
+                    alt={currentUser.name || 'User'}
+                    className="w-11 h-11 rounded-xl object-cover border border-amber-500/50 shadow-sm flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center font-black text-base shadow-md flex-shrink-0">
+                    {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="font-bold text-white text-sm truncate">{currentUser.name || 'User'}</p>
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex-shrink-0">
                       {currentUser.memberTier || 'Silver'}
@@ -540,11 +552,11 @@ export const Navbar: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400 truncate">{currentUser.email}</p>
+                  <p className="text-xs text-slate-400 truncate mt-0.5">{currentUser.email || currentUser.phone || 'Member'}</p>
                 </div>
               </div>
-              <div className="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-xs">
-                <span className="text-slate-400">{language === 'bn' ? 'ব্যালেন্স:' : 'Balance:'}</span>
+              <div className="mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between text-xs">
+                <span className="text-slate-400 font-medium">{language === 'bn' ? 'ব্যালেন্স:' : 'Balance:'}</span>
                 <div className="flex items-center gap-2 font-mono font-bold">
                   <span className="text-amber-400">৳{(currentUser.balanceBdt || 0).toLocaleString()}</span>
                   <span className="text-slate-600">|</span>
@@ -554,120 +566,122 @@ export const Navbar: React.FC = () => {
             </div>
           )}
 
-          <button
-            onClick={() => {
-              setActiveTab('sell');
-              setIsMobileMenuOpen(false);
-            }}
-            className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
-          >
-            <Send className="w-5 h-5 text-amber-400" />
-            <span>{language === 'bn' ? 'মেইল সেল করুন (Sell Gmail)' : 'Sell Gmail'}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('buy');
-              setIsMobileMenuOpen(false);
-            }}
-            className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
-          >
-            <ShoppingBag className="w-5 h-5 text-sky-400" />
-            <span>{language === 'bn' ? 'মার্কেটপ্লেস (Buy Gmail)' : 'Marketplace (Buy Gmail)'}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('wallet');
-              setIsMobileMenuOpen(false);
-            }}
-            className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
-          >
-            <Wallet className="w-5 h-5 text-emerald-400" />
-            <span>{language === 'bn' ? 'ওয়ালেট ও লেনদেন' : 'Wallet & Funds'}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('exchange');
-              setIsMobileMenuOpen(false);
-            }}
-            className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
-          >
-            <ArrowRightLeft className="w-5 h-5 text-purple-400" />
-            <span>{language === 'bn' ? 'কারেন্সি এক্সচেঞ্জ (BDT/USD)' : 'Currency Exchange (BDT/USD)'}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('leaderboard');
-              setIsMobileMenuOpen(false);
-            }}
-            className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
-          >
-            <Award className="w-5 h-5 text-yellow-400" />
-            <span>{language === 'bn' ? 'টপ সেলার লিডারবোর্ড' : 'Top Sellers Leaderboard'}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('reviews');
-              setIsMobileMenuOpen(false);
-            }}
-            className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
-          >
-            <Star className="w-5 h-5 text-amber-400" />
-            <span>{language === 'bn' ? 'ইউজার রিভিউ ও শিফট' : 'User Reviews & Shifts'}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('id_card');
-              setIsMobileMenuOpen(false);
-            }}
-            className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
-          >
-            <IdCard className="w-5 h-5 text-indigo-400" />
-            <span>{language === 'bn' ? 'ডিজিটাল মেম্বার কার্ড' : 'Digital Member ID'}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setIsNotificationOpen(true);
-              setIsMobileMenuOpen(false);
-            }}
-            className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <Bell className="w-5 h-5 text-amber-400" />
-              <span>{language === 'bn' ? 'নোটিফিকেশন সেন্টার' : 'Notification Center'}</span>
-            </div>
-            {unreadCount > 0 ? (
-              <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black">
-                {unreadCount} {language === 'bn' ? 'নতুন' : 'new'}
-              </span>
-            ) : (
-              <span className="text-[11px] text-slate-500">{language === 'bn' ? 'সব পঠিত' : 'All read'}</span>
-            )}
-          </button>
-
-          {isAdmin && (
+          <div className="space-y-1 pt-1">
             <button
               onClick={() => {
-                setActiveTab('admin');
+                setActiveTab('sell');
                 setIsMobileMenuOpen(false);
               }}
-              className="w-full text-left px-3 py-2.5 rounded-xl font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 flex items-center gap-3 mt-2"
+              className="w-full text-left px-3.5 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3 transition-colors"
             >
-              <ShieldCheck className="w-5 h-5" />
-              <span>{language === 'bn' ? '👑 অ্যাডমিন কন্ট্রোল প্যানেল' : '👑 Admin Control Panel'}</span>
+              <Send className="w-4.5 h-4.5 text-amber-400" />
+              <span className="text-sm">{language === 'bn' ? 'মেইল সেল ফ্যাক্টরি' : 'Sell Gmail'}</span>
             </button>
-          )}
+
+            <button
+              onClick={() => {
+                setActiveTab('buy');
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full text-left px-3.5 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3 transition-colors"
+            >
+              <ShoppingBag className="w-4.5 h-4.5 text-sky-400" />
+              <span className="text-sm">{language === 'bn' ? 'মার্কেটপ্লেস (জিমেইল ক্রয়)' : 'Marketplace (Buy Gmail)'}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('wallet');
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full text-left px-3.5 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3 transition-colors"
+            >
+              <Wallet className="w-4.5 h-4.5 text-emerald-400" />
+              <span className="text-sm">{language === 'bn' ? 'ওয়ালেট ও ফান্ডস' : 'Wallet & Funds'}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('exchange');
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full text-left px-3.5 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3 transition-colors"
+            >
+              <ArrowRightLeft className="w-4.5 h-4.5 text-purple-400" />
+              <span className="text-sm">{language === 'bn' ? 'মুদ্রা এক্সচেঞ্জ (BDT/USD)' : 'Currency Exchange (BDT/USD)'}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('leaderboard');
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full text-left px-3.5 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3 transition-colors"
+            >
+              <Award className="w-4.5 h-4.5 text-yellow-400" />
+              <span className="text-sm">{language === 'bn' ? 'টপ সেলার লিডারবোর্ড' : 'Top Sellers Leaderboard'}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('reviews');
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full text-left px-3.5 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3 transition-colors"
+            >
+              <Star className="w-4.5 h-4.5 text-amber-400" />
+              <span className="text-sm">{language === 'bn' ? 'ইউজার রিভিউ ও শিফট' : 'User Reviews & Shifts'}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('id_card');
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full text-left px-3.5 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3 transition-colors"
+            >
+              <IdCard className="w-4.5 h-4.5 text-indigo-400" />
+              <span className="text-sm">{language === 'bn' ? 'ডিজিটাল মেম্বার আইডি কার্ড' : 'Digital Member ID'}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setIsNotificationOpen(true);
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full text-left px-3.5 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center justify-between transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Bell className="w-4.5 h-4.5 text-amber-400" />
+                <span className="text-sm">{language === 'bn' ? 'নোটিফিকেশন সেন্টার' : 'Notification Center'}</span>
+              </div>
+              {unreadCount > 0 ? (
+                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black">
+                  {unreadCount} {language === 'bn' ? 'নতুন' : 'new'}
+                </span>
+              ) : (
+                <span className="text-[11px] text-slate-500">{language === 'bn' ? 'সব পঠিত' : 'All read'}</span>
+              )}
+            </button>
+
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  setActiveTab('admin');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 flex items-center gap-3 mt-2 transition-colors hover:bg-emerald-900/50"
+              >
+                <ShieldCheck className="w-4.5 h-4.5" />
+                <span className="text-sm">{language === 'bn' ? '👑 অ্যাডমিন কন্ট্রোল প্যানেল' : '👑 Admin Control Panel'}</span>
+              </button>
+            )}
+          </div>
 
           <div className="pt-2 border-t border-slate-800">
             {!isLoggedIn ? (
-              <div className="p-2 rounded-xl bg-slate-800/40 text-center">
-                <p className="text-[11px] text-slate-400">
+              <div className="p-2.5 rounded-xl bg-slate-800/40 text-center">
+                <p className="text-xs text-slate-400">
                   {language === 'bn' ? 'অ্যাকাউন্টে প্রবেশ করে সহজে মেইল সেল ও বাই করুন' : 'Sign in to buy and sell Gmail accounts smoothly'}
                 </p>
               </div>
@@ -691,7 +705,7 @@ export const Navbar: React.FC = () => {
                   className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-950/30 flex items-center gap-2"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>{language === 'bn' ? 'লগআউট করুন (Logout)' : 'Sign Out (Logout)'}</span>
+                  <span>{language === 'bn' ? 'লগআউট করুন' : 'Sign Out'}</span>
                 </button>
               </div>
             )}

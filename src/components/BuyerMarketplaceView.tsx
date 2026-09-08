@@ -22,6 +22,7 @@ export const BuyerMarketplaceView: React.FC = () => {
     buyMarketplaceItem,
     currentUser,
     isLoggedIn,
+    language,
     setIsAuthModalOpen,
     setAuthModalMode,
     setActiveTab,
@@ -56,7 +57,12 @@ export const BuyerMarketplaceView: React.FC = () => {
     if (isGuest) {
       setAuthModalMode('login');
       setIsAuthModalOpen(true);
-      showToast('জিমেইল ক্রয় করার পূর্বে একাউন্টে লগ-ইন বা রেজিস্ট্রেশন করে নিতে হবে।', 'error');
+      showToast(
+        language === 'bn'
+          ? 'জিমেইল ক্রয় করার পূর্বে একাউন্টে লগ-ইন বা রেজিস্ট্রেশন করে নিতে হবে।'
+          : 'Please login or register before purchasing Gmail accounts.',
+        'error'
+      );
       return;
     }
     setActiveItemForPurchase(item);
@@ -67,7 +73,12 @@ export const BuyerMarketplaceView: React.FC = () => {
     if (isGuest) {
       setAuthModalMode('login');
       setIsAuthModalOpen(true);
-      showToast('জিমেইল ক্রয় করার পূর্বে একাউন্টে লগ-ইন বা রেজিস্ট্রেশন করে নিতে হবে।', 'error');
+      showToast(
+        language === 'bn'
+          ? 'জিমেইল ক্রয় করার পূর্বে একাউন্টে লগ-ইন বা রেজিস্ট্রেশন করে নিতে হবে।'
+          : 'Please login or register before purchasing Gmail accounts.',
+        'error'
+      );
       return;
     }
     if (!activeItemForPurchase) return;
@@ -90,7 +101,7 @@ export const BuyerMarketplaceView: React.FC = () => {
     if (!purchasedOrderResult) return;
     navigator.clipboard.writeText(purchasedOrderResult.deliveredMails.join('\n'));
     setCopied(true);
-    showToast('সকল মেইল কপি করা হয়েছে!', 'success');
+    showToast(language === 'bn' ? 'সকল মেইল কপি করা হয়েছে!' : 'All credentials copied!', 'success');
     setTimeout(() => setCopied(false), 2500);
   };
 
@@ -103,7 +114,7 @@ export const BuyerMarketplaceView: React.FC = () => {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
-    showToast('টেক্সট ফাইল ডাউনলোড হয়েছে', 'success');
+    showToast(language === 'bn' ? 'টেক্সট ফাইল ডাউনলোড হয়েছে' : 'Text file downloaded', 'success');
   };
 
   return (
@@ -113,13 +124,15 @@ export const BuyerMarketplaceView: React.FC = () => {
         <div className="max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-bold mb-3">
             <Zap className="w-3.5 h-3.5" />
-            <span>ইনস্ট্যান্ট ডেলিভারি মার্কেটপ্লেস</span>
+            <span>{language === 'bn' ? 'ইনস্ট্যান্ট ডেলিভারি মার্কেটপ্লেস' : 'Instant Delivery Marketplace'}</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-white">
-            জিমেইল অ্যাকাউন্ট কিনুন (Buy Gmail)
+            {language === 'bn' ? 'জিমেইল অ্যাকাউন্ট কিনুন' : 'Buy Gmail Accounts'}
           </h1>
           <p className="text-slate-300 text-sm sm:text-base mt-2">
-            ১০০% ফ্রেশ, ওল্ড ও ভেরিফাইড রিকভারি জিমেইল সংগ্রহ করুন। অর্ডারের সাথে সাথেই স্ক্রিনে ক্রেডেনশিয়াল এবং টেক্সট ফাইল ডাউনলোড করতে পারবেন।
+            {language === 'bn'
+              ? '১০০% ফ্রেশ, ওল্ড ও ভেরিফাইড রিকভারি জিমেইল সংগ্রহ করুন। অর্ডারের সাথে সাথেই স্ক্রিনে ক্রেডেনশিয়াল এবং টেক্সট ফাইল ডাউনলোড করতে পারবেন।'
+              : '100% verified, fresh & aged Gmail accounts with recovery. Instantly view credentials on-screen or download as text file.'}
           </p>
         </div>
       </div>
@@ -133,11 +146,15 @@ export const BuyerMarketplaceView: React.FC = () => {
             </div>
             <div>
               <div className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                <span>জিমেইল ক্রয়ের পূর্বে লগ-ইন আবশ্যক</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">লক করা</span>
+                <span>{language === 'bn' ? 'জিমেইল ক্রয়ের পূর্বে লগ-ইন আবশ্যক' : 'Login Required to Purchase Gmail'}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                  {language === 'bn' ? 'লক করা' : 'Locked'}
+                </span>
               </div>
               <div className="text-xs text-slate-300 mt-1">
-                জিমেইল অ্যাকাউন্ট ক্রয় এবং তাৎক্ষণিক ক্রেডেনশিয়াল পেতে হলে প্রথমে আপনার অ্যাকাউন্টে লগ-ইন বা সাইন-আপ করতে হবে।
+                {language === 'bn'
+                  ? 'জিমেইল অ্যাকাউন্ট ক্রয় এবং তাৎক্ষণিক ক্রেডেনশিয়াল পেতে হলে প্রথমে আপনার অ্যাকাউন্টে লগ-ইন বা সাইন-আপ করতে হবে।'
+                  : 'To purchase Gmail accounts and receive instant credentials, please sign in or register.'}
               </div>
             </div>
           </div>
@@ -149,7 +166,7 @@ export const BuyerMarketplaceView: React.FC = () => {
             }}
             className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs shadow-md transition-all whitespace-nowrap cursor-pointer flex items-center justify-center gap-2"
           >
-            <span>লগ-ইন / রেজিস্ট্রেশন করুন ↗</span>
+            <span>{language === 'bn' ? 'লগ-ইন / রেজিস্ট্রেশন করুন ↗' : 'Sign In / Register ↗'}</span>
           </button>
         </div>
       )}
@@ -159,12 +176,12 @@ export const BuyerMarketplaceView: React.FC = () => {
         {/* Category Pills */}
         <div className="flex flex-wrap items-center gap-2">
           {[
-            { id: 'all', label: 'সব ক্যাটাগরি' },
-            { id: 'fresh', label: 'ফ্রেশ জিমেইল' },
-            { id: 'recovery', label: 'রিকভারি মেইল' },
-            { id: 'aged', label: 'পুরাতন মেইল (Old)' },
-            { id: 'usa', label: 'USA IP মেইল' },
-            { id: 'edu', label: 'Edu Mail' },
+            { id: 'all', label: language === 'bn' ? 'সব ক্যাটাগরি' : 'All Categories' },
+            { id: 'fresh', label: language === 'bn' ? 'ফ্রেশ জিমেইল' : 'Fresh Gmail' },
+            { id: 'recovery', label: language === 'bn' ? 'রিকভারি মেইল' : 'Recovery Mail' },
+            { id: 'aged', label: language === 'bn' ? 'পুরাতন মেইল (Old)' : 'Aged Mail (Old)' },
+            { id: 'usa', label: language === 'bn' ? 'USA IP মেইল' : 'USA IP Mail' },
+            { id: 'edu', label: language === 'bn' ? 'Edu Mail' : 'Edu Mail' },
           ].map(cat => (
             <button
               key={cat.id}
@@ -187,7 +204,7 @@ export const BuyerMarketplaceView: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="প্যাকেজ খুঁজুন..."
+            placeholder={language === 'bn' ? 'প্যাকেজ খুঁজুন...' : 'Search packages...'}
             className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
           />
         </div>
@@ -195,8 +212,10 @@ export const BuyerMarketplaceView: React.FC = () => {
 
       {/* Items Grid */}
       {filteredItems.length === 0 ? (
-        <div className="py-16 text-center bg-slate-900 border border-slate-800 rounded-3xl text-slate-500">
-          কোনো প্যাকেজ পাওয়া যায়নি। অন্য ক্যাটাগরি ফিল্টার সিলেক্ট করুন।
+        <div className="py-16 text-center bg-slate-900 border border-slate-800 rounded-3xl text-slate-500 text-sm">
+          {language === 'bn'
+            ? 'কোনো প্যাকেজ পাওয়া যায়নি। অন্য ক্যাটাগরি ফিল্টার সিলেক্ট করুন।'
+            : 'No packages found matching your criteria.'}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -212,7 +231,9 @@ export const BuyerMarketplaceView: React.FC = () => {
                   </span>
                   <div className="text-right">
                     <span className="text-2xl font-black text-white">৳{item.pricePerUnit.toFixed(2)}</span>
-                    <span className="text-xs text-slate-400 block -mt-1">প্রতি পিস</span>
+                    <span className="text-xs text-slate-400 block -mt-1">
+                      {language === 'bn' ? 'প্রতি পিস' : 'per unit'}
+                    </span>
                   </div>
                 </div>
 
@@ -234,10 +255,11 @@ export const BuyerMarketplaceView: React.FC = () => {
               <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
                 <div>
                   <div className="text-[11px] text-slate-400">
-                    স্টক: <strong className="text-emerald-400">{item.stockAvailable} টি</strong>
+                    {language === 'bn' ? 'স্টক:' : 'Stock:'}{' '}
+                    <strong className="text-emerald-400">{item.stockAvailable} {language === 'bn' ? 'টি' : 'units'}</strong>
                   </div>
                   <div className="text-[10px] text-slate-500">
-                    সর্বনিম্ন: {item.minOrder} টি
+                    {language === 'bn' ? 'সর্বনিম্ন:' : 'Min Order:'} {item.minOrder} {language === 'bn' ? 'টি' : 'units'}
                   </div>
                 </div>
 
@@ -247,7 +269,7 @@ export const BuyerMarketplaceView: React.FC = () => {
                   className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
                 >
                   <ShoppingBag className="w-3.5 h-3.5" />
-                  <span>এখনই কিনুন</span>
+                  <span>{language === 'bn' ? 'এখনই কিনুন' : 'Buy Now'}</span>
                 </button>
               </div>
             </div>
@@ -261,7 +283,9 @@ export const BuyerMarketplaceView: React.FC = () => {
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div>
-                <h3 className="text-lg font-bold text-white">অর্ডার কনফার্মেশন</h3>
+                <h3 className="text-lg font-bold text-white">
+                  {language === 'bn' ? 'অর্ডার কনফার্মেশন' : 'Confirm Order'}
+                </h3>
                 <p className="text-xs text-slate-400">{activeItemForPurchase.title}</p>
               </div>
               <button
@@ -275,7 +299,9 @@ export const BuyerMarketplaceView: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                  পরিমাণ সিলেক্ট করুন (সর্বনিম্ন {activeItemForPurchase.minOrder}টি):
+                  {language === 'bn'
+                    ? `পরিমাণ সিলেক্ট করুন (সর্বনিম্ন ${activeItemForPurchase.minOrder}টি):`
+                    : `Select Quantity (Min ${activeItemForPurchase.minOrder} pcs):`}
                 </label>
                 <div className="flex items-center gap-3">
                   <input
@@ -287,7 +313,7 @@ export const BuyerMarketplaceView: React.FC = () => {
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-base font-bold text-white focus:outline-none focus:border-amber-500"
                   />
                   <span className="text-xs text-slate-400 whitespace-nowrap">
-                    / অবশিষ্ট {activeItemForPurchase.stockAvailable}টি
+                    / {language === 'bn' ? `অবশিষ্ট ${activeItemForPurchase.stockAvailable}টি` : `${activeItemForPurchase.stockAvailable} available`}
                   </span>
                 </div>
               </div>
@@ -313,15 +339,17 @@ export const BuyerMarketplaceView: React.FC = () => {
               {/* Order Cost Breakdown */}
               <div className="p-4 rounded-2xl bg-slate-800/70 border border-slate-700/70 space-y-2 text-xs">
                 <div className="flex justify-between text-slate-300">
-                  <span>প্রতি পিস মূল্য:</span>
+                  <span>{language === 'bn' ? 'প্রতি পিস মূল্য:' : 'Price Per Piece:'}</span>
                   <span className="font-bold text-white">৳{activeItemForPurchase.pricePerUnit.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-slate-300">
-                  <span>মোট পরিমাণ:</span>
-                  <span className="font-bold text-white">{purchaseQuantity} টি</span>
+                  <span>{language === 'bn' ? 'মোট পরিমাণ:' : 'Total Quantity:'}</span>
+                  <span className="font-bold text-white">
+                    {purchaseQuantity} {language === 'bn' ? 'টি' : 'units'}
+                  </span>
                 </div>
                 <div className="pt-2 border-t border-slate-700 flex justify-between text-sm">
-                  <span className="font-bold text-white">সর্বমোট খরচ:</span>
+                  <span className="font-bold text-white">{language === 'bn' ? 'সর্বমোট খরচ:' : 'Total Cost:'}</span>
                   <span className="font-black text-amber-400 text-base">
                     ৳{(activeItemForPurchase.pricePerUnit * purchaseQuantity).toFixed(2)}
                   </span>
@@ -332,7 +360,9 @@ export const BuyerMarketplaceView: React.FC = () => {
               <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs">
                 <div className="flex items-center gap-2">
                   <Wallet className="w-4 h-4 text-emerald-400" />
-                  <span className="text-slate-400">আপনার ওয়ালেট ব্যালেন্স:</span>
+                  <span className="text-slate-400">
+                    {language === 'bn' ? 'আপনার ওয়ালেট ব্যালেন্স:' : 'Your Wallet Balance:'}
+                  </span>
                 </div>
                 <strong
                   className={
@@ -347,7 +377,7 @@ export const BuyerMarketplaceView: React.FC = () => {
 
               {currentUser.balanceBdt < activeItemForPurchase.pricePerUnit * purchaseQuantity && (
                 <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
-                  <span>পর্যাপ্ত ব্যালেন্স নেই!</span>
+                  <span>{language === 'bn' ? 'পর্যাপ্ত ব্যালেন্স নেই!' : 'Insufficient wallet balance!'}</span>
                   <button
                     onClick={() => {
                       setActiveItemForPurchase(null);
@@ -355,7 +385,7 @@ export const BuyerMarketplaceView: React.FC = () => {
                     }}
                     className="px-2.5 py-1 bg-amber-500 text-slate-950 font-bold rounded-lg hover:bg-amber-400 text-[11px]"
                   >
-                    + ব্যালেন্স যোগ করুন
+                    {language === 'bn' ? '+ ব্যালেন্স যোগ করুন' : '+ Deposit Funds'}
                   </button>
                 </div>
               )}
@@ -366,7 +396,7 @@ export const BuyerMarketplaceView: React.FC = () => {
                 onClick={() => setActiveItemForPurchase(null)}
                 className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs"
               >
-                বাতিল
+                {language === 'bn' ? 'বাতিল' : 'Cancel'}
               </button>
 
               <button
@@ -374,7 +404,7 @@ export const BuyerMarketplaceView: React.FC = () => {
                 disabled={currentUser.balanceBdt < activeItemForPurchase.pricePerUnit * purchaseQuantity}
                 className="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                পেমেন্ট সম্পন্ন করুন
+                {language === 'bn' ? 'পেমেন্ট সম্পন্ন করুন' : 'Confirm Purchase'}
               </button>
             </div>
           </div>
@@ -389,18 +419,26 @@ export const BuyerMarketplaceView: React.FC = () => {
               <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-3">
                 <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
               </div>
-              <h3 className="text-2xl font-black text-white">অর্ডার সফল ও তাৎক্ষণিক ডেলিভারি!</h3>
+              <h3 className="text-2xl font-black text-white">
+                {language === 'bn' ? 'অর্ডার সফল ও তাৎক্ষণিক ডেলিভারি!' : 'Order Successful & Delivered!'}
+              </h3>
               <p className="text-xs text-slate-400 mt-1">
-                {purchasedOrderResult.quantity}টি {purchasedOrderResult.itemTitle} ক্রেডেনশিয়াল নিচে দেওয়া হলো।
+                {language === 'bn'
+                  ? `${purchasedOrderResult.quantity}টি ${purchasedOrderResult.itemTitle} ক্রেডেনশিয়াল নিচে দেওয়া হলো।`
+                  : `Delivered ${purchasedOrderResult.quantity} credentials for ${purchasedOrderResult.itemTitle}:`}
               </p>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-slate-300">
-                  ডেলিভারিকৃত একাউন্টসমূহ ({purchasedOrderResult.deliveredMails?.length || 0}টি):
+                  {language === 'bn'
+                    ? `ডেলিভারিকৃত একাউন্টসমূহ (${purchasedOrderResult.deliveredMails?.length || 0}টি):`
+                    : `Delivered Accounts (${purchasedOrderResult.deliveredMails?.length || 0}):`}
                 </span>
-                <span className="text-[10px] text-emerald-400 font-medium">✓ ৩ দিন রিপ্লেসমেন্ট সাপোর্ট</span>
+                <span className="text-[10px] text-emerald-400 font-medium">
+                  {language === 'bn' ? '✓ ৩ দিন রিপ্লেসমেন্ট সাপোর্ট' : '✓ 3 Days Replacement Guarantee'}
+                </span>
               </div>
 
               <div className="max-h-60 overflow-y-auto bg-slate-950 border border-slate-800 rounded-2xl p-4 font-mono text-xs text-amber-300 space-y-1.5 select-all">
@@ -419,7 +457,11 @@ export const BuyerMarketplaceView: React.FC = () => {
                 className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center gap-2"
               >
                 {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                <span>{copied ? 'কপি হয়েছে!' : 'সবগুলো কপি করুন'}</span>
+                <span>
+                  {copied
+                    ? (language === 'bn' ? 'কপি হয়েছে!' : 'Copied!')
+                    : (language === 'bn' ? 'সবগুলো কপি করুন' : 'Copy All')}
+                </span>
               </button>
 
               <button
@@ -427,7 +469,7 @@ export const BuyerMarketplaceView: React.FC = () => {
                 className="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
               >
                 <Download className="w-4 h-4 stroke-[2.5]" />
-                <span>ফাইল ডাউনলোড করুন (.txt)</span>
+                <span>{language === 'bn' ? 'ফাইল ডাউনলোড করুন (.txt)' : 'Download (.txt)'}</span>
               </button>
             </div>
 
@@ -436,7 +478,7 @@ export const BuyerMarketplaceView: React.FC = () => {
                 onClick={() => setPurchasedOrderResult(null)}
                 className="text-xs text-slate-400 hover:text-white"
               >
-                উইন্ডো বন্ধ করুন (My Orders এও সংরক্ষণ থাকবে)
+                {language === 'bn' ? 'উইন্ডো বন্ধ করুন (My Orders এও সংরক্ষণ থাকবে)' : 'Close Window (Saved in My Orders)'}
               </button>
             </div>
           </div>

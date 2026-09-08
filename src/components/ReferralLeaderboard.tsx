@@ -3,7 +3,7 @@ import { useApp } from '../AppContext';
 import { Award, Copy, Check, Users, Gift, TrendingUp, Sparkles } from 'lucide-react';
 
 export const ReferralLeaderboard: React.FC = () => {
-  const { currentUser, showToast } = useApp();
+  const { currentUser, showToast, language } = useApp();
   const [copiedLink, setCopiedLink] = useState(false);
 
   const referralLink = `${window.location.origin}?ref=${currentUser.referralCode}`;
@@ -11,7 +11,10 @@ export const ReferralLeaderboard: React.FC = () => {
   const copyRefLink = () => {
     navigator.clipboard.writeText(referralLink);
     setCopiedLink(true);
-    showToast('রেফারেল লিংক কপি হয়েছে!', 'success');
+    showToast(
+      language === 'bn' ? 'রেফারেল লিংক কপি হয়েছে!' : 'Referral link copied!',
+      'success'
+    );
     setTimeout(() => setCopiedLink(false), 2500);
   };
 
@@ -24,7 +27,7 @@ export const ReferralLeaderboard: React.FC = () => {
     { rank: 6, name: 'Anik Rahman', mails: 1150, earnings: 10925, tier: 'Silver' },
     { rank: 7, name: 'Shakil Mahmud', mails: 980, earnings: 9310, tier: 'Silver' },
     { rank: 8, name: 'Hasan Ali', mails: 740, earnings: 7030, tier: 'Silver' },
-    { rank: 9, name: 'Rahman Khan (You)', mails: 280, earnings: 2660, tier: 'Silver', isCurrent: true },
+    { rank: 9, name: language === 'bn' ? 'Rahman Khan (আপনি)' : 'Rahman Khan (You)', mails: 280, earnings: 2660, tier: 'Silver', isCurrent: true },
     { rank: 10, name: 'Bappi Mia', mails: 210, earnings: 1995, tier: 'Bronze' },
   ];
 
@@ -35,21 +38,27 @@ export const ReferralLeaderboard: React.FC = () => {
         <div className="max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold mb-3">
             <Gift className="w-3.5 h-3.5" />
-            <span>রেফারেল ও এফিলিয়েট প্রোগ্রাম</span>
+            <span>{language === 'bn' ? 'রেফারেল ও এফিলিয়েট প্রোগ্রাম' : 'Referral & Affiliate Program'}</span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-black text-white">
-            বন্ধু ও টিমকে রেফার করে পান ৫% লাইফটাইম কমিশন
+            {language === 'bn'
+              ? 'বন্ধু ও টিমকে রেফার করে পান ৫% লাইফটাইম কমিশন'
+              : 'Refer Friends & Team to Earn 5% Lifetime Commission'}
           </h1>
 
           <p className="text-slate-300 text-xs sm:text-sm mt-2 max-w-2xl leading-relaxed">
-            আপনার আমন্ত্রিত ফ্রেন্ডরা যখনই মেইল সেল করবে বা মার্কেটপ্লেস থেকে কিনবে, প্রতি সফল লেনদেনে আপনার ওয়ালেটে ৫% ইনস্ট্যান্ট রেফারেল বোনাস যোগ হবে।
+            {language === 'bn'
+              ? 'আপনার আমন্ত্রিত ফ্রেন্ডরা যখনই মেইল সেল করবে বা মার্কেটপ্লেস থেকে কিনবে, প্রতি সফল লেনদেনে আপনার ওয়ালেটে ৫% ইনস্ট্যান্ট রেফারেল বোনাস যোগ হবে।'
+              : 'Whenever your referred users sell mail or buy from the marketplace, an instant 5% commission will be credited directly to your wallet.'}
           </p>
 
           {/* User's Referral Link Box */}
           <div className="mt-6 p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <div className="text-[11px] text-slate-400">আপনার ইউনিক রেফারেল লিংক:</div>
+              <div className="text-[11px] text-slate-400">
+                {language === 'bn' ? 'আপনার ইউনিক রেফারেল লিংক:' : 'Your Unique Referral Link:'}
+              </div>
               <div className="font-mono font-bold text-xs sm:text-sm text-amber-400 select-all break-all">
                 {referralLink}
               </div>
@@ -59,7 +68,11 @@ export const ReferralLeaderboard: React.FC = () => {
               className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-colors"
             >
               {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              <span>{copiedLink ? 'কপি হয়েছে' : 'লিংক কপি করুন'}</span>
+              <span>
+                {copiedLink
+                  ? (language === 'bn' ? 'কপি হয়েছে' : 'Copied!')
+                  : (language === 'bn' ? 'লিংক কপি করুন' : 'Copy Link')}
+              </span>
             </button>
           </div>
         </div>
@@ -71,12 +84,16 @@ export const ReferralLeaderboard: React.FC = () => {
           <div>
             <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
               <Award className="w-6 h-6 text-yellow-400" />
-              <span>টপ ১০ সেলার লিডারবোর্ড (Top Sellers)</span>
+              <span>{language === 'bn' ? 'টপ ১০ সেলার লিডারবোর্ড (Top Sellers)' : 'Top 10 Sellers Leaderboard'}</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">বর্তমান মাসের সর্বোচ্চ জিমেইল সেলার ও আয়ের তালিকা</p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {language === 'bn'
+                ? 'বর্তমান মাসের সর্বোচ্চ জিমেইল সেলার ও আয়ের তালিকা'
+                : 'Top ranking Gmail sellers and verified monthly earnings'}
+            </p>
           </div>
           <span className="px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-amber-400">
-            মাসিক রিওয়ার্ড লাইভ
+            {language === 'bn' ? 'মাসিক রিওয়ার্ড লাইভ' : 'Monthly Rewards Live'}
           </span>
         </div>
 
@@ -84,12 +101,12 @@ export const ReferralLeaderboard: React.FC = () => {
           <table className="w-full text-left text-xs text-slate-300">
             <thead className="bg-slate-800/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700">
               <tr>
-                <th className="py-3 px-4 font-semibold">র‌্যাঙ্ক</th>
-                <th className="py-3 px-4 font-semibold">সেলার নাম</th>
-                <th className="py-3 px-4 font-semibold">মোট বিক্রিত মেইল</th>
-                <th className="py-3 px-4 font-semibold">মোট উপার্জন</th>
-                <th className="py-3 px-4 font-semibold">মেম্বার টিয়ার</th>
-                <th className="py-3 px-4 font-semibold text-right">সম্মাননা</th>
+                <th className="py-3 px-4 font-semibold">{language === 'bn' ? 'র‌্যাঙ্ক' : 'Rank'}</th>
+                <th className="py-3 px-4 font-semibold">{language === 'bn' ? 'সেলার নাম' : 'Seller Name'}</th>
+                <th className="py-3 px-4 font-semibold">{language === 'bn' ? 'মোট বিক্রিত মেইল' : 'Total Mails'}</th>
+                <th className="py-3 px-4 font-semibold">{language === 'bn' ? 'মোট উপার্জন' : 'Total Earnings'}</th>
+                <th className="py-3 px-4 font-semibold">{language === 'bn' ? 'মেম্বার টিয়ার' : 'Member Tier'}</th>
+                <th className="py-3 px-4 font-semibold text-right">{language === 'bn' ? 'সম্মাননা' : 'Recognition'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
@@ -110,11 +127,13 @@ export const ReferralLeaderboard: React.FC = () => {
                     <span>{user.name}</span>
                     {user.isCurrent && (
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500 text-slate-950">
-                        YOU
+                        {language === 'bn' ? 'YOU' : 'YOU'}
                       </span>
                     )}
                   </td>
-                  <td className="py-4 px-4 font-bold text-white text-sm">{user.mails.toLocaleString()} টি</td>
+                  <td className="py-4 px-4 font-bold text-white text-sm">
+                    {user.mails.toLocaleString()} {language === 'bn' ? 'টি' : 'pcs'}
+                  </td>
                   <td className="py-4 px-4 font-black text-emerald-400 text-sm">
                     ৳{user.earnings.toLocaleString()}
                   </td>

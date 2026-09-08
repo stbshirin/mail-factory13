@@ -3,7 +3,7 @@ import { useApp } from '../AppContext';
 import { ArrowRightLeft, DollarSign, Wallet, RefreshCw, Sparkles } from 'lucide-react';
 
 export const ExchangeView: React.FC = () => {
-  const { currentUser, platformSettings, exchangeCurrency, showToast } = useApp();
+  const { currentUser, platformSettings, exchangeCurrency, showToast, language } = useApp();
 
   const [fromCurrency, setFromCurrency] = useState<'BDT' | 'USD'>('BDT');
   const [amount, setAmount] = useState<number>(1225);
@@ -31,11 +31,14 @@ export const ExchangeView: React.FC = () => {
       <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-purple-950/40 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-xl text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold mb-3">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>লাইভ কারেন্সি এক্সচেঞ্জার</span>
+          <span>{language === 'bn' ? 'লাইভ কারেন্সি এক্সচেঞ্জার' : 'Live Currency Exchanger'}</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-white">BDT ⇄ USD এক্সচেঞ্জ</h1>
+        <h1 className="text-2xl sm:text-3xl font-black text-white">
+          {language === 'bn' ? 'BDT ⇄ USD এক্সচেঞ্জ' : 'BDT ⇄ USD Exchange'}
+        </h1>
         <p className="text-xs sm:text-sm text-slate-300 mt-1">
-          লাইভ রেট: <strong>1 USD = ৳{rate.toFixed(2)} BDT</strong>
+          {language === 'bn' ? 'লাইভ রেট: ' : 'Live Rate: '}
+          <strong>1 USD = ৳{rate.toFixed(2)} BDT</strong>
         </p>
       </div>
 
@@ -44,9 +47,9 @@ export const ExchangeView: React.FC = () => {
           {/* From Box */}
           <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
             <div className="flex justify-between text-xs text-slate-400">
-              <span>আপনি প্রদান করবেন:</span>
+              <span>{language === 'bn' ? 'আপনি প্রদান করবেন:' : 'You Pay:'}</span>
               <span>
-                ব্যালেন্স:{' '}
+                {language === 'bn' ? 'ব্যালেন্স: ' : 'Balance: '}
                 <strong className="text-white">
                   {fromCurrency === 'BDT' ? `৳${currentUser.balanceBdt.toFixed(2)}` : `$${currentUser.balanceUsd.toFixed(2)}`}
                 </strong>
@@ -74,6 +77,7 @@ export const ExchangeView: React.FC = () => {
               type="button"
               onClick={handleSwap}
               className="p-3 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-500/20 transition-transform active:rotate-180"
+              title={language === 'bn' ? 'কারেন্সি পরিবর্তন করুন' : 'Swap Currencies'}
             >
               <ArrowRightLeft className="w-4 h-4" />
             </button>
@@ -82,9 +86,9 @@ export const ExchangeView: React.FC = () => {
           {/* To Box */}
           <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
             <div className="flex justify-between text-xs text-slate-400">
-              <span>আপনি পাবেন:</span>
+              <span>{language === 'bn' ? 'আপনি পাবেন:' : 'You Receive:'}</span>
               <span>
-                ব্যালেন্স:{' '}
+                {language === 'bn' ? 'ব্যালেন্স: ' : 'Balance: '}
                 <strong className="text-white">
                   {toCurrency === 'BDT' ? `৳${currentUser.balanceBdt.toFixed(2)}` : `$${currentUser.balanceUsd.toFixed(2)}`}
                 </strong>
@@ -104,7 +108,7 @@ export const ExchangeView: React.FC = () => {
             type="submit"
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 text-slate-950 font-black text-base shadow-xl shadow-amber-500/20 transition-all"
           >
-            তাৎক্ষণিক এক্সচেঞ্জ কনফার্ম করুন
+            {language === 'bn' ? 'তাৎক্ষণিক এক্সচেঞ্জ কনফার্ম করুন' : 'Confirm Instant Exchange'}
           </button>
         </form>
       </div>
