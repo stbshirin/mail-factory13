@@ -38,8 +38,21 @@ export const SellersView: React.FC = () => {
     showToast,
     isLoggedIn,
     setIsAuthModalOpen,
+    setAuthModalMode,
     setActiveTab,
   } = useApp();
+
+  const isGuest = !isLoggedIn || !currentUser.email || currentUser.id === 'guest';
+
+  const requireAuth = (actionName = 'জিমেইল বিক্রয়') => {
+    if (isGuest) {
+      setAuthModalMode('login');
+      setIsAuthModalOpen(true);
+      showToast(`${actionName} করার পূর্বে একাউন্টে লগ-ইন বা রেজিস্ট্রেশন করে নিতে হবে।`, 'error');
+      return true;
+    }
+    return false;
+  };
 
   const [mailType, setMailType] = useState<MailType>('fresh');
   const [inputMode, setInputMode] = useState<'boxes' | 'bulk'>('boxes');
@@ -77,6 +90,7 @@ export const SellersView: React.FC = () => {
   };
 
   const handleAddRow = () => {
+    if (requireAuth('নতুন অ্যাকাউন্ট যোগ')) return;
     setMailRows(prev => [
       ...prev,
       { id: `${Date.now()}-${Math.random().toString(36).substr(2, 4)}`, email: '', password: '', recovery: '', showPassword: false },
@@ -93,6 +107,7 @@ export const SellersView: React.FC = () => {
 
   // Quick Paste from Clipboard
   const handleQuickPasteFromClipboard = async () => {
+    if (requireAuth('ক্লিপবোর্ড থেকে পেস্ট')) return;
     try {
       if (navigator.clipboard && navigator.clipboard.readText) {
         const text = await navigator.clipboard.readText();
@@ -153,11 +168,7 @@ export const SellersView: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoggedIn || !currentUser.email || currentUser.id === 'guest') {
-      setIsAuthModalOpen(true);
-      showToast('রেজিস্ট্রেশন / লগ-ইন করার আগ মুহূর্তে কোনো প্রকার মেইল বিক্রি করা যাবে না।', 'error');
-      return;
-    }
+    if (requireAuth('জিমেইল বিক্রয়')) return;
 
     let submissionText = '';
     if (inputMode === 'boxes') {
@@ -226,24 +237,31 @@ export const SellersView: React.FC = () => {
       </div>
 
       {/* Guest Notice Banner */}
-      {(!isLoggedIn || !currentUser.email || currentUser.id === 'guest') && (
-        <div className="bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-slate-900 border border-amber-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-5 h-5" />
+      {isGuest && (
+        <div className="bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-slate-900 border border-amber-500/40 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-sm font-bold text-white">রেজিস্ট্রেশন / লগ-ইন আবশ্যক</div>
-              <div className="text-xs text-slate-300 mt-0.5">
-                রেজিস্ট্রেশন বা লগ-ইন করার আগ মুহূর্তে কোনো প্রকার মেইল বিক্রি বা সাবমিট করতে পারবেন না।
+              <div className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                <span>জিমেইল বিক্রয়ের পূর্বে লগ-ইন আবশ্যক</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">লক করা</span>
+              </div>
+              <div className="text-xs text-slate-300 mt-1">
+                জিমেইল সাবমিট এবং ভেরিফিকেশন শেষে সরাসরি বিকাশ বা নগদে টাকা পাওয়ার জন্য পূর্বে আপনার অ্যাকাউন্টে লগ-ইন বা রেজিস্ট্রেশন করুন।
               </div>
             </div>
           </div>
           <button
-            onClick={() => setIsAuthModalOpen(true)}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md transition-all whitespace-nowrap"
+            type="button"
+            onClick={() => {
+              setAuthModalMode('login');
+              setIsAuthModalOpen(true);
+            }}
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs shadow-md transition-all whitespace-nowrap cursor-pointer flex items-center justify-center gap-2"
           >
-            লগ-ইন / রেজিস্ট্রেশন করুন ↗
+            <span>লগ-ইন / রেজিস্ট্রেশন করুন ↗</span>
           </button>
         </div>
       )}
@@ -512,14 +530,25 @@ example3@gmail.com:UserPass99:recovery3@outlook.com`}
             </div>
 
             {/* VIBRANT GREEN SUBMIT BUTTON (Exact Screenshot 1) */}
-            <button
-              type="submit"
-              disabled={isSubmitting || displayAccountCount === 0}
-              className="w-full py-4 rounded-2xl bg-[#00D06C] hover:bg-[#00B95F] text-white font-black text-base shadow-xl shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
-            >
-              <Send className="w-5 h-5 stroke-[2.5]" />
-              <span>Submit {displayAccountCount} Account(s)</span>
-            </button>
+            {isGuest ? (
+              <button
+                type="button"
+                onClick={() => requireAuth('জিমেইল বিক্রয়')}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-base shadow-xl shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Sparkles className="w-5 h-5 stroke-[2.5]" />
+                <span>🔒 লগ-ইন করে মেইল সাবমিট করুন</span>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={isSubmitting || displayAccountCount === 0}
+                className="w-full py-4 rounded-2xl bg-[#00D06C] hover:bg-[#00B95F] text-white font-black text-base shadow-xl shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+              >
+                <Send className="w-5 h-5 stroke-[2.5]" />
+                <span>Submit {displayAccountCount} Account(s)</span>
+              </button>
+            )}
           </form>
         </div>
 

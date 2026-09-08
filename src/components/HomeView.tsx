@@ -39,6 +39,7 @@ export const HomeView: React.FC = () => {
     addReview,
     isLoggedIn,
     setIsAuthModalOpen,
+    setAuthModalMode,
     showToast,
     trustCards,
     updateTrustCard,
@@ -47,6 +48,28 @@ export const HomeView: React.FC = () => {
     isAdmin,
     t,
   } = useApp();
+
+  const isGuest = !isLoggedIn || !currentUser.email || currentUser.id === 'guest';
+
+  const handleSellClick = () => {
+    if (isGuest) {
+      setAuthModalMode('login');
+      setIsAuthModalOpen(true);
+      showToast('জিমেইল বিক্রয় করার পূর্বে একাউন্টে লগ-ইন বা রেজিস্ট্রেশন করে নিতে হবে।', 'error');
+      return;
+    }
+    setActiveTab('sell');
+  };
+
+  const handleBuyClick = () => {
+    if (isGuest) {
+      setAuthModalMode('login');
+      setIsAuthModalOpen(true);
+      showToast('জিমেইল ক্রয় করার পূর্বে একাউন্টে লগ-ইন বা রেজিস্ট্রেশন করে নিতে হবে।', 'error');
+      return;
+    }
+    setActiveTab('buy');
+  };
 
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -179,10 +202,10 @@ export const HomeView: React.FC = () => {
             {platformSettings.heroSubtitle || 'নিরাপদে ফ্রেশ ও ওল্ড জিমেইল অ্যাকাউন্ট ক্রয় করুন অথবা নিজের তৈরি করা জিমেইল সাবমিট করে বিকাশ ও নগদে সরাসরি টাকা উইথড্র নিন।'}
           </p>
 
-          {/* Big Green Primary CTA Button */}
+            {/* Big Green Primary CTA Button */}
           <div className="mt-6 w-full max-w-md space-y-3">
             <button
-              onClick={() => setActiveTab('sell')}
+              onClick={handleSellClick}
               className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 via-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-base sm:text-lg shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
             >
               <Sparkles className="w-5 h-5 stroke-[2.5]" />
@@ -192,7 +215,7 @@ export const HomeView: React.FC = () => {
             {/* Two Side-by-Side Action Buttons */}
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setActiveTab('buy')}
+                onClick={handleBuyClick}
                 className="py-3 px-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-white font-bold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 hover:border-slate-600 transition-all"
               >
                 <ShoppingBag className="w-4 h-4 text-amber-400" />
@@ -310,7 +333,7 @@ export const HomeView: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setActiveTab('sell')}
+              onClick={handleSellClick}
               className="mt-5 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm transition-colors"
             >
               মেইল সাবমিট করুন
@@ -365,7 +388,7 @@ export const HomeView: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setActiveTab('sell')}
+              onClick={handleSellClick}
               className="mt-5 w-full py-3.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/20 active:scale-[0.99] transition-all"
             >
               মেইল সাবমিট করুন
@@ -413,7 +436,7 @@ export const HomeView: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setActiveTab('sell')}
+              onClick={handleSellClick}
               className="mt-5 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm transition-colors"
             >
               মেইল সাবমিট করুন
@@ -480,7 +503,7 @@ export const HomeView: React.FC = () => {
                   স্টক: <span className="text-emerald-400 font-bold">{item.stockAvailable}টি</span>
                 </div>
                 <button
-                  onClick={() => setActiveTab('buy')}
+                  onClick={handleBuyClick}
                   className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors"
                 >
                   কিনুন

@@ -1056,8 +1056,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     shiftName: string;
   }): boolean => {
     if (!isLoggedIn || !currentUser.email || currentUser.id === 'guest') {
+      setAuthModalMode('login');
       setIsAuthModalOpen(true);
-      showToast('মেইল সেল করার পূর্বে অনুগ্রহ করে লগ-ইন অথবা রেজিস্ট্রেশন করুন', 'error');
+      showToast('জিমেইল বিক্রয় করার পূর্বে একাউন্টে লগ-ইন অথবা রেজিস্ট্রেশন করে নিতে হবে।', 'error');
       return false;
     }
 
@@ -1253,8 +1254,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     quantity: number
   ): { success: boolean; message: string; order?: BuyerOrder } => {
     if (!isLoggedIn || !currentUser.email || currentUser.id === 'guest') {
+      setAuthModalMode('login');
       setIsAuthModalOpen(true);
-      return { success: false, message: 'কেনাকাটা করার পূর্বে অনুগ্রহ করে লগ-ইন অথবা রেজিস্ট্রেশন করুন।' };
+      return { success: false, message: 'জিমেইল ক্রয় করার পূর্বে একাউন্টে লগ-ইন অথবা রেজিস্ট্রেশন করে নিতে হবে।' };
     }
 
     const item = marketplaceItems.find(i => i.id === itemId);
