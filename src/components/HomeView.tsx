@@ -46,6 +46,7 @@ export const HomeView: React.FC = () => {
     deleteTrustCard,
     addTrustCard,
     isAdmin,
+    language,
     t,
   } = useApp();
 
@@ -55,7 +56,12 @@ export const HomeView: React.FC = () => {
     if (isGuest) {
       setAuthModalMode('login');
       setIsAuthModalOpen(true);
-      showToast('জিমেইল বিক্রয় করার পূর্বে একাউন্টে লগ-ইন বা রেজিস্ট্রেশন করে নিতে হবে।', 'error');
+      showToast(
+        language === 'bn'
+          ? 'জিমেইল বিক্রয় করার পূর্বে একাউন্টে লগ-ইন বা রেজিস্ট্রেশন করে নিতে হবে।'
+          : 'Please log in or register before selling Gmail accounts.',
+        'error'
+      );
       return;
     }
     setActiveTab('sell');
@@ -65,7 +71,12 @@ export const HomeView: React.FC = () => {
     if (isGuest) {
       setAuthModalMode('login');
       setIsAuthModalOpen(true);
-      showToast('জিমেইল ক্রয় করার পূর্বে একাউন্টে লগ-ইন বা রেজিস্ট্রেশন করে নিতে হবে।', 'error');
+      showToast(
+        language === 'bn'
+          ? 'জিমেইল ক্রয় করার পূর্বে একাউন্টে লগ-ইন বা রেজিস্ট্রেশন করে নিতে হবে।'
+          : 'Please log in or register before buying Gmail accounts.',
+        'error'
+      );
       return;
     }
     setActiveTab('buy');
@@ -167,7 +178,9 @@ export const HomeView: React.FC = () => {
       {platformSettings.tickerNotice && (
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl px-4 py-3 flex items-center gap-3 text-xs sm:text-sm text-amber-300 shadow-sm animate-pulse">
           <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0" />
-          <span className="font-bold text-amber-400 flex-shrink-0">ঘোষণা:</span>
+          <span className="font-bold text-amber-400 flex-shrink-0">
+            {language === 'bn' ? 'ঘোষণা:' : 'Notice:'}
+          </span>
           <span className="font-medium">{platformSettings.tickerNotice}</span>
         </div>
       )}
@@ -182,34 +195,46 @@ export const HomeView: React.FC = () => {
           {/* Flame Live Rate Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/80 border border-amber-500/40 text-amber-400 text-xs sm:text-sm font-bold shadow-sm mb-4">
             <Flame className="w-4 h-4 text-amber-400 animate-pulse" />
-            <span>বর্তমান লাইভ রেট: ৳{platformSettings.activeShift === 'Evening' ? '10.50' : platformSettings.mailBuyingRateRecovery.toFixed(2)} / মেইল</span>
+            <span>
+              {language === 'bn' ? 'বর্তমান লাইভ রেট:' : 'Current Live Rate:'} ৳
+              {platformSettings.activeShift === 'Evening' ? '10.50' : platformSettings.mailBuyingRateRecovery.toFixed(2)}{' '}
+              / {language === 'bn' ? 'মেইল' : 'mail'}
+            </span>
           </div>
 
           {/* Main Title - Dynamic from Admin Settings */}
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-snug sm:leading-tight max-w-2xl">
             {platformSettings.heroHeadline ? (
               <span>{platformSettings.heroHeadline}</span>
-            ) : (
+            ) : language === 'bn' ? (
               <>
                 বিশ্বস্ত জিমেইল <span className="text-amber-400">ক্রয়-বিক্রয়</span> ও{' '}
                 <span className="text-teal-400">মাইক্রো-আর্নিং</span> প্ল্যাটফর্ম
+              </>
+            ) : (
+              <>
+                Trusted Gmail <span className="text-amber-400">Trading</span> &{' '}
+                <span className="text-teal-400">Micro-Earning</span> Platform
               </>
             )}
           </h1>
 
           {/* Subtitle - Dynamic from Admin Settings */}
           <p className="mt-3 text-slate-300 text-xs sm:text-sm leading-relaxed max-w-xl">
-            {platformSettings.heroSubtitle || 'নিরাপদে ফ্রেশ ও ওল্ড জিমেইল অ্যাকাউন্ট ক্রয় করুন অথবা নিজের তৈরি করা জিমেইল সাবমিট করে বিকাশ ও নগদে সরাসরি টাকা উইথড্র নিন।'}
+            {platformSettings.heroSubtitle ||
+              (language === 'bn'
+                ? 'নিরাপদে ফ্রেশ ও ওল্ড জিমেইল অ্যাকাউন্ট ক্রয় করুন অথবা নিজের তৈরি করা জিমেইল সাবমিট করে বিকাশ ও নগদে সরাসরি টাকা উইথড্র নিন।'
+                : 'Safely purchase fresh and aged Gmail accounts or submit your crafted emails to withdraw cash instantly via bKash and Nagad.')}
           </p>
 
-            {/* Big Green Primary CTA Button */}
+          {/* Big Green Primary CTA Button */}
           <div className="mt-6 w-full max-w-md space-y-3">
             <button
               onClick={handleSellClick}
               className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 via-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-base sm:text-lg shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
             >
               <Sparkles className="w-5 h-5 stroke-[2.5]" />
-              <span>সেল ফ্যাক্টরি ↗</span>
+              <span>{language === 'bn' ? 'সেল ফ্যাক্টরি ↗' : 'Sell Factory ↗'}</span>
             </button>
 
             {/* Two Side-by-Side Action Buttons */}
@@ -219,7 +244,7 @@ export const HomeView: React.FC = () => {
                 className="py-3 px-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-white font-bold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 hover:border-slate-600 transition-all"
               >
                 <ShoppingBag className="w-4 h-4 text-amber-400" />
-                <span>বাই জিমেইল</span>
+                <span>{language === 'bn' ? 'বাই জিমেইল' : 'Buy Gmail'}</span>
               </button>
 
               <button
@@ -227,7 +252,7 @@ export const HomeView: React.FC = () => {
                 className="py-3 px-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-white font-bold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 hover:border-slate-600 transition-all"
               >
                 <ArrowRightLeft className="w-4 h-4 text-amber-400" />
-                <span>এক্সচেঞ্জ</span>
+                <span>{language === 'bn' ? 'এক্সচেঞ্জ' : 'Exchange'}</span>
               </button>
             </div>
           </div>
@@ -242,14 +267,14 @@ export const HomeView: React.FC = () => {
               <TrendingUp className="w-4 h-4" />
             </div>
             <h2 className="text-base sm:text-lg font-black text-white">
-              সাম্প্রতিক লাইভ পেমেন্ট প্রুফ
+              {language === 'bn' ? 'সাম্প্রতিক লাইভ পেমেন্ট প্রুফ' : 'Recent Live Payment Proofs'}
             </h2>
           </div>
           <button
             onClick={() => setActiveTab('reviews')}
             className="text-xs text-amber-400 hover:text-amber-300 font-bold flex items-center gap-0.5 hover:underline"
           >
-            <span>সকল রিভিউ দেখুন</span>
+            <span>{language === 'bn' ? 'সকল রিভিউ দেখুন' : 'View All Reviews'}</span>
             <span>&gt;</span>
           </button>
         </div>
@@ -283,10 +308,14 @@ export const HomeView: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 text-white">
             <Clock className="w-5 h-5 text-amber-400" />
-            <h2 className="text-lg sm:text-xl font-black">আজকের সেলার শিফট ও বোনাস</h2>
+            <h2 className="text-lg sm:text-xl font-black">
+              {language === 'bn' ? 'আজকের সেলার শিফট ও বোনাস' : "Today's Seller Shifts & Bonuses"}
+            </h2>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            শিফট চলাকালীন সময়ে মেইল জমা দিয়ে অতিরিক্ত বোনাস ক্যাশ উপভোগ করুন।
+            {language === 'bn'
+              ? 'শিফট চলাকালীন সময়ে মেইল জমা দিয়ে অতিরিক্ত বোনাস ক্যাশ উপভোগ করুন।'
+              : 'Submit emails during active shift hours to enjoy additional bonus cash.'}
           </p>
         </div>
 
@@ -296,7 +325,9 @@ export const HomeView: React.FC = () => {
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-white">সকাল শিফট (Morning Shift)</h3>
+                <h3 className="text-base font-bold text-white">
+                  {language === 'bn' ? 'সকাল শিফট (Morning Shift)' : 'Morning Shift'}
+                </h3>
                 <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-1">
                   <Clock className="w-3.5 h-3.5" />
                   <span>08:00 AM - 02:00 PM</span>
@@ -307,12 +338,20 @@ export const HomeView: React.FC = () => {
             {/* Rate Breakdown Box */}
             <div className="mt-4 bg-slate-950/90 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
               <div>
-                <div className="text-xs text-slate-400">মৌলিক রেট: ৳8.50</div>
-                <div className="text-xs text-amber-400 font-bold mt-0.5">শিফট বোনাস: +৳0.50</div>
+                <div className="text-xs text-slate-400">
+                  {language === 'bn' ? 'মৌলিক রেট:' : 'Base Rate:'} ৳8.50
+                </div>
+                <div className="text-xs text-amber-400 font-bold mt-0.5">
+                  {language === 'bn' ? 'শিফট বোনাস: +৳0.50' : 'Shift Bonus: +৳0.50'}
+                </div>
               </div>
               <div className="text-right">
-                <div className="text-xs text-slate-400">মোট রেট</div>
-                <div className="text-lg font-black text-emerald-400">৳9.00 / মেইল</div>
+                <div className="text-xs text-slate-400">
+                  {language === 'bn' ? 'মোট রেট' : 'Total Rate'}
+                </div>
+                <div className="text-lg font-black text-emerald-400">
+                  ৳9.00 / {language === 'bn' ? 'মেইল' : 'mail'}
+                </div>
               </div>
             </div>
 
@@ -320,15 +359,27 @@ export const HomeView: React.FC = () => {
             <div className="mt-4 space-y-1.5 text-xs text-slate-300">
               <div className="flex items-center gap-2">
                 <span className="text-emerald-400 font-bold">✓</span>
-                <span>সব মেইলে Outlook রিকভারি বাধ্যতামূলক</span>
+                <span>
+                  {language === 'bn'
+                    ? 'সব মেইলে Outlook রিকভারি বাধ্যতামূলক'
+                    : 'Outlook recovery mail mandatory for all'}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-emerald-400 font-bold">✓</span>
-                <span>পাসওয়ার্ড ৮ ডিজিটের বেশি হতে হবে</span>
+                <span>
+                  {language === 'bn'
+                    ? 'পাসওয়ার্ড ৮ ডিজিটের বেশি হতে হবে'
+                    : 'Password must be 8+ characters'}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-emerald-400 font-bold">✓</span>
-                <span>প্রতি মেইলে স্পেশাল রেট ৳৯.০০</span>
+                <span>
+                  {language === 'bn'
+                    ? 'প্রতি মেইলে স্পেশাল রেট ৳৯.০০'
+                    : 'Special rate ৳9.00 per verified email'}
+                </span>
               </div>
             </div>
 
@@ -336,7 +387,7 @@ export const HomeView: React.FC = () => {
               onClick={handleSellClick}
               className="mt-5 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm transition-colors"
             >
-              মেইল সাবমিট করুন
+              {language === 'bn' ? 'মেইল সাবমিট করুন' : 'Submit Mails'}
             </button>
           </div>
 
@@ -345,7 +396,9 @@ export const HomeView: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base font-bold text-white">সন্ধ্যা শিফট (Prime Evening Shift)</h3>
+                  <h3 className="text-base font-bold text-white">
+                    {language === 'bn' ? 'সন্ধ্যা শিফট (Prime Evening Shift)' : 'Prime Evening Shift'}
+                  </h3>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-1">
                   <Clock className="w-3.5 h-3.5" />
@@ -355,19 +408,27 @@ export const HomeView: React.FC = () => {
 
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-black">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span>লাইভ চালু</span>
+                <span>{language === 'bn' ? 'লাইভ চালু' : 'Live Active'}</span>
               </span>
             </div>
 
             {/* Rate Breakdown Box */}
             <div className="mt-4 bg-slate-950/90 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
               <div>
-                <div className="text-xs text-slate-400">মৌলিক রেট: ৳9.50</div>
-                <div className="text-xs text-amber-400 font-bold mt-0.5">শিফট বোনাস: +৳1.00</div>
+                <div className="text-xs text-slate-400">
+                  {language === 'bn' ? 'মৌলিক রেট:' : 'Base Rate:'} ৳9.50
+                </div>
+                <div className="text-xs text-amber-400 font-bold mt-0.5">
+                  {language === 'bn' ? 'শিফট বোনাস: +৳1.00' : 'Shift Bonus: +৳1.00'}
+                </div>
               </div>
               <div className="text-right">
-                <div className="text-xs text-slate-400">মোট রেট</div>
-                <div className="text-xl font-black text-emerald-400">৳10.50 / মেইল</div>
+                <div className="text-xs text-slate-400">
+                  {language === 'bn' ? 'মোট রেট' : 'Total Rate'}
+                </div>
+                <div className="text-xl font-black text-emerald-400">
+                  ৳10.50 / {language === 'bn' ? 'মেইল' : 'mail'}
+                </div>
               </div>
             </div>
 
@@ -375,15 +436,27 @@ export const HomeView: React.FC = () => {
             <div className="mt-4 space-y-1.5 text-xs text-slate-300">
               <div className="flex items-center gap-2">
                 <span className="text-emerald-400 font-bold">✓</span>
-                <span>হট শিফট: প্রতি মেইলে ৳১০.৫০ পর্যন্ত আয়</span>
+                <span>
+                  {language === 'bn'
+                    ? 'হট শিফট: প্রতি মেইলে ৳১০.৫০ পর্যন্ত আয়'
+                    : 'Hot Shift: Earn up to ৳10.50 per mail'}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-emerald-400 font-bold">✓</span>
-                <span>যেকোনো আইপি মেইল গ্রহণযোগ্য</span>
+                <span>
+                  {language === 'bn'
+                    ? 'যেকোনো আইপি মেইল গ্রহণযোগ্য'
+                    : 'Any IP mails accepted worldwide'}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-emerald-400 font-bold">✓</span>
-                <span>ইনস্ট্যান্ট ৩ মিনিটে চেকিং ও পেমেন্ট</span>
+                <span>
+                  {language === 'bn'
+                    ? 'ইনস্ট্যান্ট ৩ মিনিটে চেকিং ও পেমেন্ট'
+                    : 'Instant 3-minute check and payment'}
+                </span>
               </div>
             </div>
 
@@ -391,7 +464,7 @@ export const HomeView: React.FC = () => {
               onClick={handleSellClick}
               className="mt-5 w-full py-3.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/20 active:scale-[0.99] transition-all"
             >
-              মেইল সাবমিট করুন
+              {language === 'bn' ? 'মেইল সাবমিট করুন' : 'Submit Mails'}
             </button>
           </div>
 
@@ -399,7 +472,9 @@ export const HomeView: React.FC = () => {
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-white">নাইট শিফট (VIP Night Shift)</h3>
+                <h3 className="text-base font-bold text-white">
+                  {language === 'bn' ? 'নাইট শিফট (VIP Night Shift)' : 'VIP Night Shift'}
+                </h3>
                 <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-1">
                   <Clock className="w-3.5 h-3.5" />
                   <span>09:00 PM - 04:00 AM</span>
@@ -410,12 +485,20 @@ export const HomeView: React.FC = () => {
             {/* Rate Breakdown Box */}
             <div className="mt-4 bg-slate-950/90 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
               <div>
-                <div className="text-xs text-slate-400">মৌলিক রেট: ৳10.00</div>
-                <div className="text-xs text-amber-400 font-bold mt-0.5">শিফট বোনাস: +৳1.50</div>
+                <div className="text-xs text-slate-400">
+                  {language === 'bn' ? 'মৌলিক রেট:' : 'Base Rate:'} ৳10.00
+                </div>
+                <div className="text-xs text-amber-400 font-bold mt-0.5">
+                  {language === 'bn' ? 'শিফট বোনাস: +৳1.50' : 'Shift Bonus: +৳1.50'}
+                </div>
               </div>
               <div className="text-right">
-                <div className="text-xs text-slate-400">মোট রেট</div>
-                <div className="text-lg font-black text-emerald-400">৳11.50 / মেইল</div>
+                <div className="text-xs text-slate-400">
+                  {language === 'bn' ? 'মোট রেট' : 'Total Rate'}
+                </div>
+                <div className="text-lg font-black text-emerald-400">
+                  ৳11.50 / {language === 'bn' ? 'মেইল' : 'mail'}
+                </div>
               </div>
             </div>
 
@@ -423,15 +506,27 @@ export const HomeView: React.FC = () => {
             <div className="mt-4 space-y-1.5 text-xs text-slate-300">
               <div className="flex items-center gap-2">
                 <span className="text-emerald-400 font-bold">✓</span>
-                <span>সর্বোচ্চ রেট শিফট ৳১১.৫০</span>
+                <span>
+                  {language === 'bn'
+                    ? 'সর্বোচ্চ রেট শিফট ৳১১.৫০'
+                    : 'Highest rate shift ৳11.50 per mail'}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-emerald-400 font-bold">✓</span>
-                <span>টপ ৫ সেলারে জন্য নগদ ৳১,০০০ বোনাস</span>
+                <span>
+                  {language === 'bn'
+                    ? 'টপ ৫ সেলারে জন্য নগদ ৳১,০০০ বোনাস'
+                    : '৳1,000 cash bonus for top 5 sellers'}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-emerald-400 font-bold">✓</span>
-                <span>আনলিমিটেড সাবমিট করা যাবে</span>
+                <span>
+                  {language === 'bn'
+                    ? 'আনলিমিটেড সাবমিট করা যাবে'
+                    : 'Unlimited submissions allowed'}
+                </span>
               </div>
             </div>
 
@@ -439,7 +534,7 @@ export const HomeView: React.FC = () => {
               onClick={handleSellClick}
               className="mt-5 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm transition-colors"
             >
-              মেইল সাবমিট করুন
+              {language === 'bn' ? 'মেইল সাবমিট করুন' : 'Submit Mails'}
             </button>
           </div>
         </div>
@@ -451,17 +546,21 @@ export const HomeView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 text-white">
               <ShoppingBag className="w-5 h-5 text-amber-400" />
-              <h2 className="text-lg sm:text-xl font-black">হট ডিলস: জিমেইল মার্কেটপ্লেস</h2>
+              <h2 className="text-lg sm:text-xl font-black">
+                {language === 'bn' ? 'হট ডিলস: জিমেইল মার্কেটপ্লেস' : 'Hot Deals: Gmail Marketplace'}
+              </h2>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              ১০০% রিকভারি যুক্ত ফ্রেশ ও ওল্ড জিমেইল কিনুন ইনস্ট্যান্ট অটো-ডেলিভারি সহ।
+              {language === 'bn'
+                ? '১০০% রিকভারি যুক্ত ফ্রেশ ও ওল্ড জিমেইল কিনুন ইনস্ট্যান্ট অটো-ডেলিভারি সহ।'
+                : 'Buy 100% recovery verified fresh and aged Gmail accounts with instant auto-delivery.'}
             </p>
           </div>
           <button
             onClick={() => setActiveTab('buy')}
             className="text-xs text-amber-400 hover:text-amber-300 font-bold flex items-center gap-0.5 hover:underline flex-shrink-0"
           >
-            <span>সব প্যাকেজ দেখুন</span>
+            <span>{language === 'bn' ? 'সব প্যাকেজ দেখুন' : 'View All Packages'}</span>
             <span>&gt;</span>
           </button>
         </div>
@@ -475,11 +574,13 @@ export const HomeView: React.FC = () => {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    {item.badge || 'হট ডিল'}
+                    {item.badge || (language === 'bn' ? 'হট ডিল' : 'Hot Deal')}
                   </span>
                   <div className="text-right">
                     <span className="text-lg font-black text-white">৳{item.pricePerUnit.toFixed(2)}</span>
-                    <span className="text-[10px] text-slate-400 block -mt-1">প্রতি পিস</span>
+                    <span className="text-[10px] text-slate-400 block -mt-1">
+                      {language === 'bn' ? 'প্রতি পিস' : 'per piece'}
+                    </span>
                   </div>
                 </div>
 
@@ -500,13 +601,16 @@ export const HomeView: React.FC = () => {
 
               <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
                 <div className="text-xs text-slate-400">
-                  স্টক: <span className="text-emerald-400 font-bold">{item.stockAvailable}টি</span>
+                  {language === 'bn' ? 'স্টক:' : 'Stock:'}{' '}
+                  <span className="text-emerald-400 font-bold">
+                    {item.stockAvailable}{language === 'bn' ? 'টি' : ' pcs'}
+                  </span>
                 </div>
                 <button
                   onClick={handleBuyClick}
                   className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors"
                 >
-                  কিনুন
+                  {language === 'bn' ? 'কিনুন' : 'Buy Now'}
                 </button>
               </div>
             </div>
@@ -521,10 +625,14 @@ export const HomeView: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>অ্যাডমিন ম্যানেজমেন্ট পারমিশন</span>
+                <span>
+                  {language === 'bn' ? 'অ্যাডমিন ম্যানেজমেন্ট পারমিশন' : 'Admin Management Permission'}
+                </span>
               </span>
               <span className="text-xs text-slate-300 hidden sm:inline">
-                যেকোনো সুবিধা কার্ড এডিট বা ডিলিট করতে পারবেন
+                {language === 'bn'
+                  ? 'যেকোনো সুবিধা কার্ড এডিট বা ডিলিট করতে পারবেন'
+                  : 'You can edit or delete any feature guarantee card'}
               </span>
             </div>
             <button
@@ -532,7 +640,9 @@ export const HomeView: React.FC = () => {
               className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-500/20 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>নতুন সুবিধা কার্ড যোগ করুন</span>
+              <span>
+                {language === 'bn' ? 'নতুন সুবিধা কার্ড যোগ করুন' : 'Add New Feature Card'}
+              </span>
             </button>
           </div>
         )}
@@ -543,26 +653,38 @@ export const HomeView: React.FC = () => {
             : [
                 {
                   id: 'trust-1',
-                  title: 'ইনস্ট্যান্ট ৩ মিনিটে উইথড্র',
-                  description: 'বিকাশ ও নগদ পার্সোনালে সর্বনিম্ন মাত্র ৳৫০ উইথড্র করুন কোনো ফি ছাড়া।',
+                  title: language === 'bn' ? 'ইনস্ট্যান্ট ৩ মিনিটে উইথড্র' : 'Instant 3-Minute Withdraw',
+                  description:
+                    language === 'bn'
+                      ? 'বিকাশ ও নগদ পার্সোনালে সর্বনিম্ন মাত্র ৳৫০ উইথড্র করুন কোনো ফি ছাড়া।'
+                      : 'Withdraw minimum ৳50 to bKash or Nagad personal with zero extra fees.',
                   iconType: 'zap',
                 },
                 {
                   id: 'trust-2',
-                  title: '১০০% রিপ্লেসমেন্ট ওয়ারেন্টি',
-                  description: 'কোনো মেইলে সমস্যা হলে ২৪-৪৮ ঘণ্টার মধ্যে সাথে সাথে রিপ্লেসমেন্ট বা রিফান্ড।',
+                  title: language === 'bn' ? '১০০% রিপ্লেসমেন্ট ওয়ারেন্টি' : '100% Replacement Warranty',
+                  description:
+                    language === 'bn'
+                      ? 'কোনো মেইলে সমস্যা হলে ২৪-৪৮ ঘণ্টার মধ্যে সাথে সাথে রিপ্লেসমেন্ট বা রিফান্ড।'
+                      : 'Instant replacement or refund if any account faces issues within 24-48 hours.',
                   iconType: 'shield',
                 },
                 {
                   id: 'trust-3',
-                  title: '৫% আজীবন রেফারেল কমিশন',
-                  description: 'বন্ধুদের ইনভাইট করুন এবং তাদের প্রতিটি মেইল বিক্রির উপর ৫% বোনাস উপভোগ করুন।',
+                  title: language === 'bn' ? '৫% আজীবন রেফারেল কমিশন' : '5% Lifetime Referral Bonus',
+                  description:
+                    language === 'bn'
+                      ? 'বন্ধুদের ইনভাইট করুন এবং তাদের প্রতিটি মেইল বিক্রির উপর ৫% বোনাস উপভোগ করুন।'
+                      : 'Invite friends and earn a 5% cash commission on every email they sell.',
                   iconType: 'gift',
                 },
                 {
                   id: 'trust-4',
-                  title: '২৪/৭ লাইভ বাংলা সাপোর্ট',
-                  description: 'টেলিগ্রাম ও অন-সাইট লাইভ চ্যাটে যেকোনো সহায়তার জন্য আমরা সদা প্রস্তুত।',
+                  title: language === 'bn' ? '২৪/৭ লাইভ সাপোর্ট' : '24/7 Live Support',
+                  description:
+                    language === 'bn'
+                      ? 'টেলিগ্রাম ও অন-সাইট লাইভ চ্যাটে যেকোনো সহায়তার জন্য আমরা সদা প্রস্তুত।'
+                      : 'Always ready to assist via Telegram and on-site real-time chat.',
                   iconType: 'support',
                 },
               ]
@@ -582,19 +704,25 @@ export const HomeView: React.FC = () => {
                         handleOpenEditCard(card);
                       }}
                       className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 hover:border-amber-400 shadow-md transition-all"
-                      title="এই সুবিধা কার্ডটি এডিট করুন"
+                      title={language === 'bn' ? 'এই সুবিধা কার্ডটি এডিট করুন' : 'Edit this card'}
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={e => {
                         e.stopPropagation();
-                        if (window.confirm(`আপনি কি "${card.title}" কার্ডটি মুছে ফেলতে চান?`)) {
+                        if (
+                          window.confirm(
+                            language === 'bn'
+                              ? `আপনি কি "${card.title}" কার্ডটি মুছে ফেলতে চান?`
+                              : `Are you sure you want to delete "${card.title}"?`
+                          )
+                        ) {
                           deleteTrustCard(card.id);
                         }
                       }}
                       className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-rose-400 border border-slate-700 hover:border-rose-500/40 shadow-md transition-all"
-                      title="এই সুবিধা কার্ডটি ডিলিট করুন"
+                      title={language === 'bn' ? 'এই সুবিধা কার্ডটি ডিলিট করুন' : 'Delete this card'}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -652,17 +780,21 @@ export const HomeView: React.FC = () => {
         <div className="relative z-10 max-w-xl mx-auto flex flex-col items-center">
           {/* Badge */}
           <span className="inline-block px-3 py-1 rounded-full bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-bold mb-3">
-            অফিসিয়াল টেলিগ্রাম চ্যানেল
+            {language === 'bn' ? 'অফিসিয়াল টেলিগ্রাম চ্যানেল' : 'Official Telegram Channel'}
           </span>
 
           {/* Heading */}
           <h2 className="text-xl sm:text-2xl font-black text-white">
-            ১০,০০০+ সেলার ও বায়ারের কমিউনিটিতে যোগ দিন
+            {language === 'bn'
+              ? '১০,০০০+ সেলার ও বায়ারের কমিউনিটিতে যোগ দিন'
+              : 'Join our Community of 10,000+ Sellers & Buyers'}
           </h2>
 
           {/* Subtitle */}
           <p className="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
-            প্রতিদিনের স্পেশাল শিফট আপডেট, রেট বাড়ানো-কমানোর নোটিশ এবং পেমেন্ট প্রুফ সবার আগে টেলিগ্রামে পেতে এখনি যোগ দিন।
+            {language === 'bn'
+              ? 'প্রতিদিনের স্পেশাল শিফট আপডেট, রেট বাড়ানো-কমানোর নোটিশ এবং পেমেন্ট প্রুফ সবার আগে টেলিগ্রামে পেতে এখনি যোগ দিন।'
+              : 'Join today to receive daily shift notices, instant rate change alerts, and live verified payment proofs first on Telegram.'}
           </p>
 
           {/* Two Action Buttons */}
@@ -672,7 +804,7 @@ export const HomeView: React.FC = () => {
               className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm border border-slate-700 transition-colors flex items-center justify-center gap-2"
             >
               <MessageCircle className="w-4 h-4 text-emerald-400" />
-              <span>লাইভ সাপোর্ট চ্যাট</span>
+              <span>{language === 'bn' ? 'লাইভ সাপোর্ট চ্যাট' : 'Live Support Chat'}</span>
             </button>
 
             <a
@@ -682,7 +814,7 @@ export const HomeView: React.FC = () => {
               className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
             >
               <span>✈️</span>
-              <span>টেলিগ্রাম গ্রুপে জয়েন করুন</span>
+              <span>{language === 'bn' ? 'টেলিগ্রাম গ্রুপে জয়েন করুন' : 'Join Telegram Group'}</span>
             </a>
           </div>
         </div>
@@ -697,13 +829,17 @@ export const HomeView: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-black text-white">গ্রাহক ও সেলারদের রিভিউ</h2>
+                <h2 className="text-base sm:text-lg font-black text-white">
+                  {language === 'bn' ? 'গ্রাহক ও সেলারদের রিভিউ' : 'Customer & Seller Reviews'}
+                </h2>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
-                  যাচাইকৃত ব্যবহারকারী
+                  {language === 'bn' ? 'যাচাইকৃত ব্যবহারকারী' : 'Verified Users'}
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                সেলার ও বায়ারদের বাস্তব কাজের অভিজ্ঞতা ও মতামত
+                {language === 'bn'
+                  ? 'সেলার ও বায়ারদের বাস্তব কাজের অভিজ্ঞতা ও মতামত'
+                  : 'Authentic feedback and work experiences from our community'}
               </p>
             </div>
           </div>
@@ -713,7 +849,7 @@ export const HomeView: React.FC = () => {
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 active:scale-95 transition-all self-start sm:self-auto"
           >
             <Star className="w-4 h-4 fill-slate-950 text-slate-950" />
-            <span>রিভিউ আবেদন করুন</span>
+            <span>{language === 'bn' ? 'রিভিউ আবেদন করুন' : 'Submit Review'}</span>
           </button>
         </div>
 
@@ -722,8 +858,12 @@ export const HomeView: React.FC = () => {
           <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-xs text-amber-300">
             <Clock className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <strong className="font-bold">রিভিউ আবেদন প্রক্রিয়াধীন:</strong> আপনার{' '}
-              {myPendingReviews.length}টি রিভিউ অ্যাডমিন অনুমোদনের জন্য অপেক্ষারত রয়েছে। অ্যাডমিন কনফার্ম করার পর এটি হোম পেজে প্রকাশ পাবে।
+              <strong className="font-bold">
+                {language === 'bn' ? 'রিভিউ আবেদন প্রক্রিয়াধীন:' : 'Review Under Review:'}
+              </strong>{' '}
+              {language === 'bn'
+                ? `আপনার ${myPendingReviews.length}টি রিভিউ অ্যাডমিন অনুমোদনের জন্য অপেক্ষারত রয়েছে। অ্যাডমিন কনফার্ম করার পর এটি হোম পেজে প্রকাশ পাবে।`
+                : `Your ${myPendingReviews.length} review submission(s) are awaiting admin approval. They will appear here once approved.`}
             </div>
           </div>
         )}
@@ -732,7 +872,9 @@ export const HomeView: React.FC = () => {
         {approvedReviews.length === 0 ? (
           <div className="p-8 text-center bg-slate-950/70 rounded-2xl border border-slate-800/80 space-y-2">
             <p className="text-xs text-slate-400">
-              এখনও কোনো অনুমোদিত পাবলিক রিভিউ নেই। প্রথম রিভিউ আবেদন করতে "রিভিউ আবেদন করুন" বাটনে ক্লিক করুন!
+              {language === 'bn'
+                ? 'এখনও কোনো অনুমোদিত পাবলিক রিভিউ নেই। প্রথম রিভিউ আবেদন করতে "রিভিউ আবেদন করুন" বাটনে ক্লিক করুন!'
+                : 'No approved reviews yet. Click "Submit Review" to share your first experience!'}
             </p>
           </div>
         ) : (
@@ -797,8 +939,14 @@ export const HomeView: React.FC = () => {
                   <Star className="w-4 h-4 fill-amber-400" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">রিভিউ ও অভিজ্ঞতা আবেদন</h3>
-                  <p className="text-xs text-slate-400">এডমিন কনফার্ম করার পর এটি হোম পেজে পাবলিক হবে</p>
+                  <h3 className="text-base font-bold text-white">
+                    {language === 'bn' ? 'রিভিউ ও অভিজ্ঞতা আবেদন' : 'Submit Review & Experience'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {language === 'bn'
+                      ? 'এডমিন কনফার্ম করার পর এটি হোম পেজে পাবলিক হবে'
+                      : 'Will be publicly visible after admin approval'}
+                  </p>
                 </div>
               </div>
 
@@ -814,7 +962,7 @@ export const HomeView: React.FC = () => {
               {/* Star Rating Select */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-2">
-                  আপনার স্টার রেটিং নির্বাচন করুন:
+                  {language === 'bn' ? 'আপনার স্টার রেটিং নির্বাচন করুন:' : 'Select Star Rating:'}
                 </label>
                 <div className="flex items-center gap-2">
                   {[1, 2, 3, 4, 5].map(star => (
@@ -838,13 +986,17 @@ export const HomeView: React.FC = () => {
               {/* Shift Tag */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  কাজের শিফট / ক্যাটাগরি:
+                  {language === 'bn' ? 'কাজের শিফট / ক্যাটাগরি:' : 'Shift / Category:'}
                 </label>
                 <input
                   type="text"
                   value={reviewShift}
                   onChange={e => setReviewShift(e.target.value)}
-                  placeholder="যেমন: Evening Shift, Fresh Gmail, Buy Package"
+                  placeholder={
+                    language === 'bn'
+                      ? 'যেমন: Evening Shift, Fresh Gmail, Buy Package'
+                      : 'e.g. Evening Shift, Fresh Gmail, Buy Package'
+                  }
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs focus:border-amber-500 outline-none"
                 />
               </div>
@@ -852,20 +1004,29 @@ export const HomeView: React.FC = () => {
               {/* Comment Textarea */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  আপনার বিস্তারিত মতামত ও কাজের অভিজ্ঞতা:
+                  {language === 'bn'
+                    ? 'আপনার বিস্তারিত মতামত ও কাজের অভিজ্ঞতা:'
+                    : 'Your Detailed Feedback & Experience:'}
                 </label>
                 <textarea
                   required
                   rows={4}
                   value={reviewComment}
                   onChange={e => setReviewComment(e.target.value)}
-                  placeholder="প্ল্যাটফর্মের লেনদেনের গতি, পেমেন্ট পাওয়ার অভিজ্ঞতা বা সেবার মান সম্পর্কে লিখুন..."
+                  placeholder={
+                    language === 'bn'
+                      ? 'প্ল্যাটফর্মের লেনদেনের গতি, পেমেন্ট পাওয়ার অভিজ্ঞতা বা সেবার মান সম্পর্কে লিখুন...'
+                      : 'Share your thoughts about payout speed, support quality, or trading experience...'
+                  }
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs placeholder:text-slate-500 focus:border-amber-500 outline-none leading-relaxed"
                 />
               </div>
 
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400">
-                🔒 <strong>নিরাপত্তা ও যাচাইকরণ:</strong> আপনার ইউজারনেম ({currentUser.name}) দিয়ে রিভিউ জমা হবে। স্প্যাম রোধে অ্যাডমিন ভেরিফিকেশনের পর তা হোম পেজে দৃশ্যমান হবে।
+                🔒 <strong>{language === 'bn' ? 'নিরাপত্তা ও যাচাইকরণ:' : 'Security & Verification:'}</strong>{' '}
+                {language === 'bn'
+                  ? `আপনার ইউজারনেম (${currentUser.name}) দিয়ে রিভিউ জমা হবে। স্প্যাম রোধে অ্যাডমিন ভেরিফিকেশনের পর তা হোম পেজে দৃশ্যমান হবে।`
+                  : `Your review will be submitted under your name (${currentUser.name}) and shown on home page upon admin verification.`}
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
@@ -874,7 +1035,7 @@ export const HomeView: React.FC = () => {
                   onClick={() => setIsReviewModalOpen(false)}
                   className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
                 >
-                  বাতিল
+                  {language === 'bn' ? 'বাতিল' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
@@ -882,7 +1043,15 @@ export const HomeView: React.FC = () => {
                   className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 active:scale-95 transition-all flex items-center gap-1.5"
                 >
                   <Check className="w-4 h-4" />
-                  <span>{isSubmittingReview ? 'জমা হচ্ছে...' : 'রিভিউ আবেদন জমা দিন'}</span>
+                  <span>
+                    {isSubmittingReview
+                      ? language === 'bn'
+                        ? 'জমা হচ্ছে...'
+                        : 'Submitting...'
+                      : language === 'bn'
+                      ? 'রিভিউ আবেদন জমা দিন'
+                      : 'Submit Review'}
+                  </span>
                 </button>
               </div>
             </form>
@@ -897,7 +1066,15 @@ export const HomeView: React.FC = () => {
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-amber-400" />
-                <span>{editingCard ? 'সুবিধা কার্ড এডিট করুন' : 'নতুন সুবিধা কার্ড তৈরি করুন'}</span>
+                <span>
+                  {editingCard
+                    ? language === 'bn'
+                      ? 'সুবিধা কার্ড এডিট করুন'
+                      : 'Edit Feature Card'
+                    : language === 'bn'
+                    ? 'নতুন সুবিধা কার্ড তৈরি করুন'
+                    : 'Create New Feature Card'}
+                </span>
               </h3>
               <button
                 onClick={() => {
@@ -906,13 +1083,15 @@ export const HomeView: React.FC = () => {
                 }}
                 className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSaveCard} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">কার্ড টাইটেল (শিরোনাম) *:</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  {language === 'bn' ? 'কার্ড টাইটেল (শিরোনাম) *:' : 'Card Title *:'}
+                </label>
                 <input
                   type="text"
                   value={cardTitle}
@@ -924,7 +1103,9 @@ export const HomeView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">বিবরণ (Description):</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  {language === 'bn' ? 'বিবরণ (Description):' : 'Description:'}
+                </label>
                 <textarea
                   value={cardDesc}
                   onChange={e => setCardDesc(e.target.value)}
@@ -935,15 +1116,17 @@ export const HomeView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">আইকন ও থিম বেছে নিন:</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  {language === 'bn' ? 'আইকন ও থিম বেছে নিন:' : 'Choose Icon & Theme:'}
+                </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { id: 'zap', label: 'বিদ্যুৎ (Zap)', icon: Zap, color: 'text-teal-400' },
-                    { id: 'shield', label: 'নিরাপত্তা (Shield)', icon: ShieldCheck, color: 'text-amber-400' },
-                    { id: 'gift', label: 'কমিশন (Gift)', icon: Gift, color: 'text-blue-400' },
-                    { id: 'support', label: 'সাপোর্ট (Phone)', icon: PhoneCall, color: 'text-purple-400' },
-                    { id: 'star', label: 'স্টার (Star)', icon: Star, color: 'text-yellow-400' },
-                    { id: 'sparkles', label: 'স্পার্কল (Sparkles)', icon: Sparkles, color: 'text-emerald-400' },
+                    { id: 'zap', label: language === 'bn' ? 'বিদ্যুৎ (Zap)' : 'Speed (Zap)', icon: Zap, color: 'text-teal-400' },
+                    { id: 'shield', label: language === 'bn' ? 'নিরাপত্তা (Shield)' : 'Shield', icon: ShieldCheck, color: 'text-amber-400' },
+                    { id: 'gift', label: language === 'bn' ? 'কমিশন (Gift)' : 'Commission', icon: Gift, color: 'text-blue-400' },
+                    { id: 'support', label: language === 'bn' ? 'সাপোর্ট (Phone)' : 'Support', icon: PhoneCall, color: 'text-purple-400' },
+                    { id: 'star', label: language === 'bn' ? 'স্টার (Star)' : 'Star', icon: Star, color: 'text-yellow-400' },
+                    { id: 'sparkles', label: language === 'bn' ? 'স্পার্কল (Sparkles)' : 'Sparkles', icon: Sparkles, color: 'text-emerald-400' },
                   ].map(opt => {
                     const IconComp = opt.icon;
                     return (
@@ -970,13 +1153,19 @@ export const HomeView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      if (window.confirm(`আপনি কি "${editingCard.title}" কার্ডটি মুছে ফেলতে চান?`)) {
+                      if (
+                        window.confirm(
+                          language === 'bn'
+                            ? `আপনি কি "${editingCard.title}" কার্ডটি মুছে ফেলতে চান?`
+                            : `Are you sure you want to delete "${editingCard.title}"?`
+                        )
+                      ) {
                         deleteTrustCard(editingCard.id);
                         setEditingCard(null);
                       }
                     }}
                     className="py-2.5 px-3.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold cursor-pointer"
-                    title="মুছে ফেলুন"
+                    title={language === 'bn' ? 'মুছে ফেলুন' : 'Delete'}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -989,13 +1178,19 @@ export const HomeView: React.FC = () => {
                   }}
                   className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
                 >
-                  বাতিল
+                  {language === 'bn' ? 'বাতিল' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors shadow-lg shadow-amber-500/20 cursor-pointer"
                 >
-                  {editingCard ? 'আপডেট সংরক্ষণ করুন' : 'কার্ড যোগ করুন'}
+                  {editingCard
+                    ? language === 'bn'
+                      ? 'আপডেট সংরক্ষণ করুন'
+                      : 'Save Changes'
+                    : language === 'bn'
+                    ? 'কার্ড যোগ করুন'
+                    : 'Add Card'}
                 </button>
               </div>
             </form>

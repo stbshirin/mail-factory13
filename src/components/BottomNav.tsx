@@ -3,7 +3,7 @@ import { useApp } from '../AppContext';
 import { Home, ShoppingBag, Wallet, ShieldCheck, Sparkles, LogIn, User } from 'lucide-react';
 
 export const BottomNav: React.FC = () => {
-  const { activeTab, setActiveTab, isAdmin, isLoggedIn, setIsAuthModalOpen, setAuthModalMode } = useApp();
+  const { activeTab, setActiveTab, isAdmin, isLoggedIn, setIsAuthModalOpen, setAuthModalMode, language } = useApp();
 
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-3 py-1.5 shadow-2xl">
@@ -16,7 +16,7 @@ export const BottomNav: React.FC = () => {
           }`}
         >
           <Home className="w-5 h-5" />
-          <span className="text-[11px] mt-0.5">হোম</span>
+          <span className="text-[11px] mt-0.5">{language === 'bn' ? 'হোম' : 'Home'}</span>
           {activeTab === 'home' && (
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-0.5"></span>
           )}
@@ -30,7 +30,7 @@ export const BottomNav: React.FC = () => {
           }`}
         >
           <ShoppingBag className="w-5 h-5" />
-          <span className="text-[11px] mt-0.5">মার্কেট</span>
+          <span className="text-[11px] mt-0.5">{language === 'bn' ? 'মার্কেট' : 'Market'}</span>
           {activeTab === 'buy' && (
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-0.5"></span>
           )}
@@ -41,11 +41,13 @@ export const BottomNav: React.FC = () => {
           <button
             onClick={() => setActiveTab('sell')}
             className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500 via-emerald-400 to-teal-300 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/40 hover:scale-105 active:scale-95 transition-transform border-4 border-slate-950"
-            title="সেল করুন"
+            title={language === 'bn' ? 'সেল করুন' : 'Sell Gmail'}
           >
             <Sparkles className="w-6 h-6 stroke-[2.5]" />
           </button>
-          <span className="text-[11px] font-bold text-emerald-400 mt-0.5">সেল করুন</span>
+          <span className="text-[11px] font-bold text-emerald-400 mt-0.5">
+            {language === 'bn' ? 'সেল করুন' : 'Sell'}
+          </span>
         </div>
 
         {/* এডমিন অথবা অ্যাকাউন্ট */}
@@ -57,7 +59,7 @@ export const BottomNav: React.FC = () => {
             }`}
           >
             <ShieldCheck className="w-5 h-5" />
-            <span className="text-[11px] mt-0.5">এডমিন</span>
+            <span className="text-[11px] mt-0.5">{language === 'bn' ? 'এডমিন' : 'Admin'}</span>
             {activeTab === 'admin' && (
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-0.5"></span>
             )}
@@ -71,7 +73,7 @@ export const BottomNav: React.FC = () => {
             className="flex flex-col items-center py-1 px-3 rounded-xl transition-all text-amber-400 hover:text-amber-300"
           >
             <LogIn className="w-5 h-5" />
-            <span className="text-[11px] mt-0.5 font-bold">লগইন</span>
+            <span className="text-[11px] mt-0.5 font-bold">{language === 'bn' ? 'লগইন' : 'Login'}</span>
           </button>
         ) : (
           <button
@@ -81,7 +83,7 @@ export const BottomNav: React.FC = () => {
             }`}
           >
             <User className="w-5 h-5" />
-            <span className="text-[11px] mt-0.5">প্রোফাইল</span>
+            <span className="text-[11px] mt-0.5">{language === 'bn' ? 'প্রোফাইল' : 'Profile'}</span>
             {activeTab === 'profile' && (
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-0.5"></span>
             )}
@@ -105,7 +107,7 @@ export const BottomNav: React.FC = () => {
           }`}
         >
           <Wallet className="w-5 h-5" />
-          <span className="text-[11px] mt-0.5">ওয়ালেট</span>
+          <span className="text-[11px] mt-0.5">{language === 'bn' ? 'ওয়ালেট' : 'Wallet'}</span>
           {(activeTab === 'wallet' || activeTab === 'deposit' || activeTab === 'withdraw') && (
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-0.5"></span>
           )}

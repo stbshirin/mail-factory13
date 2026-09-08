@@ -23,6 +23,7 @@ import {
   LogIn,
   LogOut,
   UserPlus,
+  Globe,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -61,17 +62,18 @@ export const Navbar: React.FC = () => {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
           <span className="text-amber-400 font-bold truncate flex items-center gap-1.5">
-            ⚡ {platformSettings.activeShift === 'Evening' || true ? 'সন্ধ্যা শিফট চালু: ' : 'লাইভ শিফট: '}
-            <span className="text-slate-200 font-normal">রেট ৳১০.৫০/মেইল!</span>
+            ⚡ {platformSettings.activeShift === 'Evening' || true ? (language === 'bn' ? 'সন্ধ্যা শিফট চালু: ' : 'Evening Shift Active: ') : (language === 'bn' ? 'লাইভ শিফট: ' : 'Live Shift: ')}
+            <span className="text-slate-200 font-normal">{language === 'bn' ? 'রেট ৳১০.৫০/মেইল!' : 'Rate ৳10.50/mail!'}</span>
           </span>
         </div>
 
         <button
           onClick={() => setLanguage(language === 'bn' ? 'en' : 'bn')}
-          className="text-xs font-semibold text-slate-200 hover:text-white flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 px-2.5 py-0.5 rounded-lg transition-colors flex-shrink-0 ml-2"
+          className="text-xs font-semibold text-slate-200 hover:text-white flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 px-2.5 py-0.5 rounded-lg transition-colors flex-shrink-0 ml-2 shadow-xs cursor-pointer"
+          title={language === 'bn' ? 'Switch to English' : 'বাংলায় পরিবর্তন করুন'}
         >
           <span className="text-amber-400">🌐</span>
-          <span>{language === 'bn' ? 'English' : 'বাংলা'}</span>
+          <span className="font-bold">{language === 'bn' ? 'English' : 'বাংলা'}</span>
         </button>
       </div>
 
@@ -200,10 +202,10 @@ export const Navbar: React.FC = () => {
                   setIsAuthModalOpen(true);
                 }}
                 className="px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1 transition-colors shadow-sm"
-                title="লগ-ইন বা রেজিস্ট্রেশন"
+                title={language === 'bn' ? 'লগ-ইন বা রেজিস্ট্রেশন' : 'Sign In or Register'}
               >
                 <LogIn className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span className="hidden sm:inline">লগইন / রেজিস্টার</span>
+                <span className="hidden sm:inline">{language === 'bn' ? 'লগইন / রেজিস্টার' : 'Sign In / Register'}</span>
               </button>
             )}
 
@@ -217,7 +219,7 @@ export const Navbar: React.FC = () => {
                     : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-700/60'
                 }`}
                 aria-label="Notifications"
-                title="নোটিফিকেশন সেন্টার"
+                title={language === 'bn' ? 'নোটিফিকেশন সেন্টার' : 'Notification Center'}
               >
                 <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                 {unreadCount > 0 && (
@@ -236,10 +238,11 @@ export const Navbar: React.FC = () => {
             {/* Language Switch */}
             <button
               onClick={() => setLanguage(language === 'bn' ? 'en' : 'bn')}
-              className="px-2 py-1 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-amber-400 hover:bg-slate-700 transition-colors"
-              title="Toggle Language"
+              className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-amber-400 hover:bg-slate-700 flex items-center gap-1 transition-colors shadow-xs"
+              title={language === 'bn' ? 'Switch to English' : 'বাংলায় পরিবর্তন করুন'}
             >
-              {language === 'bn' ? 'বাং' : 'EN'}
+              <Globe className="w-3.5 h-3.5" />
+              <span>{language === 'bn' ? 'English' : 'বাংলা'}</span>
             </button>
 
             {/* User Profile / Account Dropdown */}
@@ -269,10 +272,10 @@ export const Navbar: React.FC = () => {
                     </div>
                     <div className="hidden md:block text-left">
                       <div className="text-xs font-semibold text-white leading-none">
-                        লগইন
+                        {language === 'bn' ? 'লগইন' : 'Login'}
                       </div>
                       <div className="text-[10px] text-amber-400 font-mono mt-0.5 leading-none">
-                        অ্যাকাউন্ট
+                        {language === 'bn' ? 'অ্যাকাউন্ট' : 'Account'}
                       </div>
                     </div>
                   </>
@@ -289,9 +292,13 @@ export const Navbar: React.FC = () => {
                       <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-2.5 text-amber-400 shadow-inner">
                         <LogIn className="w-6 h-6 stroke-[2.2]" />
                       </div>
-                      <p className="font-bold text-white text-sm">MailFactory অ্যাকাউন্ট</p>
+                      <p className="font-bold text-white text-sm">
+                        {language === 'bn' ? 'MailFactory অ্যাকাউন্ট' : 'MailFactory Account'}
+                      </p>
                       <p className="text-[11px] text-slate-400 mt-1 mb-3.5 px-1 leading-relaxed">
-                        লগইন করে আপনার ওয়ালেট, জিমেইল সেল, মার্কেটপ্লেস ও অর্ডার ড্যাশবোর্ড এক্সেস করুন
+                        {language === 'bn'
+                          ? 'লগইন করে আপনার ওয়ালেট, জিমেইল সেল, মার্কেটপ্লেস ও অর্ডার ড্যাশবোর্ড এক্সেস করুন'
+                          : 'Log in to access your wallet, mail selling, marketplace, and order dashboard.'}
                       </p>
 
                       <div className="space-y-2">
@@ -304,7 +311,7 @@ export const Navbar: React.FC = () => {
                           className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-500/20 active:scale-95"
                         >
                           <LogIn className="w-4 h-4 stroke-[2.5]" />
-                          <span>লগ-ইন করুন (Login)</span>
+                          <span>{language === 'bn' ? 'লগ-ইন করুন (Login)' : 'Sign In'}</span>
                         </button>
 
                         <button
@@ -316,7 +323,7 @@ export const Navbar: React.FC = () => {
                           className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700 hover:border-slate-600 flex items-center justify-center gap-2 transition-all active:scale-95"
                         >
                           <UserPlus className="w-4 h-4 text-amber-400" />
-                          <span>নতুন রেজিস্ট্রেশন (Register)</span>
+                          <span>{language === 'bn' ? 'নতুন রেজিস্ট্রেশন (Register)' : 'Create Account'}</span>
                         </button>
                       </div>
                     </div>
@@ -349,7 +356,7 @@ export const Navbar: React.FC = () => {
                             className="w-full text-left px-3 py-2 text-emerald-400 hover:bg-emerald-950/40 rounded-lg flex items-center gap-2.5 font-semibold text-xs transition-colors"
                           >
                             <ShieldCheck className="w-4 h-4" />
-                            <span>অ্যাডমিন ম্যানেজমেন্ট প্যানেল</span>
+                            <span>{language === 'bn' ? 'অ্যাডমিন ম্যানেজমেন্ট প্যানেল' : 'Admin Control Panel'}</span>
                           </button>
                         )}
 
@@ -361,7 +368,7 @@ export const Navbar: React.FC = () => {
                           className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2.5 text-xs transition-colors"
                         >
                           <Wallet className="w-4 h-4 text-amber-400" />
-                          <span>আমার ওয়ালেট ও ডিপোজিট</span>
+                          <span>{language === 'bn' ? 'আমার ওয়ালেট ও ডিপোজিট' : 'My Wallet & Deposits'}</span>
                         </button>
 
                         <button
@@ -372,7 +379,7 @@ export const Navbar: React.FC = () => {
                           className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2.5 text-xs transition-colors"
                         >
                           <IdCard className="w-4 h-4 text-amber-400" />
-                          <span>মেম্বার আইডি কার্ড (ID Card)</span>
+                          <span>{language === 'bn' ? 'মেম্বার আইডি কার্ড (ID Card)' : 'Member ID Card'}</span>
                         </button>
 
                         <button
@@ -383,7 +390,7 @@ export const Navbar: React.FC = () => {
                           className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2.5 text-xs transition-colors"
                         >
                           <ShoppingBag className="w-4 h-4 text-sky-400" />
-                          <span>আমার ক্রয়কৃত অর্ডার (Orders)</span>
+                          <span>{language === 'bn' ? 'আমার ক্রয়কৃত অর্ডার (Orders)' : 'My Purchased Orders'}</span>
                         </button>
 
                         <button
@@ -394,7 +401,7 @@ export const Navbar: React.FC = () => {
                           className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2.5 text-xs transition-colors"
                         >
                           <RefreshCw className="w-4 h-4 text-emerald-400" />
-                          <span>লেনদেন হিস্ট্রি (Transactions)</span>
+                          <span>{language === 'bn' ? 'লেনদেন হিস্ট্রি (Transactions)' : 'Transaction History'}</span>
                         </button>
 
                         <button
@@ -405,7 +412,7 @@ export const Navbar: React.FC = () => {
                           className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2.5 text-xs transition-colors"
                         >
                           <Settings className="w-4 h-4 text-slate-400" />
-                          <span>প্রোফাইল সেটিংস</span>
+                          <span>{language === 'bn' ? 'প্রোফাইল সেটিংস' : 'Profile Settings'}</span>
                         </button>
                       </div>
 
@@ -419,7 +426,7 @@ export const Navbar: React.FC = () => {
                           className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 flex items-center gap-2 transition-colors"
                         >
                           <LogOut className="w-3.5 h-3.5 text-rose-400" />
-                          <span>লগআউট (Logout)</span>
+                          <span>{language === 'bn' ? 'লগআউট (Logout)' : 'Logout'}</span>
                         </button>
                       </div>
                     </div>
@@ -441,7 +448,33 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Drawer Navigation */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-800 bg-slate-900 px-4 pt-3 pb-5 space-y-1">
+        <div className="lg:hidden border-t border-slate-800 bg-slate-900 px-4 pt-3 pb-5 space-y-2">
+          {/* Mobile Language Switcher Card */}
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/80 mb-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+              <Globe className="w-4 h-4 text-amber-400" />
+              <span>{language === 'bn' ? 'ভাষা নির্বাচন' : 'Language'}</span>
+            </div>
+            <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-700">
+              <button
+                onClick={() => setLanguage('bn')}
+                className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${
+                  language === 'bn' ? 'bg-amber-500 text-slate-950 shadow-xs' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                বাংলা
+              </button>
+              <button
+                onClick={() => setLanguage('en')}
+                className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${
+                  language === 'en' ? 'bg-amber-500 text-slate-950 shadow-xs' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                English
+              </button>
+            </div>
+          </div>
+
           {/* User Info or Quick Auth in Mobile Drawer */}
           {!isLoggedIn ? (
             <div className="grid grid-cols-2 gap-2 mb-3">
@@ -454,7 +487,7 @@ export const Navbar: React.FC = () => {
                 className="py-2.5 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-transform"
               >
                 <LogIn className="w-4 h-4 stroke-[2.5]" />
-                <span>লগইন করুন</span>
+                <span>{language === 'bn' ? 'লগইন করুন' : 'Sign In'}</span>
               </button>
               <button
                 onClick={() => {
@@ -465,7 +498,7 @@ export const Navbar: React.FC = () => {
                 className="py-2.5 px-3 bg-slate-800 hover:bg-slate-750 border border-slate-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
               >
                 <UserPlus className="w-4 h-4 text-amber-400" />
-                <span>নতুন রেজিস্টার</span>
+                <span>{language === 'bn' ? 'নতুন রেজিস্টার' : 'Register'}</span>
               </button>
             </div>
           ) : (
@@ -490,7 +523,7 @@ export const Navbar: React.FC = () => {
                 </div>
               </div>
               <div className="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-xs">
-                <span className="text-slate-400">ব্যালেন্স:</span>
+                <span className="text-slate-400">{language === 'bn' ? 'ব্যালেন্স:' : 'Balance:'}</span>
                 <div className="flex items-center gap-2 font-mono font-bold">
                   <span className="text-amber-400">৳{(currentUser.balanceBdt || 0).toLocaleString()}</span>
                   <span className="text-slate-600">|</span>
@@ -508,7 +541,7 @@ export const Navbar: React.FC = () => {
             className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
           >
             <Send className="w-5 h-5 text-amber-400" />
-            <span>মেইল সেল করুন (Sell Gmail)</span>
+            <span>{language === 'bn' ? 'মেইল সেল করুন (Sell Gmail)' : 'Sell Gmail'}</span>
           </button>
 
           <button
@@ -519,7 +552,7 @@ export const Navbar: React.FC = () => {
             className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
           >
             <ShoppingBag className="w-5 h-5 text-sky-400" />
-            <span>মার্কেটপ্লেস (Buy Gmail)</span>
+            <span>{language === 'bn' ? 'মার্কেটপ্লেস (Buy Gmail)' : 'Marketplace (Buy Gmail)'}</span>
           </button>
 
           <button
@@ -530,7 +563,7 @@ export const Navbar: React.FC = () => {
             className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
           >
             <Wallet className="w-5 h-5 text-emerald-400" />
-            <span>ওয়ালেট ও লেনদেন</span>
+            <span>{language === 'bn' ? 'ওয়ালেট ও লেনদেন' : 'Wallet & Funds'}</span>
           </button>
 
           <button
@@ -541,7 +574,7 @@ export const Navbar: React.FC = () => {
             className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
           >
             <ArrowRightLeft className="w-5 h-5 text-purple-400" />
-            <span>কারেন্সি এক্সচেঞ্জ (BDT/USD)</span>
+            <span>{language === 'bn' ? 'কারেন্সি এক্সচেঞ্জ (BDT/USD)' : 'Currency Exchange (BDT/USD)'}</span>
           </button>
 
           <button
@@ -552,7 +585,7 @@ export const Navbar: React.FC = () => {
             className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
           >
             <Award className="w-5 h-5 text-yellow-400" />
-            <span>টপ সেলার লিডারবোর্ড</span>
+            <span>{language === 'bn' ? 'টপ সেলার লিডারবোর্ড' : 'Top Sellers Leaderboard'}</span>
           </button>
 
           <button
@@ -563,7 +596,7 @@ export const Navbar: React.FC = () => {
             className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
           >
             <Star className="w-5 h-5 text-amber-400" />
-            <span>ইউজার রিভিউ ও শিফট</span>
+            <span>{language === 'bn' ? 'ইউজার রিভিউ ও শিফট' : 'User Reviews & Shifts'}</span>
           </button>
 
           <button
@@ -574,7 +607,7 @@ export const Navbar: React.FC = () => {
             className="w-full text-left px-3 py-2.5 rounded-xl font-medium text-slate-200 hover:bg-slate-800 flex items-center gap-3"
           >
             <IdCard className="w-5 h-5 text-indigo-400" />
-            <span>ডিজিটাল মেম্বার কার্ড</span>
+            <span>{language === 'bn' ? 'ডিজিটাল মেম্বার কার্ড' : 'Digital Member ID'}</span>
           </button>
 
           <button
@@ -586,14 +619,14 @@ export const Navbar: React.FC = () => {
           >
             <div className="flex items-center gap-3">
               <Bell className="w-5 h-5 text-amber-400" />
-              <span>নোটিফিকেশন সেন্টার</span>
+              <span>{language === 'bn' ? 'নোটিফিকেশন সেন্টার' : 'Notification Center'}</span>
             </div>
             {unreadCount > 0 ? (
               <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black">
-                {unreadCount} নতুন
+                {unreadCount} {language === 'bn' ? 'নতুন' : 'new'}
               </span>
             ) : (
-              <span className="text-[11px] text-slate-500">সব পঠিত</span>
+              <span className="text-[11px] text-slate-500">{language === 'bn' ? 'সব পঠিত' : 'All read'}</span>
             )}
           </button>
 
@@ -606,7 +639,7 @@ export const Navbar: React.FC = () => {
               className="w-full text-left px-3 py-2.5 rounded-xl font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 flex items-center gap-3 mt-2"
             >
               <ShieldCheck className="w-5 h-5" />
-              <span>👑 অ্যাডমিন কন্ট্রোল প্যানেল</span>
+              <span>{language === 'bn' ? '👑 অ্যাডমিন কন্ট্রোল প্যানেল' : '👑 Admin Control Panel'}</span>
             </button>
           )}
 
@@ -614,7 +647,7 @@ export const Navbar: React.FC = () => {
             {!isLoggedIn ? (
               <div className="p-2 rounded-xl bg-slate-800/40 text-center">
                 <p className="text-[11px] text-slate-400">
-                  অ্যাকাউন্টে প্রবেশ করে সহজে মেইল সেল ও বাই করুন
+                  {language === 'bn' ? 'অ্যাকাউন্টে প্রবেশ করে সহজে মেইল সেল ও বাই করুন' : 'Sign in to buy and sell Gmail accounts smoothly'}
                 </p>
               </div>
             ) : (
@@ -627,7 +660,7 @@ export const Navbar: React.FC = () => {
                   className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 flex items-center gap-2"
                 >
                   <Settings className="w-4 h-4 text-slate-400" />
-                  <span>প্রোফাইল ও অ্যাকাউন্ট সেটিংস</span>
+                  <span>{language === 'bn' ? 'প্রোফাইল ও অ্যাকাউন্ট সেটিংস' : 'Profile & Account Settings'}</span>
                 </button>
                 <button
                   onClick={() => {
@@ -637,7 +670,7 @@ export const Navbar: React.FC = () => {
                   className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-950/30 flex items-center gap-2"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>লগআউট করুন (Logout)</span>
+                  <span>{language === 'bn' ? 'লগআউট করুন (Logout)' : 'Sign Out (Logout)'}</span>
                 </button>
               </div>
             )}

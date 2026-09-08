@@ -2,7 +2,7 @@ export type Language = 'bn' | 'en';
 
 export const translations = {
   bn: {
-    // Navigation
+    // Navigation & Header
     nav_home: 'হোম',
     nav_sell: 'মেইল সেল',
     nav_buy: 'মার্কেটপ্লেস',
@@ -20,6 +20,22 @@ export const translations = {
     nav_switch_lang: 'English',
     nav_shift_active: 'সন্ধ্যা শিফট চালু: ',
     nav_rate_per_mail: 'রেট ৳১০.৫০/মেইল!',
+    nav_live_proof: 'লাইভ পেমেন্ট প্রুফ',
+    nav_notifications: 'নোটিফিকেশন সেন্টার',
+    nav_profile_settings: 'প্রোফাইল ও অ্যাকাউন্ট সেটিংস',
+    nav_member: 'মেম্বার',
+    nav_admin_role: 'অ্যাডমিন',
+    nav_account: 'অ্যাকাউন্ট',
+    nav_guest_prompt: 'লগইন করে আপনার ওয়ালেট, জিমেইল সেল, মার্কেটপ্লেস ও অর্ডার ড্যাশবোর্ড এক্সেস করুন',
+
+    // Bottom Navigation
+    bottom_nav_home: 'হোম',
+    bottom_nav_market: 'মার্কেট',
+    bottom_nav_sell: 'সেল করুন',
+    bottom_nav_admin: 'এডমিন',
+    bottom_nav_login: 'লগইন',
+    bottom_nav_profile: 'প্রোফাইল',
+    bottom_nav_wallet: 'ওয়ালেট',
 
     // Common / Auth alerts
     auth_required_title: 'লগ-ইন আবশ্যক',
@@ -37,17 +53,27 @@ export const translations = {
     hero_cta_sell: 'সেল ফ্যাক্টরি ↗',
     hero_cta_buy: 'বাই জিমেইল',
     hero_cta_exchange: 'এক্সচেঞ্জ',
+    ticker_announcement: 'ঘোষণা:',
     recent_proofs_title: 'সাম্প্রতিক লাইভ পেমেন্ট প্রুফ',
     all_reviews_link: 'সকল রিভিউ দেখুন',
+    proof_just_now: 'সদ্য সম্পন্ন',
+    proof_type_sell: 'মেইল সেল',
+    proof_type_withdraw: 'উইথড্র',
     shifts_title: 'আজকের সেলার শিফট ও বোনাস',
     shifts_desc: 'শিফট চলাকালীন সময়ে মেইল জমা দিয়ে অতিরিক্ত বোনাস ক্যাশ উপভোগ করুন।',
     shift_morning: 'সকাল শিফট (Morning Shift)',
     shift_evening: 'সন্ধ্যা শিফট (Evening Shift)',
     shift_night: 'রাত শিফট (Night Shift)',
+    shift_active_badge: 'চালু আছে',
+    shift_upcoming_badge: 'আসন্ন',
     shift_base_rate: 'মৌলিক রেট',
     shift_bonus: 'শিফট বোনাস',
     shift_total_rate: 'সর্বমোট রেট',
     submit_mail_btn: 'মেইল জমা দিন',
+    hot_deals_title: 'হট ডিলস: জনপ্রিয় প্যাকেজসমূহ',
+    view_all_packages: 'সকল প্যাকেজ দেখুন ↗',
+    stock_available: 'স্টক অবশিষ্ট',
+    buy_action: 'কিনুন',
     feature_card1_title: '১০০% অটোমেটিক ডেলিভারি',
     feature_card1_desc: 'পেমেন্ট সম্পন্ন হওয়ার সাথে সাথেই জিমেইল ক্রেডেন্সিয়াল স্ক্রিনে দেখতে পাবেন।',
     feature_card2_title: 'ইনস্ট্যান্ট ক্যাশআউট',
@@ -75,22 +101,48 @@ export const translations = {
     market_cat_usa: 'USA জিমেইল',
     market_cat_edu: 'Edu জিমেইল',
     market_buy_now: 'এখনই কিনুন',
+    market_out_of_stock: 'স্টক শেষ',
     market_stock: 'স্টক অবশিষ্ট',
     market_pcs: 'টি',
     market_unit_price: 'প্রতি পিস রেট',
     market_min_order: 'সর্বনিম্ন অর্ডার',
     market_search_placeholder: 'প্যাকেজের নাম দিয়ে খুঁজুন...',
     market_login_prompt: '🔒 কেনাকাটা ও প্যাকেজ অর্ডার করার জন্য লগ-ইন অথবা রেজিস্ট্রেশন আবশ্যক।',
+    buy_login_required_title: 'জিমেইল ক্রয়ের পূর্বে লগ-ইন আবশ্যক',
+    buy_login_required_desc: 'জিমেইল অ্যাকাউন্ট ক্রয় এবং তাৎক্ষণিক ক্রেডেনশিয়াল পেতে হলে প্রথমে আপনার অ্যাকাউন্টে লগ-ইন বা সাইন-আপ করতে হবে।',
+    buy_confirm_title: 'প্যাকেজ ক্রয় নিশ্চিতকরণ',
+    buy_qty_label: 'পরিমাণ (পিস):',
+    buy_total_payable: 'মোট প্রদেয় টাকা:',
+    buy_your_balance: 'আপনার বর্তমান ব্যালেন্স:',
+    buy_confirm_btn: 'ক্রয় সম্পন্ন করুন',
+    buy_cancel_btn: 'বাতিল',
 
-    // Sellers
+    // Sellers View
     sell_title: 'জিমেইল সেল ফ্যাক্টরি',
     sell_desc: 'আপনার জিমেইল সাবমিট করুন এবং ৫ মিনিটে বিকাশ ও নগদে টাকা গ্রহণ করুন।',
+    sell_login_required_title: 'জিমেইল বিক্রয়ের পূর্বে লগ-ইন আবশ্যক',
+    sell_login_required_desc: 'জিমেইল সাবমিট এবং ভেরিফিকেশন শেষে সরাসরি বিকাশ বা নগদে টাকা পাওয়ার জন্য পূর্বে আপনার অ্যাকাউন্টে লগ-ইন বা রেজিস্ট্রেশন করুন।',
+    sell_login_btn: 'লগ-ইন / রেজিস্ট্রেশন করুন ↗',
+    sell_locked_badge: 'লক করা',
     sell_batch_submit: 'নতুন ব্যাচ সাবমিট করুন',
     sell_mail_type: 'জিমেইলের ধরন',
     sell_mail_data: 'জিমেইল ডেটা (ইমেইল:পাসওয়ার্ড:রিকভারি)',
     sell_payout_account: 'পেমেন্ট গ্রহণের নম্বর (বিকাশ/নগদ)',
     sell_submit_btn: 'ব্যাচ জমা দিন',
     sell_history_title: 'আপনার পূর্ববর্তী ব্যাচ হিস্ট্রি',
+    sell_mode_boxes: 'বক্স মোড',
+    sell_mode_bulk: 'বাল্ক পেস্ট মোড',
+    sell_fresh: 'ফ্রেশ জিমেইল',
+    sell_recovery: 'রিকভারি জিমেইল',
+    sell_aged: 'পুরাতন জিমেইল',
+    sell_add_row: '+ আরও অ্যাকাউন্ট যোগ করুন',
+    sell_paste_clipboard: 'ক্লিপবোর্ড থেকে পেস্ট করুন',
+    sell_login_to_submit: '🔒 লগ-ইন করে মেইল সাবমিট করুন',
+    sell_submit_count: 'অ্যাকাউন্ট সাবমিট করুন',
+    sell_summary_title: 'রেট ও শিফট বোনাস সামারি',
+    sell_total_accounts: 'মোট অ্যাকাউন্ট',
+    sell_estimated_payout: 'আনুমানিক মোট মূল্য',
+    sell_guidelines_title: 'সাবমিশন নীতিমালা ও নির্দেশনা',
 
     // Wallet
     wallet_title: 'আমার ওয়ালেট ও ফান্ডস',
@@ -102,11 +154,40 @@ export const translations = {
     wallet_exchange_btn: 'কারেন্সি এক্সচেঞ্জ',
     wallet_transactions_title: 'সাম্প্রতিক ওয়ালেট লেনদেন',
 
+    // Exchange
+    exchange_title: 'কারেন্সি এক্সচেঞ্জ',
+    exchange_desc: 'টাকা (BDT) এবং ডলার (USD) মুহূর্তেই সর্বনিম্ন ফিতে এক্সচেঞ্জ করুন।',
+    exchange_rate_label: 'বর্তমান এক্সচেঞ্জ রেট',
+    exchange_action_btn: 'মুহূর্তেই এক্সচেঞ্জ করুন',
+
+    // Leaderboard
+    leaderboard_title: 'টপ সেলার লিডারবোর্ড',
+    leaderboard_desc: 'প্রতি মাসের সেরা পারফর্মারদের তালিকা ও অতিরিক্ত ক্যাশ বোনাস রিওয়ার্ড।',
+    leaderboard_rank: 'র‍্যাংক',
+    leaderboard_seller: 'সেলার',
+    leaderboard_sales: 'মোট সেল',
+    leaderboard_reward: 'বোনাস রিওয়ার্ড',
+
+    // Auth Modal
+    auth_login_tab: 'লগইন',
+    auth_register_tab: 'নতুন অ্যাকাউন্ট',
+    auth_forgot_tab: 'পাসওয়ার্ড রিসেট',
+    auth_email_label: 'জিমেইল / ইমেইল অ্যাড্রেস',
+    auth_password_label: 'পাসওয়ার্ড',
+    auth_name_label: 'আপনার পূর্ণ নাম',
+    auth_phone_label: 'মোবাইল নম্বর (বিকাশ/নগদ)',
+    auth_confirm_password: 'পাসওয়ার্ড নিশ্চিত করুন',
+    auth_google_btn: 'গুগল দিয়ে প্রবেশ করুন',
+    auth_forgot_link: 'পাসওয়ার্ড ভুলে গেছেন?',
+    auth_terms_agree: 'আমি প্ল্যাটফর্মের নিয়মাবলী ও শর্তাবলীর সাথে একমত।',
+    auth_already_have_account: 'ইতিমধ্যে অ্যাকাউন্ট আছে? লগইন করুন',
+    auth_dont_have_account: 'অ্যাকাউন্ট নেই? নতুন অ্যাকাউন্ট খুলুন',
+
     // Deposit Phone Privacy
     deposit_phone_protected_notice: '🔒 গ্রাহকের গোপনীয়তা সুরক্ষায় ডিপোজিট ফোন নম্বর সর্বোচ্চ সুরক্ষিত থাকে এবং কোনো সাধারণ ব্যক্তি তা দেখতে পারে না।',
   },
   en: {
-    // Navigation
+    // Navigation & Header
     nav_home: 'Home',
     nav_sell: 'Sell Mail',
     nav_buy: 'Marketplace',
@@ -124,6 +205,22 @@ export const translations = {
     nav_switch_lang: 'বাংলা',
     nav_shift_active: 'Evening Shift Active: ',
     nav_rate_per_mail: 'Rate ৳10.50/mail!',
+    nav_live_proof: 'Live Payment Proofs',
+    nav_notifications: 'Notification Center',
+    nav_profile_settings: 'Profile & Account Settings',
+    nav_member: 'Member',
+    nav_admin_role: 'Admin',
+    nav_account: 'Account',
+    nav_guest_prompt: 'Log in to access your wallet, mail selling, marketplace, and order dashboard.',
+
+    // Bottom Navigation
+    bottom_nav_home: 'Home',
+    bottom_nav_market: 'Market',
+    bottom_nav_sell: 'Sell',
+    bottom_nav_admin: 'Admin',
+    bottom_nav_login: 'Login',
+    bottom_nav_profile: 'Profile',
+    bottom_nav_wallet: 'Wallet',
 
     // Common / Auth alerts
     auth_required_title: 'Login Required',
@@ -141,17 +238,27 @@ export const translations = {
     hero_cta_sell: 'Sell Factory ↗',
     hero_cta_buy: 'Buy Gmail',
     hero_cta_exchange: 'Exchange',
+    ticker_announcement: 'Notice:',
     recent_proofs_title: 'Recent Live Payment Proofs',
     all_reviews_link: 'View All Reviews',
+    proof_just_now: 'Just completed',
+    proof_type_sell: 'Mail Sold',
+    proof_type_withdraw: 'Withdrawal',
     shifts_title: "Today's Seller Shifts & Bonuses",
     shifts_desc: 'Submit mails during active shifts to enjoy extra bonus cash on top of the base rate.',
     shift_morning: 'Morning Shift',
     shift_evening: 'Evening Shift',
     shift_night: 'Night Shift',
+    shift_active_badge: 'Active Now',
+    shift_upcoming_badge: 'Upcoming',
     shift_base_rate: 'Base Rate',
     shift_bonus: 'Shift Bonus',
     shift_total_rate: 'Total Rate',
     submit_mail_btn: 'Submit Mails',
+    hot_deals_title: 'Hot Deals: Popular Packages',
+    view_all_packages: 'Browse All Packages ↗',
+    stock_available: 'Available Stock',
+    buy_action: 'Buy',
     feature_card1_title: '100% Instant Delivery',
     feature_card1_desc: 'Get your Gmail credentials on screen immediately upon successful payment.',
     feature_card2_title: 'Instant Cashouts',
@@ -179,22 +286,48 @@ export const translations = {
     market_cat_usa: 'USA Gmail',
     market_cat_edu: 'Edu Gmail',
     market_buy_now: 'Buy Now',
+    market_out_of_stock: 'Out of Stock',
     market_stock: 'Available Stock',
     market_pcs: 'pcs',
     market_unit_price: 'Unit Price',
     market_min_order: 'Min Order',
     market_search_placeholder: 'Search packages by title...',
     market_login_prompt: '🔒 Login or registration is required to buy packages.',
+    buy_login_required_title: 'Login Required to Buy Gmail',
+    buy_login_required_desc: 'To purchase Gmail accounts and receive instant credentials, please log in or register first.',
+    buy_confirm_title: 'Confirm Package Purchase',
+    buy_qty_label: 'Quantity (pcs):',
+    buy_total_payable: 'Total Payable Amount:',
+    buy_your_balance: 'Your Current Balance:',
+    buy_confirm_btn: 'Complete Purchase',
+    buy_cancel_btn: 'Cancel',
 
-    // Sellers
+    // Sellers View
     sell_title: 'Gmail Sell Factory',
     sell_desc: 'Submit your Gmail accounts and receive cash within 5 minutes on bKash or Nagad.',
+    sell_login_required_title: 'Login Required to Sell Gmail',
+    sell_login_required_desc: 'Please login or register first to submit Gmails and receive payouts directly to bKash or Nagad.',
+    sell_login_btn: 'Login / Register ↗',
+    sell_locked_badge: 'Locked',
     sell_batch_submit: 'Submit New Batch',
     sell_mail_type: 'Gmail Type',
     sell_mail_data: 'Gmail Data (email:password:recovery)',
     sell_payout_account: 'Payout Account (bKash/Nagad)',
     sell_submit_btn: 'Submit Batch',
     sell_history_title: 'Your Batch Submission History',
+    sell_mode_boxes: 'Box Mode',
+    sell_mode_bulk: 'Bulk Paste Mode',
+    sell_fresh: 'Fresh Gmail',
+    sell_recovery: 'Recovery Gmail',
+    sell_aged: 'Aged Gmail',
+    sell_add_row: '+ Add Another Account',
+    sell_paste_clipboard: 'Paste from Clipboard',
+    sell_login_to_submit: '🔒 Login to Submit Mails',
+    sell_submit_count: 'Account(s) Submit',
+    sell_summary_title: 'Rate & Shift Bonus Summary',
+    sell_total_accounts: 'Total Accounts',
+    sell_estimated_payout: 'Estimated Total Payout',
+    sell_guidelines_title: 'Submission Rules & Guidelines',
 
     // Wallet
     wallet_title: 'My Wallet & Funds',
@@ -206,6 +339,35 @@ export const translations = {
     wallet_exchange_btn: 'Currency Exchange',
     wallet_transactions_title: 'Recent Wallet Transactions',
 
+    // Exchange
+    exchange_title: 'Currency Exchange',
+    exchange_desc: 'Convert seamlessly between BDT and USD instantly with minimal fee.',
+    exchange_rate_label: 'Current Exchange Rate',
+    exchange_action_btn: 'Exchange Now',
+
+    // Leaderboard
+    leaderboard_title: 'Top Sellers Leaderboard',
+    leaderboard_desc: 'Monthly rankings of top performers and extra cash bonus rewards.',
+    leaderboard_rank: 'Rank',
+    leaderboard_seller: 'Seller',
+    leaderboard_sales: 'Total Sales',
+    leaderboard_reward: 'Bonus Reward',
+
+    // Auth Modal
+    auth_login_tab: 'Login',
+    auth_register_tab: 'Create Account',
+    auth_forgot_tab: 'Reset Password',
+    auth_email_label: 'Gmail / Email Address',
+    auth_password_label: 'Password',
+    auth_name_label: 'Full Name',
+    auth_phone_label: 'Phone Number (bKash/Nagad)',
+    auth_confirm_password: 'Confirm Password',
+    auth_google_btn: 'Sign in with Google',
+    auth_forgot_link: 'Forgot Password?',
+    auth_terms_agree: 'I agree to the platform rules & terms of service.',
+    auth_already_have_account: 'Already have an account? Sign in',
+    auth_dont_have_account: "Don't have an account? Create one",
+
     // Deposit Phone Privacy
     deposit_phone_protected_notice: '🔒 For user privacy, depositor phone numbers are strictly protected and never displayed to other users.',
   },
@@ -213,7 +375,8 @@ export const translations = {
 
 export type TranslationKey = keyof typeof translations.bn;
 
-export function getTranslation(key: TranslationKey, lang: Language = 'bn'): string {
+export function getTranslation(key: TranslationKey | string, lang: Language = 'bn'): string {
   const dictionary = translations[lang] || translations.bn;
-  return dictionary[key] || translations.bn[key] || key;
+  return (dictionary as Record<string, string>)[key] || (translations.bn as Record<string, string>)[key] || key;
 }
+
