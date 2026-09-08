@@ -339,7 +339,7 @@ export const HomeView: React.FC = () => {
             <div className="mt-4 bg-slate-950/90 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
               <div>
                 <div className="text-xs text-slate-400">
-                  {language === 'bn' ? 'মৌলিক রেট:' : 'Base Rate:'} ৳8.50
+                  {language === 'bn' ? 'নতুন জিমেইল মৌলিক রেট:' : 'New Gmail Base Rate:'} ৳{platformSettings.mailBuyingRateFresh.toFixed(2)}
                 </div>
                 <div className="text-xs text-amber-400 font-bold mt-0.5">
                   {language === 'bn' ? 'শিফট বোনাস: +৳0.50' : 'Shift Bonus: +৳0.50'}
@@ -350,7 +350,7 @@ export const HomeView: React.FC = () => {
                   {language === 'bn' ? 'মোট রেট' : 'Total Rate'}
                 </div>
                 <div className="text-lg font-black text-emerald-400">
-                  ৳9.00 / {language === 'bn' ? 'মেইল' : 'mail'}
+                  ৳{(platformSettings.mailBuyingRateFresh + 0.50).toFixed(2)} / {language === 'bn' ? 'মেইল' : 'mail'}
                 </div>
               </div>
             </div>
@@ -377,8 +377,8 @@ export const HomeView: React.FC = () => {
                 <span className="text-emerald-400 font-bold">✓</span>
                 <span>
                   {language === 'bn'
-                    ? 'প্রতি মেইলে স্পেশাল রেট ৳৯.০০'
-                    : 'Special rate ৳9.00 per verified email'}
+                    ? `প্রতি নতুন মেইলে রেট ৳${(platformSettings.mailBuyingRateFresh + 0.50).toFixed(2)}`
+                    : `Special rate ৳${(platformSettings.mailBuyingRateFresh + 0.50).toFixed(2)} per verified email`}
                 </span>
               </div>
             </div>
@@ -387,7 +387,7 @@ export const HomeView: React.FC = () => {
               onClick={handleSellClick}
               className="mt-5 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm transition-colors"
             >
-              {language === 'bn' ? 'মেইল সাবমিট করুন' : 'Submit Mails'}
+              {language === 'bn' ? 'নতুন জিমেইল সাবমিট করুন' : 'Submit New Gmail'}
             </button>
           </div>
 
@@ -416,7 +416,7 @@ export const HomeView: React.FC = () => {
             <div className="mt-4 bg-slate-950/90 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
               <div>
                 <div className="text-xs text-slate-400">
-                  {language === 'bn' ? 'মৌলিক রেট:' : 'Base Rate:'} ৳9.50
+                  {language === 'bn' ? 'মৌলিক রেট:' : 'Base Rate:'} ৳{platformSettings.mailBuyingRateFresh.toFixed(2)}
                 </div>
                 <div className="text-xs text-amber-400 font-bold mt-0.5">
                   {language === 'bn' ? 'শিফট বোনাস: +৳1.00' : 'Shift Bonus: +৳1.00'}
@@ -427,7 +427,7 @@ export const HomeView: React.FC = () => {
                   {language === 'bn' ? 'মোট রেট' : 'Total Rate'}
                 </div>
                 <div className="text-xl font-black text-emerald-400">
-                  ৳10.50 / {language === 'bn' ? 'মেইল' : 'mail'}
+                  ৳{(platformSettings.mailBuyingRateFresh + 1.00).toFixed(2)} / {language === 'bn' ? 'মেইল' : 'mail'}
                 </div>
               </div>
             </div>
@@ -438,8 +438,8 @@ export const HomeView: React.FC = () => {
                 <span className="text-emerald-400 font-bold">✓</span>
                 <span>
                   {language === 'bn'
-                    ? 'হট শিফট: প্রতি মেইলে ৳১০.৫০ পর্যন্ত আয়'
-                    : 'Hot Shift: Earn up to ৳10.50 per mail'}
+                    ? `হট শিফট: প্রতি মেইলে ৳${(platformSettings.mailBuyingRateFresh + 1.00).toFixed(2)} পর্যন্ত আয়`
+                    : `Hot Shift: Earn up to ৳${(platformSettings.mailBuyingRateFresh + 1.00).toFixed(2)} per mail`}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -468,12 +468,12 @@ export const HomeView: React.FC = () => {
             </button>
           </div>
 
-          {/* Card 3: নাইট শিফট */}
+          {/* Card 3: নাইট শিফট (Old Gmail VIP) */}
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-white">
-                  {language === 'bn' ? 'নাইট শিফট (VIP Night Shift)' : 'VIP Night Shift'}
+                  {language === 'bn' ? 'পুরাতন জিমেইল নাইট শিফট (Old Gmail VIP)' : 'Old Gmail VIP Night Shift'}
                 </h3>
                 <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-1">
                   <Clock className="w-3.5 h-3.5" />
@@ -486,7 +486,7 @@ export const HomeView: React.FC = () => {
             <div className="mt-4 bg-slate-950/90 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
               <div>
                 <div className="text-xs text-slate-400">
-                  {language === 'bn' ? 'মৌলিক রেট:' : 'Base Rate:'} ৳10.00
+                  {language === 'bn' ? 'পুরাতন জিমেইল রেট:' : 'Old Gmail Rate:'} ৳{platformSettings.mailBuyingRateAged.toFixed(2)}
                 </div>
                 <div className="text-xs text-amber-400 font-bold mt-0.5">
                   {language === 'bn' ? 'শিফট বোনাস: +৳1.50' : 'Shift Bonus: +৳1.50'}
@@ -497,7 +497,7 @@ export const HomeView: React.FC = () => {
                   {language === 'bn' ? 'মোট রেট' : 'Total Rate'}
                 </div>
                 <div className="text-lg font-black text-emerald-400">
-                  ৳11.50 / {language === 'bn' ? 'মেইল' : 'mail'}
+                  ৳{(platformSettings.mailBuyingRateAged + 1.50).toFixed(2)} / {language === 'bn' ? 'মেইল' : 'mail'}
                 </div>
               </div>
             </div>
@@ -508,8 +508,8 @@ export const HomeView: React.FC = () => {
                 <span className="text-emerald-400 font-bold">✓</span>
                 <span>
                   {language === 'bn'
-                    ? 'সর্বোচ্চ রেট শিফট ৳১১.৫০'
-                    : 'Highest rate shift ৳11.50 per mail'}
+                    ? `সর্বোচ্চ পুরাতন জিমেইল রেট ৳${(platformSettings.mailBuyingRateAged + 1.50).toFixed(2)}`
+                    : `Highest Old Gmail rate ৳${(platformSettings.mailBuyingRateAged + 1.50).toFixed(2)} per mail`}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -534,7 +534,7 @@ export const HomeView: React.FC = () => {
               onClick={handleSellClick}
               className="mt-5 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm transition-colors"
             >
-              {language === 'bn' ? 'মেইল সাবমিট করুন' : 'Submit Mails'}
+              {language === 'bn' ? 'পুরাতন জিমেইল সাবমিট করুন' : 'Submit Old Gmail'}
             </button>
           </div>
         </div>

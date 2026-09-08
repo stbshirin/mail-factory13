@@ -964,23 +964,44 @@ export const AdminPanelView: React.FC = () => {
             <div className="space-y-4 p-5 rounded-2xl bg-slate-950 border border-slate-800">
               <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
-                <span>সেলারদের থেকে জিমেইল কেনার রেট (প্রতি পিস BDT):</span>
+                <span>
+                  {language === 'bn'
+                    ? 'সেলারদের থেকে জিমেইল কেনার রেট (Buying Rates BDT):'
+                    : 'Seller Buying Rates (BDT per piece):'}
+                </span>
               </h3>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">ফ্রেশ জিমেইল (Fresh):</label>
+                  <label className="block text-[11px] text-slate-300 font-bold mb-1">
+                    {language === 'bn' ? '🔥 নতুন জিমেইল রেট (New Gmail):' : '🔥 New Gmail Rate:'}
+                  </label>
                   <input
                     type="number"
                     step="0.1"
                     value={ratesForm.mailBuyingRateFresh}
                     onChange={e => setRatesForm({ ...ratesForm, mailBuyingRateFresh: Number(e.target.value) })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-sm"
+                    className="w-full bg-slate-900 border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 text-white font-bold text-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">রিকভারি জিমেইল (Recovery):</label>
+                  <label className="block text-[11px] text-slate-300 font-bold mb-1">
+                    {language === 'bn' ? '⏳ পুরাতন জিমেইল রেট (Old Gmail):' : '⏳ Old Gmail Rate:'}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={ratesForm.mailBuyingRateAged}
+                    onChange={e => setRatesForm({ ...ratesForm, mailBuyingRateAged: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 text-white font-bold text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">
+                    {language === 'bn' ? 'রিকভারি জিমেইল (Recovery):' : 'Recovery Gmail:'}
+                  </label>
                   <input
                     type="number"
                     step="0.1"
@@ -991,18 +1012,9 @@ export const AdminPanelView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">পুরাতন জিমেইল (Aged):</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={ratesForm.mailBuyingRateAged}
-                    onChange={e => setRatesForm({ ...ratesForm, mailBuyingRateAged: Number(e.target.value) })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">USA IP জিমেইল:</label>
+                  <label className="block text-[11px] text-slate-400 mb-1">
+                    {language === 'bn' ? 'USA IP জিমেইল:' : 'USA IP Gmail:'}
+                  </label>
                   <input
                     type="number"
                     step="0.1"
@@ -1013,7 +1025,9 @@ export const AdminPanelView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Edu জিমেইল (Edu):</label>
+                  <label className="block text-[11px] text-slate-400 mb-1">
+                    {language === 'bn' ? 'Edu জিমেইল (Edu):' : 'Edu Gmail:'}
+                  </label>
                   <input
                     type="number"
                     step="0.1"

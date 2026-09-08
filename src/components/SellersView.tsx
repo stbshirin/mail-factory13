@@ -61,12 +61,10 @@ export const SellersView: React.FC = () => {
   };
 
   const [mailType, setMailType] = useState<MailType>('fresh');
-  const [inputMode, setInputMode] = useState<'boxes' | 'bulk'>('boxes');
   const [mailRows, setMailRows] = useState<MailInputRow[]>([
     { id: '1', email: '', password: '', recovery: '', showPassword: false },
     { id: '2', email: '', password: '', recovery: '', showPassword: false },
   ]);
-  const [rawText, setRawText] = useState('');
   const [showPasteModal, setShowPasteModal] = useState(false);
   const [pasteModalText, setPasteModalText] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('bKash');
@@ -163,50 +161,27 @@ export const SellersView: React.FC = () => {
 
   // Valid calculations
   const validRows = mailRows.filter(r => r.email.trim().includes('@') && r.password.trim().length >= 4);
-  const bulkLines = rawText
-    .split('\n')
-    .map(l => l.trim())
-    .filter(l => l.length > 0);
-  const bulkValid = bulkLines.filter(l => {
-    const parts = l.split(/[:\t, ]+/);
-    return parts[0] && parts[0].includes('@') && parts[1] && parts[1].length >= 4;
-  });
-
-  const validCount = inputMode === 'boxes' ? validRows.length : bulkValid.length;
-  const totalCount = inputMode === 'boxes' ? mailRows.length : bulkLines.length;
-  const displayAccountCount = validCount > 0 ? validCount : totalCount;
+  const validCount = validRows.length;
+  const displayAccountCount = validCount > 0 ? validCount : mailRows.length;
   const estimatedTotal = (validCount * currentRate).toFixed(2);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (requireAuth(language === 'bn' ? 'জিমেইল বিক্রয়' : 'Sell Gmail')) return;
 
-    let submissionText = '';
-    if (inputMode === 'boxes') {
-      if (validRows.length === 0) {
-        showToast(
-          language === 'bn'
-            ? 'অনুগ্রহ করে অন্তত একটি বৈধ ইমেইল ও পাসওয়ার্ড লিখুন'
-            : 'Please enter at least one valid email and password',
-          'error'
-        );
-        return;
-      }
-      submissionText = validRows
-        .map(r => `${r.email.trim()}:${r.password.trim()}${r.recovery?.trim() ? `:${r.recovery.trim()}` : ''}`)
-        .join('\n');
-    } else {
-      if (bulkValid.length === 0) {
-        showToast(
-          language === 'bn'
-            ? 'অনুগ্রহ করে অন্তত একটি বৈধ ইমেইল ও পাসওয়ার্ড লিখুন'
-            : 'Please enter at least one valid email and password',
-          'error'
-        );
-        return;
-      }
-      submissionText = rawText;
+    if (validRows.length === 0) {
+      showToast(
+        language === 'bn'
+          ? 'অনুগ্রহ করে অন্তত একটি বৈধ ইমেইল ও পাসওয়ার্ড লিখুন'
+          : 'Please enter at least one valid email and password',
+        'error'
+      );
+      return;
     }
+
+    const submissionText = validRows
+      .map(r => `${r.email.trim()}:${r.password.trim()}${r.recovery?.trim() ? `:${r.recovery.trim()}` : ''}`)
+      .join('\n');
 
     if (!payoutAccount.trim()) {
       showToast(
@@ -229,7 +204,6 @@ export const SellersView: React.FC = () => {
 
     setIsSubmitting(false);
     if (success) {
-      setRawText('');
       setMailRows([
         { id: '1', email: '', password: '', recovery: '', showPassword: false },
         { id: '2', email: '', password: '', recovery: '', showPassword: false },
@@ -303,201 +277,151 @@ export const SellersView: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* HERO RATE CARD */}
             <div className="bg-[#0c1527] border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                    {language === 'bn' ? 'আপনার লেভেল রেট:' : 'Your Level Rate:'}
+                    {language === 'bn' ? 'বর্তমান সেলিং রেট:' : 'Current Selling Rate:'}
                   </span>
-                  <div className="text-3xl sm:text-4xl font-black text-[#00D06C] tracking-tight mt-1">
-                    ৳{currentRate.toFixed(2)} <span className="text-sm sm:text-base font-bold text-slate-400">/ Gmail</span>
+                  <div className="text-3xl sm:text-4xl font-black text-[#00D06C] tracking-tight mt-1 flex items-baseline gap-2">
+                    <span>৳{currentRate.toFixed(2)}</span>
+                    <span className="text-xs sm:text-sm font-bold text-slate-400">
+                      / {language === 'bn' ? (mailType === 'fresh' ? 'নতুন জিমেইল' : mailType === 'aged' ? 'পুরাতন জিমেইল' : 'জিমেইল') : (mailType === 'fresh' ? 'New Gmail' : mailType === 'aged' ? 'Old Gmail' : 'Gmail')}
+                    </span>
                   </div>
                 </div>
 
-                {/* Mail Type Switcher */}
-                <div className="flex items-center gap-1.5 p-1 bg-slate-900/90 border border-slate-800 rounded-2xl">
+                {/* Primary Category Selector: New Gmail & Old Gmail */}
+                <div className="flex items-center gap-2 p-1.5 bg-slate-900/90 border border-slate-800 rounded-2xl">
                   <button
                     type="button"
                     onClick={() => setMailType('fresh')}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-1.5 ${
                       mailType === 'fresh'
-                        ? 'bg-indigo-600 text-white shadow-md'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                     }`}
                   >
-                    {language === 'bn' ? 'নতুন জিমেইল' : 'Fresh Gmail'}
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{language === 'bn' ? 'নতুন জিমেইল (New)' : 'New Gmail'}</span>
                   </button>
+
                   <button
                     type="button"
                     onClick={() => setMailType('aged')}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-1.5 ${
                       mailType === 'aged'
-                        ? 'bg-indigo-600 text-white shadow-md'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-lg shadow-amber-500/20'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                     }`}
                   >
-                    {language === 'bn' ? 'পুরাতন জিমেইল' : 'Aged Gmail'}
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>{language === 'bn' ? 'পুরাতন জিমেইল (Old)' : 'Old Gmail'}</span>
                   </button>
+
                   <button
                     type="button"
-                    onClick={() => setMailType(mailType === 'recovery' ? 'fresh' : 'recovery')}
-                    className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all hidden sm:inline-block ${
+                    onClick={() => setMailType('recovery')}
+                    className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all hidden md:flex items-center gap-1 ${
                       mailType === 'recovery'
                         ? 'bg-indigo-600 text-white shadow-md'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                     }`}
                     title={language === 'bn' ? 'রিকভারি যুক্ত জিমেইল' : 'With Recovery Mail'}
                   >
-                    {language === 'bn' ? 'রিকভারি' : 'Recovery'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Input Mode Selector & Quick Paste buttons */}
-              <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setInputMode('boxes')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                      inputMode === 'boxes'
-                        ? 'bg-slate-800 text-white border border-slate-700'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {language === 'bn' ? 'ইনপুট বক্স মোড' : 'Box Input Mode'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setInputMode('bulk')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                      inputMode === 'bulk'
-                        ? 'bg-slate-800 text-white border border-slate-700'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {language === 'bn' ? 'বাল্ক টেক্সট এরিয়া' : 'Bulk Text Mode'}
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleQuickPasteFromClipboard}
-                    className="px-3 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95"
-                  >
-                    <ClipboardPaste className="w-3.5 h-3.5" />
-                    <span>{language === 'bn' ? 'ক্লিপবোর্ড থেকে কুইক পেস্ট' : 'Quick Paste from Clipboard'}</span>
+                    <span>{language === 'bn' ? 'রিকভারি' : 'Recovery'}</span>
                   </button>
                 </div>
               </div>
             </div>
 
             {/* GMAIL INPUT BOXES AREA */}
-            {inputMode === 'boxes' ? (
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-slate-300">
-                    {language === 'bn'
-                      ? `ইমেইল ও পাসওয়ার্ড লিখুন বা পেস্ট করুন (${mailRows.length}টি রো):`
-                      : `Enter or paste Email & Password (${mailRows.length} rows):`}
-                  </span>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    {language === 'bn' ? 'ভ্যালিড একাউন্ট:' : 'Valid Accounts:'}{' '}
-                    <strong className="text-[#00D06C]">{validCount}</strong>
-                  </span>
-                </div>
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs sm:text-sm font-bold text-slate-200">
+                  {language === 'bn'
+                    ? `${mailType === 'fresh' ? 'নতুন জিমেইল' : mailType === 'aged' ? 'পুরাতন জিমেইল' : 'জিমেইল'} একাউন্ট ও পাসওয়ার্ড লিখুন:`
+                    : `Enter ${mailType === 'fresh' ? 'New Gmail' : mailType === 'aged' ? 'Old Gmail' : 'Gmail'} Email & Password:`}
+                </span>
+                <span className="text-xs text-slate-400 font-mono">
+                  {language === 'bn' ? 'রেডি একাউন্ট:' : 'Ready Accounts:'}{' '}
+                  <strong className="text-[#00D06C] text-sm">{validCount}</strong>
+                </span>
+              </div>
 
-                {/* Email & Password Input Rows */}
-                <div className="space-y-3">
-                  {mailRows.map((row, idx) => (
-                    <div key={row.id} className="flex items-center gap-2 sm:gap-3">
-                      <div className="w-6 text-center text-xs font-mono font-bold text-slate-500 flex-shrink-0">
-                        {idx + 1}.
-                      </div>
-
-                      {/* Email Input */}
-                      <div className="flex-1">
-                        <input
-                          type="email"
-                          value={row.email}
-                          onChange={e => handleRowChange(row.id, 'email', e.target.value)}
-                          placeholder="example@gmail.com"
-                          className="w-full bg-[#0a1120] border border-slate-700/80 hover:border-slate-600 focus:border-indigo-500 rounded-2xl px-4 py-3 text-sm text-white placeholder-slate-500 font-mono outline-none transition-colors"
-                        />
-                      </div>
-
-                      {/* Password Input with Show/Hide Eye Toggle */}
-                      <div className="flex-1 relative">
-                        <input
-                          type={row.showPassword ? 'text' : 'password'}
-                          value={row.password}
-                          onChange={e => handleRowChange(row.id, 'password', e.target.value)}
-                          placeholder={language === 'bn' ? 'পাসওয়ার্ড' : 'Password'}
-                          className="w-full bg-[#0a1120] border border-slate-700/80 hover:border-slate-600 focus:border-indigo-500 rounded-2xl pl-4 pr-10 py-3 text-sm text-white placeholder-slate-500 font-mono outline-none transition-colors"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => togglePasswordVisibility(row.id)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1 rounded-lg"
-                          title={row.showPassword ? (language === 'bn' ? 'লুকান' : 'Hide') : (language === 'bn' ? 'দেখুন' : 'Show')}
-                        >
-                          {row.showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-
-                      {/* Delete Row button */}
-                      {mailRows.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveRow(row.id)}
-                          className="p-2.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors flex-shrink-0"
-                          title={language === 'bn' ? 'এই রো মুছুন' : 'Delete Row'}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
+              {/* Email & Password Input Rows */}
+              <div className="space-y-3">
+                {mailRows.map((row, idx) => (
+                  <div key={row.id} className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-6 text-center text-xs font-mono font-bold text-slate-500 flex-shrink-0">
+                      {idx + 1}.
                     </div>
-                  ))}
-                </div>
 
-                {/* + Add More Button */}
-                <div className="pt-2 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={handleAddRow}
-                    className="w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-slate-700 shadow-md transition-all active:scale-[0.99]"
-                  >
-                    <Plus className="w-4 h-4 stroke-[3]" />
-                    <span>{language === 'bn' ? '+ আরও রো যোগ করুন' : '+ Add More Rows'}</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* BULK TEXTAREA MODE */
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                    {language === 'bn'
-                      ? 'জিমেইল লিস্ট পেস্ট করুন (প্রতি লাইনে email:password):'
-                      : 'Paste Gmail List (email:password per line):'}
-                  </label>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    {language === 'bn' ? 'ফরম্যাট:' : 'Format:'}{' '}
-                    <span className="text-amber-400 font-bold">email:password:recovery</span>
-                  </span>
-                </div>
+                    {/* Email Input */}
+                    <div className="flex-1">
+                      <input
+                        type="email"
+                        value={row.email}
+                        onChange={e => handleRowChange(row.id, 'email', e.target.value)}
+                        placeholder="example@gmail.com"
+                        className="w-full bg-[#0a1120] border border-slate-700/80 hover:border-slate-600 focus:border-emerald-500 rounded-2xl px-4 py-3 text-xs sm:text-sm text-white placeholder-slate-500 font-mono outline-none transition-colors"
+                      />
+                    </div>
 
-                <textarea
-                  value={rawText}
-                  onChange={e => setRawText(e.target.value)}
-                  placeholder={`example1@gmail.com:Pass#1234:recovery1@outlook.com
-example2@gmail.com:Secret!2026:recovery2@outlook.com
-example3@gmail.com:UserPass99:recovery3@outlook.com`}
-                  rows={7}
-                  className="w-full bg-[#0a1120] border border-slate-700 rounded-2xl p-4 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
-                />
+                    {/* Password Input with Show/Hide Eye Toggle */}
+                    <div className="flex-1 relative">
+                      <input
+                        type={row.showPassword ? 'text' : 'password'}
+                        value={row.password}
+                        onChange={e => handleRowChange(row.id, 'password', e.target.value)}
+                        placeholder={language === 'bn' ? 'পাসওয়ার্ড' : 'Password'}
+                        className="w-full bg-[#0a1120] border border-slate-700/80 hover:border-slate-600 focus:border-emerald-500 rounded-2xl pl-4 pr-10 py-3 text-xs sm:text-sm text-white placeholder-slate-500 font-mono outline-none transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility(row.id)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1 rounded-lg"
+                        title={row.showPassword ? (language === 'bn' ? 'লুকান' : 'Hide') : (language === 'bn' ? 'দেখুন' : 'Show')}
+                      >
+                        {row.showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+
+                    {/* Delete Row button */}
+                    {mailRows.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveRow(row.id)}
+                        className="p-2.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors flex-shrink-0"
+                        title={language === 'bn' ? 'এই রো মুছুন' : 'Delete Row'}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
-            )}
+
+              {/* Action Buttons: Add More & Paste Multiple */}
+              <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={handleAddRow}
+                  className="w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-slate-700 shadow-md transition-all active:scale-[0.99]"
+                >
+                  <Plus className="w-4 h-4 stroke-[3]" />
+                  <span>{language === 'bn' ? '+ আরও অ্যাকাউন্ট যোগ করুন' : '+ Add Another Account'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPasteModal(true)}
+                  className="w-full py-3 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-indigo-500/30 shadow-md transition-all active:scale-[0.99]"
+                >
+                  <ClipboardPaste className="w-4 h-4" />
+                  <span>{language === 'bn' ? 'একসাথে একাধিক পেস্ট করুন' : 'Paste Multiple Accounts'}</span>
+                </button>
+              </div>
+            </div>
 
             {/* Payout Details & Shift Selection */}
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
