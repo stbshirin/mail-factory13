@@ -53,7 +53,7 @@ export const Navbar: React.FC = () => {
   const unreadCount = (notifications || []).filter(n => !n?.read).length;
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-white shadow-lg">
+    <header className={`sticky top-0 ${isMobileMenuOpen ? 'z-50' : 'z-40'} bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-white shadow-lg`}>
       {/* Top Ticker / Notification Bar */}
       <div className="bg-slate-950/90 border-b border-slate-800/80 px-3 sm:px-6 py-1.5 text-xs font-semibold flex items-center justify-between">
         <div className="flex items-center gap-2 overflow-hidden text-left">
@@ -67,14 +67,29 @@ export const Navbar: React.FC = () => {
           </span>
         </div>
 
-        <button
-          onClick={() => setLanguage(language === 'bn' ? 'en' : 'bn')}
-          className="text-xs font-semibold text-slate-200 hover:text-white flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 px-2.5 py-0.5 rounded-lg transition-colors flex-shrink-0 ml-2 shadow-xs cursor-pointer"
-          title={language === 'bn' ? 'Switch to English' : 'বাংলায় পরিবর্তন করুন'}
-        >
-          <span className="text-amber-400">🌐</span>
-          <span className="font-bold">{language === 'bn' ? 'English' : 'বাংলা'}</span>
-        </button>
+        {/* Clear, Unambiguous Segmented Language Switcher in Ticker */}
+        <div className="flex items-center bg-slate-900 border border-slate-700/80 p-0.5 rounded-lg flex-shrink-0 ml-2 shadow-xs">
+          <button
+            onClick={() => setLanguage('bn')}
+            className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${
+              language === 'bn'
+                ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            বাংলা
+          </button>
+          <button
+            onClick={() => setLanguage('en')}
+            className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${
+              language === 'en'
+                ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            ENG
+          </button>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -235,15 +250,29 @@ export const Navbar: React.FC = () => {
               />
             </div>
 
-            {/* Language Switch */}
-            <button
-              onClick={() => setLanguage(language === 'bn' ? 'en' : 'bn')}
-              className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-amber-400 hover:bg-slate-700 flex items-center gap-1 transition-colors shadow-xs"
-              title={language === 'bn' ? 'Switch to English' : 'বাংলায় পরিবর্তন করুন'}
-            >
-              <Globe className="w-3.5 h-3.5" />
-              <span>{language === 'bn' ? 'English' : 'বাংলা'}</span>
-            </button>
+            {/* Language Switch (Desktop & Tablet - Hidden on small mobile to avoid header clutter) */}
+            <div className="hidden sm:flex items-center bg-slate-800 border border-slate-700 p-0.5 rounded-lg shadow-xs">
+              <button
+                onClick={() => setLanguage('bn')}
+                className={`px-2 py-1 rounded text-xs font-bold transition-colors ${
+                  language === 'bn'
+                    ? 'bg-amber-500 text-slate-950 font-black'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                বাংলা
+              </button>
+              <button
+                onClick={() => setLanguage('en')}
+                className={`px-2 py-1 rounded text-xs font-bold transition-colors ${
+                  language === 'en'
+                    ? 'bg-amber-500 text-slate-950 font-black'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                ENG
+              </button>
+            </div>
 
             {/* User Profile / Account Dropdown */}
             <div className="relative">
@@ -469,17 +498,26 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Drawer Navigation */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-800 bg-slate-900/95 backdrop-blur-xl px-4 pt-3.5 pb-6 space-y-2.5 z-50">
+        <div className="lg:hidden border-t border-slate-800 bg-slate-900/98 backdrop-blur-2xl px-4 pt-3.5 pb-36 space-y-3 max-h-[calc(100dvh-100px)] overflow-y-auto overscroll-contain shadow-2xl">
           {/* Mobile Language Switcher Card - Clean Uniform Box */}
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 shadow-xs">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-              <Globe className="w-4 h-4 text-amber-400" />
-              <span>{language === 'bn' ? 'ভাষা নির্বাচন' : 'Language'}</span>
+          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700/80 shadow-xs">
+            <div className="flex items-center gap-2.5 text-xs font-bold text-slate-200">
+              <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <Globe className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-white text-xs font-bold">
+                  {language === 'bn' ? 'ভাষা নির্বাচন' : 'Language'}
+                </div>
+                <div className="text-[10px] text-slate-400 font-normal">
+                  {language === 'bn' ? 'বাংলা অথবা English' : 'Bengali or English'}
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-700/80">
               <button
                 onClick={() => setLanguage('bn')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   language === 'bn'
                     ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
                     : 'text-slate-400 hover:text-white'
@@ -489,7 +527,7 @@ export const Navbar: React.FC = () => {
               </button>
               <button
                 onClick={() => setLanguage('en')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   language === 'en'
                     ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
                     : 'text-slate-400 hover:text-white'
@@ -527,7 +565,14 @@ export const Navbar: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-800/90 via-slate-800/60 to-slate-900/90 border border-slate-700/80 shadow-md">
+            <div
+              onClick={() => {
+                setActiveTab('profile');
+                setIsMobileMenuOpen(false);
+              }}
+              className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-800/90 via-slate-800/60 to-slate-900/90 border border-slate-700/80 shadow-md cursor-pointer hover:border-amber-500/40 transition-colors"
+              title={language === 'bn' ? 'প্রোফাইল সেটিংস দেখতে ক্লিক করুন' : 'Click to view profile settings'}
+            >
               <div className="flex items-center gap-3">
                 {currentUser.avatarUrl ? (
                   <img
